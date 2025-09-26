@@ -25,6 +25,11 @@ export default function Kits() {
   const updateKit = useMutation(api.kits.update);
   const deleteKit = useMutation(api.kits.remove);
 
+  // Add: pull inventory items across all categories to use as materials
+  const rawMaterials = useQuery(api.inventory.listByCategory, { category: "raw_material" });
+  const preProcessed = useQuery(api.inventory.listByCategory, { category: "pre_processed" });
+  const finishedGoods = useQuery(api.inventory.listByCategory, { category: "finished_good" });
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingKit, setEditingKit] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -432,12 +437,30 @@ export default function Kits() {
                         <div className="text-sm text-muted-foreground">No materials specified.</div>
                       )}
                       <div className="mt-3 flex items-center gap-2">
-                        <Input
-                          placeholder="Add material (e.g., 5 sensors)"
-                          value={expandedKitId === kit._id ? newMaterial : ""}
-                          onChange={(e) => setNewMaterial(e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
+                        <Select
+                          onValueChange={(v: string) => setNewMaterial(v)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select material from inventory" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(rawMaterials ?? []).map((i: any) => (
+                              <SelectItem key={`raw-${i._id}`} value={i.name}>
+                                {i.name} • Raw
+                              </SelectItem>
+                            ))}
+                            {(preProcessed ?? []).map((i: any) => (
+                              <SelectItem key={`pre-${i._id}`} value={i.name}>
+                                {i.name} • Pre-Processed
+                              </SelectItem>
+                            ))}
+                            {(finishedGoods ?? []).map((i: any) => (
+                              <SelectItem key={`fin-${i._id}`} value={i.name}>
+                                {i.name} • Finished
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
