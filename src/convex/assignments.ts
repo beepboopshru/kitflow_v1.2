@@ -65,7 +65,6 @@ export const getByClient = query({
   args: { clientId: v.optional(v.id("clients")) },
   handler: async (ctx, args) => {
     if (!args.clientId) {
-      // When no clientId provided (e.g., query is skipped), return an empty array
       return [];
     }
 
