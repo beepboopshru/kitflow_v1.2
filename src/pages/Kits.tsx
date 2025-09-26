@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { AlertTriangle, Edit, Package, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -39,13 +39,14 @@ export default function Kits() {
   const [typeFilter, setTypeFilter] = useState<"all" | "cstem" | "robotics">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "assigned">("all");
   const [kitFilter, setKitFilter] = useState<string>("all");
+  const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
 
   // Filter kits in-memory based on dropdowns
   const filteredKits = (kits ?? []).filter((k) => {
     const typeOk = typeFilter === "all" ? true : k.type === typeFilter;
     const statusOk = statusFilter === "all" ? true : k.status === statusFilter;
     const kitOk = kitFilter === "all" ? true : k._id === kitFilter;
-    return typeOk && statusOk && kitOk;
+    return typeOk && statusFilter && kitOk;
   });
 
   useEffect(() => {
@@ -110,6 +111,10 @@ export default function Kits() {
         toast("Error deleting kit", { description: error instanceof Error ? error.message : "Unknown error" });
       }
     }
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedKitId((prev) => (prev === id ? null : id));
   };
 
   if (isLoading || !isAuthenticated) {
@@ -299,8 +304,18 @@ export default function Kits() {
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{kit.name}</CardTitle>
+                    <div
+                      className="group cursor-pointer select-none"
+                      onClick={() => toggleExpand(kit._id)}
+                    >
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {kit.name}
+                        {expandedKitId === kit._id ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                        )}
+                      </CardTitle>
                       <Badge variant="outline" className="mt-1">
                         {kit.type.toUpperCase()}
                       </Badge>
@@ -309,14 +324,20 @@ export default function Kits() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEdit(kit)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(kit);
+                        }}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(kit._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(kit._id);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -348,10 +369,22 @@ export default function Kits() {
                     </Badge>
                   </div>
 
-                  {kit.packingRequirements && (
-                    <div>
-                      <span className="text-xs text-muted-foreground">Packing:</span>
-                      <p className="text-xs mt-1">{kit.packingRequirements}</p>
+                  {expandedKitId === kit._id && (
+                    <div className="mt-2 rounded-md border p-3 bg-muted/30">
+                      <div className="text-xs text-muted-foreground mb-2">Materials Required</div>
+                      {kit.packingRequirements && kit.packingRequirements.trim().length > 0 ? (
+                        <ul className="list-disc pl-5 space-y-1 text-sm">
+                          {kit.packingRequirements
+                            .split(",")
+                            .map((s: string) => s.trim())
+                            .filter((s: string) => s.length > 0)
+                            .map((item: string, idx: number) => (
+                              <li key={idx}>{item}</li>
+                            ))}
+                        </ul>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">No materials specified.</div>
+                      )}
                     </div>
                   )}
                 </CardContent>
