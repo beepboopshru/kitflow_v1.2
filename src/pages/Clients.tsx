@@ -372,12 +372,32 @@ export default function Clients() {
                         {Array.from({ length: 10 }, (_, i) => i + 1).map((g) => (
                           <div key={g} className="rounded-md border p-3">
                             <div className="text-xs text-muted-foreground">Grade {g}</div>
-                            <div className="text-lg font-semibold">{buckets[g].count}</div>
+                            <div className="mt-1 space-y-1">
+                              {buckets[g].items.length === 0 ? (
+                                <div className="text-xs text-muted-foreground">None</div>
+                              ) : (
+                                buckets[g].items.map((it) => (
+                                  <div key={it._id} className="text-xs">
+                                    {it.kit?.name ?? "Kit"} • Qty {it.quantity}
+                                  </div>
+                                ))
+                              )}
+                            </div>
                           </div>
                         ))}
                         <div className="rounded-md border p-3">
                           <div className="text-xs text-muted-foreground">Unspecified</div>
-                          <div className="text-lg font-semibold">{unspecified.count}</div>
+                          <div className="mt-1 space-y-1">
+                            {unspecified.items.length === 0 ? (
+                              <div className="text-xs text-muted-foreground">None</div>
+                            ) : (
+                              unspecified.items.map((it) => (
+                                <div key={it._id} className="text-xs">
+                                  {it.kit?.name ?? "Kit"} • Qty {it.quantity}
+                                </div>
+                              ))
+                            )}
+                          </div>
                         </div>
                       </div>
 
