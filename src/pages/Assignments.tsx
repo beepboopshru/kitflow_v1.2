@@ -176,7 +176,10 @@ export default function Assignments() {
                   <Select
                     value={formData.grade === null ? "none" : String(formData.grade)}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, grade: value === "none" ? null : parseInt(value) })
+                      setFormData({
+                        ...formData,
+                        grade: value === "none" ? null : parseInt(value),
+                      })
                     }
                   >
                     <SelectTrigger>
