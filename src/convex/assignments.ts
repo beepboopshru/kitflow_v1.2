@@ -62,11 +62,18 @@ export const list = query({
 });
 
 export const getByClient = query({
-  args: { clientId: v.id("clients") },
+  args: { clientId: v.optional(v.id("clients")) },
   handler: async (ctx, args) => {
+    if (!args.clientId) {
+      // When no client selected, skip and return empty array
+      return [];
+    }
+
+    const clientId = args.clientId; // non-null after guard
+
     const assignments = await ctx.db
       .query("assignments")
-      .withIndex("by_client", (q) => q.eq("clientId", args.clientId))
+      .withIndex("by_client", (q) => q.eq("clientId", clientId))
       .collect();
 
     const enrichedAssignments = await Promise.all(

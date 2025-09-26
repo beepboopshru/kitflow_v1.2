@@ -42,7 +42,7 @@ export default function Clients() {
   // Load assignments for selected client (skips when no client selected)
   const clientAssignments = useQuery(
     api.assignments.getByClient,
-    selectedClient ? ({ clientId: selectedClient._id } as any) : undefined
+    selectedClient ? { clientId: selectedClient._id } : undefined
   );
 
   useEffect(() => {
