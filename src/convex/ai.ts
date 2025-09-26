@@ -49,7 +49,7 @@ export const chat = action({
           "X-Title": "KitFlow",
         },
         body: JSON.stringify({
-          model: "anthropic/claude-3-haiku",
+          model: "deepseek/deepseek-r1-0528:free",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: args.message },
