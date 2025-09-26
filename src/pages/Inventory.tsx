@@ -30,6 +30,14 @@ const RAW_SUBCATEGORIES: Array<{ value: string; label: string }> = [
   { value: "corrugated_sheets", label: "Corrugated Sheets" },
 ];
 
+const PRE_SUBCATEGORIES: Array<{ value: string; label: string }> = [
+  { value: "laser_cut", label: "Laser Cut" },
+  { value: "cnc", label: "CNC Machined" },
+  { value: "3d_printed", label: "3D Printed" },
+  { value: "painted", label: "Painted" },
+  { value: "assembled", label: "Assembled" },
+];
+
 const CATEGORY_LABELS: Record<Category, string> = {
   raw_material: "Raw Material",
   pre_processed: "Pre-Processed",
@@ -83,9 +91,12 @@ export default function Inventory() {
       await createItem({
         name: createForm.name,
         category: createForm.category,
-        ...(createForm.category === "raw_material" && createForm.subCategory !== "none"
-          ? { subCategory: createForm.subCategory as any }
-          : {}),
+        ...(
+          (createForm.category === "raw_material" || createForm.category === "pre_processed")
+          && createForm.subCategory !== "none"
+            ? { subCategory: createForm.subCategory as any }
+            : {}
+        ),
         unit: createForm.unit || undefined,
         quantity: createForm.quantity,
         notes: createForm.notes || undefined,
@@ -237,6 +248,29 @@ export default function Inventory() {
                       <SelectContent>
                         <SelectItem value="none">None</SelectItem>
                         {RAW_SUBCATEGORIES.map((sc) => (
+                          <SelectItem key={sc.value} value={sc.value}>
+                            {sc.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Show subcategory select when Pre-Processed is selected */}
+                {createForm.category === "pre_processed" && (
+                  <div>
+                    <Label htmlFor="subCategory">Pre-Processed Subcategory</Label>
+                    <Select
+                      value={createForm.subCategory}
+                      onValueChange={(v: string) => setCreateForm((s) => ({ ...s, subCategory: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select subcategory" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {PRE_SUBCATEGORIES.map((sc) => (
                           <SelectItem key={sc.value} value={sc.value}>
                             {sc.label}
                           </SelectItem>
@@ -436,7 +470,118 @@ export default function Inventory() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-            <CategoryCard title={`${CATEGORY_LABELS.pre_processed} • Total: ${totals.pre}`} items={pre ?? []} />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-medium">
+                  {`${CATEGORY_LABELS.pre_processed} • Total: ${totals.pre}`}
+                </CardTitle>
+                <Badge variant="secondary">{pre?.length ?? 0} items</Badge>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {PRE_SUBCATEGORIES.map((sc) => {
+                  const group = (pre ?? []).filter((it) => it.subCategory === sc.value);
+                  return (
+                    <div key={sc.value} className="rounded-md border p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">{sc.label}</div>
+                        <Badge variant="outline">Total: {group.reduce((s, i) => s + i.quantity, 0)}</Badge>
+                      </div>
+                      {group.length === 0 ? (
+                        <div className="text-sm text-muted-foreground">No items yet.</div>
+                      ) : (
+                        <div className="space-y-3">
+                          {group.map((it) => (
+                            <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                              <div>
+                                <div className="font-medium">{it.name}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                </div>
+                                {it.notes ? (
+                                  <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                ) : null}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                  title="Remove stock"
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                  title="Add stock"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {(() => {
+                  const uncategorized = (pre ?? []).filter((it) => !it.subCategory);
+                  return (
+                    <div className="rounded-md border p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">Uncategorized</div>
+                        <Badge variant="outline">Total: {uncategorized.reduce((s, i) => s + i.quantity, 0)}</Badge>
+                      </div>
+                      {uncategorized.length === 0 ? (
+                        <div className="text-sm text-muted-foreground">No items yet.</div>
+                      ) : (
+                        <div className="space-y-3">
+                          {uncategorized.map((it) => (
+                            <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                              <div>
+                                <div className="font-medium">{it.name}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                </div>
+                                {it.notes ? (
+                                  <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                ) : null}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                  title="Remove stock"
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                  title="Add stock"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <CategoryCard title={`${CATEGORY_LABELS.finished_good} • Total: ${totals.fin}`} items={fin ?? []} />
