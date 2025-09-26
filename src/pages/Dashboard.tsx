@@ -6,8 +6,10 @@ import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
 import { AlertTriangle, Box, Package, Users } from "lucide-react";
 import { useQuery } from "convex/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export default function Dashboard() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -15,6 +17,20 @@ export default function Dashboard() {
   
   const summary = useQuery(api.reports.getInventorySummary);
   const lowStockKits = useQuery(api.kits.getLowStockKits);
+  const kits = useQuery(api.kits.list);
+
+  // Add local filters
+  const [typeFilter, setTypeFilter] = useState<"all" | "cstem" | "robotics">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "assigned">("all");
+  const [kitFilter, setKitFilter] = useState<string>("all");
+
+  // Filtered kits derived from kits query
+  const filteredKits = (kits ?? []).filter((k) => {
+    const typeOk = typeFilter === "all" ? true : k.type === typeFilter;
+    const statusOk = statusFilter === "all" ? true : k.status === statusFilter;
+    const kitOk = kitFilter === "all" ? true : k._id === kitFilter;
+    return typeOk && statusOk && kitOk;
+  });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -86,6 +102,94 @@ export default function Dashboard() {
             </motion.div>
           ))}
         </div>
+
+        {/* Kit Quick Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Kit Quick Filter</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Options • Kit Type</Label>
+                <Select value={typeFilter} onValueChange={(v: "all" | "cstem" | "robotics") => setTypeFilter(v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="All types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="cstem">CSTEM</SelectItem>
+                    <SelectItem value="robotics">Robotics</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs">Kit Lists • Select Kit</Label>
+                <Select value={kitFilter} onValueChange={(v: string) => setKitFilter(v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="All kits" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Kits</SelectItem>
+                    {(kits ?? []).map((k) => (
+                      <SelectItem key={k._id} value={k._id}>
+                        {k.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs">Pouching Plan • Status</Label>
+                <Select value={statusFilter} onValueChange={(v: "all" | "in_stock" | "assigned") => setStatusFilter(v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="in_stock">In Stock</SelectItem>
+                    <SelectItem value="assigned">Assigned</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredKits.slice(0, 6).map((kit) => (
+                <div key={kit._id} className="rounded-md border p-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="font-medium">{kit.name}</div>
+                      <Badge variant="outline" className="mt-1">
+                        {kit.type.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <Badge variant={kit.status === "in_stock" ? "default" : "secondary"}>
+                      {kit.status === "in_stock" ? "In Stock" : "Assigned"}
+                    </Badge>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">Stock: {kit.stockCount}</span>
+                    </div>
+                    {kit.stockCount <= kit.lowStockThreshold && (
+                      <div className="flex items-center space-x-1 text-red-600">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="text-xs">Low</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {filteredKits.length === 0 && (
+                <div className="text-sm text-muted-foreground">No kits match your filters.</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Kit Type Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
