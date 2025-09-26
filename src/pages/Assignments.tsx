@@ -174,9 +174,9 @@ export default function Assignments() {
                 <div>
                   <Label htmlFor="grade">Grade (optional)</Label>
                   <Select
-                    value={formData.grade ? String(formData.grade) : ""}
+                    value={formData.grade === null ? "none" : String(formData.grade)}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, grade: value ? parseInt(value) : null })
+                      setFormData({ ...formData, grade: value === "none" ? null : parseInt(value) })
                     }
                   >
                     <SelectTrigger>

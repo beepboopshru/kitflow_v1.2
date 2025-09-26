@@ -65,15 +65,39 @@ export const getByClient = query({
   args: { clientId: v.optional(v.id("clients")) },
   handler: async (ctx, args) => {
     if (!args.clientId) {
-      // When no client selected, skip and return empty array
+      // When no clientId provided (e.g., query is skipped), return an empty array
       return [];
     }
 
-    const clientId = args.clientId; // non-null after guard
+    const assignments = await ctx.db
+      .query("assignments")
+      .withIndex("by_client", (q) => q.eq("clientId", args.clientId!))
+      .collect();
+
+    const enrichedAssignments = await Promise.all(
+      assignments.map(async (assignment) => {
+        const kit = await ctx.db.get(assignment.kitId);
+        return {
+          ...assignment,
+          kit,
+        };
+      })
+    );
+
+    return enrichedAssignments;
+  },
+});
+
+export const getByClientOptional = query({
+  args: { clientId: v.optional(v.id("clients")) },
+  handler: async (ctx, args) => {
+    if (!args.clientId) {
+      return [];
+    }
 
     const assignments = await ctx.db
       .query("assignments")
-      .withIndex("by_client", (q) => q.eq("clientId", clientId))
+      .withIndex("by_client", (q) => q.eq("clientId", args.clientId!))
       .collect();
 
     const enrichedAssignments = await Promise.all(
