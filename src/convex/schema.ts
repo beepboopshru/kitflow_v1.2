@@ -68,6 +68,20 @@ const schema = defineSchema(
       updatedAt: v.optional(v.number()),
       grade: v.optional(v.number()),
     }).index("by_kit", ["kitId"]).index("by_client", ["clientId"]).index("by_status", ["status"]),
+
+    // Inventory Management
+    inventory: defineTable({
+      name: v.string(),
+      category: v.union(
+        v.literal("raw_material"),
+        v.literal("pre_processed"),
+        v.literal("finished_good"),
+      ),
+      unit: v.optional(v.string()),
+      quantity: v.number(),
+      notes: v.optional(v.string()),
+      createdBy: v.id("users"),
+    }).index("by_category", ["category"]),
   },
   {
     schemaValidation: false,

@@ -18,6 +18,7 @@ import type * as auth_emailOtp from "../auth/emailOtp.js";
 import type * as auth from "../auth.js";
 import type * as clients from "../clients.js";
 import type * as http from "../http.js";
+import type * as inventory from "../inventory.js";
 import type * as kits from "../kits.js";
 import type * as reports from "../reports.js";
 import type * as seed from "../seed.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   clients: typeof clients;
   http: typeof http;
+  inventory: typeof inventory;
   kits: typeof kits;
   reports: typeof reports;
   seed: typeof seed;

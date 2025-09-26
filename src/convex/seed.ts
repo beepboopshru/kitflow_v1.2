@@ -80,6 +80,32 @@ export const seedData = internalMutation({
       assignedAt: Date.now(),
     });
 
+    // Seed Inventory
+    await ctx.db.insert("inventory", {
+      name: "Aluminum Sheets",
+      category: "raw_material",
+      unit: "sheets",
+      quantity: 120,
+      notes: "2mm thickness",
+      createdBy: seedUserId,
+    });
+    await ctx.db.insert("inventory", {
+      name: "Cut Gears",
+      category: "pre_processed",
+      unit: "pcs",
+      quantity: 35,
+      notes: "Laser cut",
+      createdBy: seedUserId,
+    });
+    await ctx.db.insert("inventory", {
+      name: "Robot Chassis Kit",
+      category: "finished_good",
+      unit: "kits",
+      quantity: 15,
+      notes: "Ready to ship",
+      createdBy: seedUserId,
+    });
+
     // Update kit stock to reflect assignments
     await ctx.db.patch(arduinoId, { stockCount: 23, status: "in_stock" });
     await ctx.db.patch(roboticsId, { stockCount: 9, status: "in_stock" });

@@ -9,6 +9,7 @@ import {
   Users 
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
+import { Boxes } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,6 +24,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Kits", href: "/kits", icon: Box },
     { name: "Clients", href: "/clients", icon: Users },
     { name: "Assignments", href: "/assignments", icon: Package },
+    { name: "Inventory", href: "/inventory", icon: Boxes },
   ];
 
   return (

@@ -14,6 +14,7 @@ import Dashboard from "@/pages/Dashboard.tsx";
 import Kits from "@/pages/Kits.tsx";
 import Clients from "@/pages/Clients.tsx";
 import Assignments from "@/pages/Assignments.tsx";
+import Inventory from "@/pages/Inventory.tsx";
 import "./types/global.d.ts";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -58,6 +59,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/kits" element={<Kits />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/assignments" element={<Assignments />} />
+            <Route path="/inventory" element={<Inventory />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
