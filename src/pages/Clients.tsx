@@ -2,7 +2,7 @@ import Layout from "@/components/Layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,6 +35,15 @@ export default function Clients() {
     email: "",
     notes: "",
   });
+
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+
+  // Load assignments for selected client (skips when no client selected)
+  const clientAssignments = useQuery(
+    api.assignments.getByClient,
+    selectedClient ? ({ clientId: selectedClient._id } as any) : undefined
+  );
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -98,6 +107,11 @@ export default function Clients() {
         toast("Error deleting client", { description: error instanceof Error ? error.message : "Unknown error" });
       }
     }
+  };
+
+  const openDetails = (client: any) => {
+    setSelectedClient(client);
+    setIsDetailsOpen(true);
   };
 
   if (isLoading || !isAuthenticated) {
@@ -250,10 +264,19 @@ export default function Clients() {
                     <Building className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">{client.organization}</span>
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{client.contact}</span>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{client.contact}</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openDetails(client)}
+                    >
+                      View Monthwise
+                    </Button>
                   </div>
 
                   {client.email && (
@@ -274,6 +297,110 @@ export default function Clients() {
             </motion.div>
           ))}
         </div>
+
+        {/* Monthwise & Gradewise dialog */}
+        <Dialog open={isDetailsOpen} onOpenChange={(o) => {
+          setIsDetailsOpen(o);
+          if (!o) setSelectedClient(null);
+        }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedClient ? `Monthwise for ${selectedClient.name}` : "Monthwise"}
+              </DialogTitle>
+              <DialogDescription>
+                Grouped by month; inside each month, grade-wise (1–10).
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Monthwise content */}
+            <div className="space-y-4 max-h-[60vh] overflow-auto">
+              {(() => {
+                if (!clientAssignments) {
+                  return <div className="text-sm text-muted-foreground">Loading...</div>;
+                }
+                if (clientAssignments.length === 0) {
+                  return <div className="text-sm text-muted-foreground">No assignments yet.</div>;
+                }
+
+                // Group by YYYY-MM
+                const byMonth: Record<string, Array<any>> = {};
+                clientAssignments.forEach((a) => {
+                  const d = new Date(a.assignedAt);
+                  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                  if (!byMonth[key]) byMonth[key] = [];
+                  byMonth[key].push(a);
+                });
+
+                const months = Object.keys(byMonth).sort((a, b) => (a < b ? 1 : -1));
+
+                return months.map((mKey) => {
+                  const monthAssignments = byMonth[mKey];
+
+                  // Build grade buckets 1..10
+                  const buckets: Record<number, { count: number; items: Array<any> }> = {};
+                  for (let g = 1; g <= 10; g++) {
+                    buckets[g] = { count: 0, items: [] };
+                  }
+                  const unspecified: { count: number; items: Array<any> } = { count: 0, items: [] };
+
+                  monthAssignments.forEach((a) => {
+                    if (a.grade && a.grade >= 1 && a.grade <= 10) {
+                      buckets[a.grade].count += a.quantity;
+                      buckets[a.grade].items.push(a);
+                    } else {
+                      unspecified.count += a.quantity;
+                      unspecified.items.push(a);
+                    }
+                  });
+
+                  return (
+                    <div key={mKey} className="rounded-lg border p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="font-medium">
+                          {new Date(`${mKey}-01`).toLocaleDateString(undefined, {
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </div>
+                        <Badge variant="secondary">
+                          Total Qty: {monthAssignments.reduce((s, a) => s + a.quantity, 0)}
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        {Array.from({ length: 10 }, (_, i) => i + 1).map((g) => (
+                          <div key={g} className="rounded-md border p-3">
+                            <div className="text-xs text-muted-foreground">Grade {g}</div>
+                            <div className="text-lg font-semibold">{buckets[g].count}</div>
+                          </div>
+                        ))}
+                        <div className="rounded-md border p-3">
+                          <div className="text-xs text-muted-foreground">Unspecified</div>
+                          <div className="text-lg font-semibold">{unspecified.count}</div>
+                        </div>
+                      </div>
+
+                      {/* Optional: list items under the grid */}
+                      <div className="mt-4 space-y-2">
+                        {monthAssignments.map((a) => (
+                          <div key={a._id} className="text-sm flex items-center justify-between">
+                            <span className="text-muted-foreground">
+                              {a.kit?.name} • Qty {a.quantity} {a.grade ? `• Grade ${a.grade}` : ""}
+                            </span>
+                            <Badge variant="outline">
+                              {new Date(a.assignedAt).toLocaleDateString()}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {clients?.length === 0 && (
           <div className="text-center py-12">

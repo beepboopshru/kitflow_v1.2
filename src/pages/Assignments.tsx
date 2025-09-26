@@ -15,6 +15,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
 
 export default function Assignments() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -32,6 +33,8 @@ export default function Assignments() {
     clientId: "",
     quantity: 1,
     notes: "",
+    // Add optional grade for 1-10 levels
+    grade: null as number | null,
   });
 
   useEffect(() => {
@@ -46,6 +49,7 @@ export default function Assignments() {
       clientId: "",
       quantity: 1,
       notes: "",
+      grade: null,
     });
   };
 
@@ -58,6 +62,7 @@ export default function Assignments() {
         clientId: formData.clientId as any,
         quantity: formData.quantity,
         notes: formData.notes || undefined,
+        grade: formData.grade ?? undefined,
       });
       toast("Assignment created successfully");
       setIsCreateOpen(false);
@@ -164,6 +169,35 @@ export default function Assignments() {
                     onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
                     required
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="grade">Grade (optional)</Label>
+                  <Select
+                    value={formData.grade ? String(formData.grade) : ""}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, grade: value ? parseInt(value) : null })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select grade (1-10)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* Provide a clearable option with a non-empty value per shadcn guidance */}
+                      <SelectItem value="none">No Grade</SelectItem>
+                      <Separator className="my-1" />
+                      <SelectItem value="1">Grade 1</SelectItem>
+                      <SelectItem value="2">Grade 2</SelectItem>
+                      <SelectItem value="3">Grade 3</SelectItem>
+                      <SelectItem value="4">Grade 4</SelectItem>
+                      <SelectItem value="5">Grade 5</SelectItem>
+                      <SelectItem value="6">Grade 6</SelectItem>
+                      <SelectItem value="7">Grade 7</SelectItem>
+                      <SelectItem value="8">Grade 8</SelectItem>
+                      <SelectItem value="9">Grade 9</SelectItem>
+                      <SelectItem value="10">Grade 10</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
