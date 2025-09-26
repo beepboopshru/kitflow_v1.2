@@ -36,6 +36,18 @@ export default function Kits() {
     packingRequirements: "",
   });
 
+  const [typeFilter, setTypeFilter] = useState<"all" | "cstem" | "robotics">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "assigned">("all");
+  const [kitFilter, setKitFilter] = useState<string>("all");
+
+  // Filter kits in-memory based on dropdowns
+  const filteredKits = (kits ?? []).filter((k) => {
+    const typeOk = typeFilter === "all" ? true : k.type === typeFilter;
+    const statusOk = statusFilter === "all" ? true : k.status === statusFilter;
+    const kitOk = kitFilter === "all" ? true : k._id === kitFilter;
+    return typeOk && statusOk && kitOk;
+  });
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       navigate("/auth");
@@ -113,6 +125,66 @@ export default function Kits() {
             <p className="text-muted-foreground mt-2">
               Manage your CSTEM and Robotics kits inventory
             </p>
+
+            {/* Filters: Options (Type), Kit lists, Pouching plan (Status) */}
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Options: Kit Type */}
+              <div>
+                <Label className="text-xs">Options • Kit Type</Label>
+                <Select
+                  value={typeFilter}
+                  onValueChange={(v: "all" | "cstem" | "robotics") => setTypeFilter(v)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="All types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="cstem">CSTEM</SelectItem>
+                    <SelectItem value="robotics">Robotics</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Kit lists: Specific Kit */}
+              <div>
+                <Label className="text-xs">Kit Lists • Select Kit</Label>
+                <Select
+                  value={kitFilter}
+                  onValueChange={(v: string) => setKitFilter(v)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="All kits" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Kits</SelectItem>
+                    {(kits ?? []).map((k) => (
+                      <SelectItem key={k._id} value={k._id}>
+                        {k.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Pouching plan: Status */}
+              <div>
+                <Label className="text-xs">Pouching Plan • Status</Label>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(v: "all" | "in_stock" | "assigned") => setStatusFilter(v)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="in_stock">In Stock</SelectItem>
+                    <SelectItem value="assigned">Assigned</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
           
           <Dialog open={isCreateOpen} onOpenChange={(open) => {
@@ -217,7 +289,7 @@ export default function Kits() {
 
         {/* Kits Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {kits?.map((kit, index) => (
+          {filteredKits.map((kit, index) => (
             <motion.div
               key={kit._id}
               initial={{ opacity: 0, y: 20 }}
@@ -288,11 +360,11 @@ export default function Kits() {
           ))}
         </div>
 
-        {kits?.length === 0 && (
+        {filteredKits.length === 0 && (
           <div className="text-center py-12">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium">No kits found</h3>
-            <p className="text-muted-foreground">Get started by creating your first kit.</p>
+            <h3 className="text-lg font-medium">No kits match your filters</h3>
+            <p className="text-muted-foreground">Try adjusting the filters above.</p>
           </div>
         )}
       </div>
