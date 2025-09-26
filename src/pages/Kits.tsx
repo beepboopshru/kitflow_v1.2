@@ -40,13 +40,14 @@ export default function Kits() {
   const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "assigned">("all");
   const [kitFilter, setKitFilter] = useState<string>("all");
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
+  const [newMaterial, setNewMaterial] = useState<string>("");
 
   // Filter kits in-memory based on dropdowns
   const filteredKits = (kits ?? []).filter((k) => {
     const typeOk = typeFilter === "all" ? true : k.type === typeFilter;
     const statusOk = statusFilter === "all" ? true : k.status === statusFilter;
     const kitOk = kitFilter === "all" ? true : k._id === kitFilter;
-    return typeOk && statusFilter && kitOk;
+    return typeOk && statusOk && kitOk;
   });
 
   useEffect(() => {
@@ -115,6 +116,39 @@ export default function Kits() {
 
   const toggleExpand = (id: string) => {
     setExpandedKitId((prev) => (prev === id ? null : id));
+  };
+
+  const handleAddMaterial = async (kit: any) => {
+    const item = newMaterial.trim();
+    if (!item) return;
+    const existing = (kit.packingRequirements || "")
+      .split(",")
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+    const updated = [...existing, item].join(", ");
+    try {
+      await updateKit({ id: kit._id, packingRequirements: updated });
+      toast("Material added");
+      setNewMaterial("");
+    } catch (err) {
+      toast("Failed to add material", { description: err instanceof Error ? err.message : "Unknown error" });
+    }
+  };
+
+  const handleRemoveMaterial = async (kit: any, index: number) => {
+    const existing = (kit.packingRequirements || "")
+      .split(",")
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+    if (index < 0 || index >= existing.length) return;
+    const updatedArr = existing.filter((_: string, i: number) => i !== index);
+    const updated = updatedArr.join(", ");
+    try {
+      await updateKit({ id: kit._id, packingRequirements: updated });
+      toast("Material removed");
+    } catch (err) {
+      toast("Failed to remove material", { description: err instanceof Error ? err.message : "Unknown error" });
+    }
   };
 
   if (isLoading || !isAuthenticated) {
@@ -379,12 +413,40 @@ export default function Kits() {
                             .map((s: string) => s.trim())
                             .filter((s: string) => s.length > 0)
                             .map((item: string, idx: number) => (
-                              <li key={idx}>{item}</li>
+                              <li key={idx} className="flex items-center justify-between gap-2">
+                                <span>{item}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveMaterial(kit, idx);
+                                  }}
+                                >
+                                  Remove
+                                </Button>
+                              </li>
                             ))}
                         </ul>
                       ) : (
                         <div className="text-sm text-muted-foreground">No materials specified.</div>
                       )}
+                      <div className="mt-3 flex items-center gap-2">
+                        <Input
+                          placeholder="Add material (e.g., 5 sensors)"
+                          value={expandedKitId === kit._id ? newMaterial : ""}
+                          onChange={(e) => setNewMaterial(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddMaterial(kit);
+                          }}
+                        >
+                          Add
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
