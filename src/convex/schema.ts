@@ -32,12 +32,41 @@ const schema = defineSchema(
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // add other tables here
+    // Kit Management
+    kits: defineTable({
+      name: v.string(),
+      type: v.union(v.literal("cstem"), v.literal("robotics")),
+      description: v.optional(v.string()),
+      image: v.optional(v.string()),
+      stockCount: v.number(),
+      lowStockThreshold: v.number(),
+      packingRequirements: v.optional(v.string()),
+      status: v.union(v.literal("in_stock"), v.literal("assigned")),
+      createdBy: v.id("users"),
+    }).index("by_type", ["type"]).index("by_status", ["status"]),
 
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    // Client Database
+    clients: defineTable({
+      name: v.string(),
+      organization: v.string(),
+      contact: v.string(),
+      type: v.union(v.literal("monthly"), v.literal("one_time")),
+      email: v.optional(v.string()),
+      notes: v.optional(v.string()),
+      createdBy: v.id("users"),
+    }).index("by_type", ["type"]),
+
+    // Kit Assignments (Packing/Pouching Plans)
+    assignments: defineTable({
+      kitId: v.id("kits"),
+      clientId: v.id("clients"),
+      quantity: v.number(),
+      status: v.union(v.literal("assigned"), v.literal("packed"), v.literal("dispatched")),
+      notes: v.optional(v.string()),
+      assignedBy: v.id("users"),
+      assignedAt: v.number(),
+      updatedAt: v.optional(v.number()),
+    }).index("by_kit", ["kitId"]).index("by_client", ["clientId"]).index("by_status", ["status"]),
   },
   {
     schemaValidation: false,
