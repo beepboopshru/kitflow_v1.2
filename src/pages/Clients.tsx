@@ -41,7 +41,7 @@ export default function Clients() {
 
   // Load assignments for selected client only when dialog open and client selected, otherwise skip
   const clientAssignments = useQuery(
-    api.assignments.getByClientOptional,
+    api.assignments.getByClient,
     isDetailsOpen && selectedClient ? ({ clientId: selectedClient._id } as any) : "skip"
   );
 
