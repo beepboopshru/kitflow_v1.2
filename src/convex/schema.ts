@@ -77,11 +77,13 @@ const schema = defineSchema(
         v.literal("pre_processed"),
         v.literal("finished_good"),
       ),
+      subCategory: v.optional(v.string()),
       unit: v.optional(v.string()),
       quantity: v.number(),
       notes: v.optional(v.string()),
       createdBy: v.id("users"),
-    }).index("by_category", ["category"]),
+    }).index("by_category", ["category"])
+      .index("by_category_and_subCategory", ["category", "subCategory"]),
   },
   {
     schemaValidation: false,

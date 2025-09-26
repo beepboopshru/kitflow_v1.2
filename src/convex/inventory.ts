@@ -3,9 +3,24 @@ import { mutation, query } from "./_generated/server";
 import { getCurrentUser } from "./users";
 
 export const listByCategory = query({
-  args: { category: v.union(v.literal("raw_material"), v.literal("pre_processed"), v.literal("finished_good")) },
+  // Accept optional subCategory to support raw materials subfields
+  args: { 
+    category: v.union(v.literal("raw_material"), v.literal("pre_processed"), v.literal("finished_good")),
+    subCategory: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
-    return await ctx.db.query("inventory").withIndex("by_category", (q) => q.eq("category", args.category)).collect();
+    if (args.subCategory !== undefined) {
+      return await ctx.db
+        .query("inventory")
+        .withIndex("by_category_and_subCategory", (q) =>
+          q.eq("category", args.category).eq("subCategory", args.subCategory)
+        )
+        .collect();
+    }
+    return await ctx.db
+      .query("inventory")
+      .withIndex("by_category", (q) => q.eq("category", args.category))
+      .collect();
   },
 });
 
@@ -13,6 +28,8 @@ export const create = mutation({
   args: {
     name: v.string(),
     category: v.union(v.literal("raw_material"), v.literal("pre_processed"), v.literal("finished_good")),
+    // Accept optional subCategory (used when category is raw_material)
+    subCategory: v.optional(v.string()),
     unit: v.optional(v.string()),
     quantity: v.number(),
     notes: v.optional(v.string()),
@@ -24,6 +41,7 @@ export const create = mutation({
     return await ctx.db.insert("inventory", {
       name: args.name,
       category: args.category,
+      subCategory: args.subCategory, // store if provided
       unit: args.unit,
       quantity: args.quantity,
       notes: args.notes,

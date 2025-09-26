@@ -18,6 +18,18 @@ import { Plus, Minus, PlusCircle } from "lucide-react";
 
 type Category = "raw_material" | "pre_processed" | "finished_good";
 
+// Add subcategories for raw materials
+const RAW_SUBCATEGORIES: Array<{ value: string; label: string }> = [
+  { value: "electronics", label: "Electronics" },
+  { value: "foam", label: "Foam" },
+  { value: "mdf", label: "MDF" },
+  { value: "fasteners", label: "Fasteners" },
+  { value: "stationery", label: "Stationery" },
+  { value: "tubes", label: "Tubes" },
+  { value: "printable", label: "Printable" },
+  { value: "corrugated_sheets", label: "Corrugated Sheets" },
+];
+
 const CATEGORY_LABELS: Record<Category, string> = {
   raw_material: "Raw Material",
   pre_processed: "Pre-Processed",
@@ -44,6 +56,7 @@ export default function Inventory() {
   const [createForm, setCreateForm] = useState({
     name: "",
     category: "raw_material" as Category,
+    subCategory: "none",
     unit: "",
     quantity: 0,
     notes: "",
@@ -70,13 +83,16 @@ export default function Inventory() {
       await createItem({
         name: createForm.name,
         category: createForm.category,
+        ...(createForm.category === "raw_material" && createForm.subCategory !== "none"
+          ? { subCategory: createForm.subCategory as any }
+          : {}),
         unit: createForm.unit || undefined,
         quantity: createForm.quantity,
         notes: createForm.notes || undefined,
       } as any);
       toast("Item created");
       setIsCreateOpen(false);
-      setCreateForm({ name: "", category: "raw_material", unit: "", quantity: 0, notes: "" });
+      setCreateForm({ name: "", category: "raw_material", subCategory: "none", unit: "", quantity: 0, notes: "" });
     } catch (err) {
       toast("Failed to create item", { description: err instanceof Error ? err.message : "Unknown error" });
     }
@@ -207,6 +223,29 @@ export default function Inventory() {
                   </Select>
                 </div>
 
+                {/* Show subcategory select only when Raw Material is selected */}
+                {createForm.category === "raw_material" && (
+                  <div>
+                    <Label htmlFor="subCategory">Raw Material Subcategory</Label>
+                    <Select
+                      value={createForm.subCategory}
+                      onValueChange={(v: string) => setCreateForm((s) => ({ ...s, subCategory: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select subcategory" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {RAW_SUBCATEGORIES.map((sc) => (
+                          <SelectItem key={sc.value} value={sc.value}>
+                            {sc.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="quantity">Quantity</Label>
@@ -278,9 +317,124 @@ export default function Inventory() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Raw materials grouped by subcategory */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-            <CategoryCard title={`${CATEGORY_LABELS.raw_material} • Total: ${totals.raw}`} items={raw ?? []} />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-medium">
+                  {`${CATEGORY_LABELS.raw_material} • Total: ${totals.raw}`}
+                </CardTitle>
+                <Badge variant="secondary">{raw?.length ?? 0} items</Badge>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Subcategory sections */}
+                {RAW_SUBCATEGORIES.map((sc) => {
+                  const group = (raw ?? []).filter((it) => it.subCategory === sc.value);
+                  return (
+                    <div key={sc.value} className="rounded-md border p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">{sc.label}</div>
+                        <Badge variant="outline">Total: {group.reduce((s, i) => s + i.quantity, 0)}</Badge>
+                      </div>
+                      {group.length === 0 ? (
+                        <div className="text-sm text-muted-foreground">No items yet.</div>
+                      ) : (
+                        <div className="space-y-3">
+                          {group.map((it) => (
+                            <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                              <div>
+                                <div className="font-medium">{it.name}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                </div>
+                                {it.notes ? (
+                                  <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                ) : null}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                  title="Remove stock"
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                  title="Add stock"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {/* Uncategorized bucket */}
+                {(() => {
+                  const uncategorized = (raw ?? []).filter((it) => !it.subCategory);
+                  return (
+                    <div className="rounded-md border p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">Uncategorized</div>
+                        <Badge variant="outline">Total: {uncategorized.reduce((s, i) => s + i.quantity, 0)}</Badge>
+                      </div>
+                      {uncategorized.length === 0 ? (
+                        <div className="text-sm text-muted-foreground">No items yet.</div>
+                      ) : (
+                        <div className="space-y-3">
+                          {uncategorized.map((it) => (
+                            <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                              <div>
+                                <div className="font-medium">{it.name}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                </div>
+                                {it.notes ? (
+                                  <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                ) : null}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                  title="Remove stock"
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                  title="Add stock"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
           </motion.div>
+
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <CategoryCard title={`${CATEGORY_LABELS.pre_processed} • Total: ${totals.pre}`} items={pre ?? []} />
           </motion.div>
