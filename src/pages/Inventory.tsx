@@ -54,7 +54,7 @@ export default function Inventory() {
 
   const raw = useQuery(api.inventory.listByCategory, { category: "raw_material" });
   const pre = useQuery(api.inventory.listByCategory, { category: "pre_processed" });
-  const fin = useQuery(api.inventory.listByCategory, { category: "finished_good" });
+  const kits = useQuery(api.kits.list, {});
 
   const createItem = useMutation(api.inventory.create);
   const adjustStock = useMutation(api.inventory.adjustStock);
@@ -112,9 +112,9 @@ export default function Inventory() {
     return {
       raw: raw?.reduce((s, i) => s + i.quantity, 0) ?? 0,
       pre: pre?.reduce((s, i) => s + i.quantity, 0) ?? 0,
-      fin: fin?.reduce((s, i) => s + i.quantity, 0) ?? 0,
+      fin: kits?.reduce((s: number, k: any) => s + (k?.stockCount ?? 0), 0) ?? 0,
     };
-  }, [raw, pre, fin]);
+  }, [raw, pre, kits]);
 
   if (isLoading || !isAuthenticated) return null;
 
@@ -919,92 +919,45 @@ export default function Inventory() {
                     {`${CATEGORY_LABELS.finished_good} • Total: ${totals.fin}`}
                   </span>
                 </div>
-                <Badge variant="secondary">{fin?.length ?? 0} items</Badge>
+                <Badge variant="secondary">{kits?.length ?? 0} items</Badge>
               </button>
 
               {finSectionOpen ? (
                 <>
-                  {/* Inline Add New (Finished) */}
+                  {/* Finished goods are Kits -> provide manage CTA instead of inline inventory form */}
                   <CardContent className="pt-4">
-                    <form onSubmit={handleQuickAddFin} className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <Input
-                        placeholder="Name"
-                        value={finQuick.name}
-                        onChange={(e) => setFinQuick((s) => ({ ...s, name: e.target.value }))}
-                        required
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Qty"
-                        value={finQuick.quantity}
-                        onChange={(e) =>
-                          setFinQuick((s) => ({ ...s, quantity: Number.isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value) }))
-                        }
-                        required
-                      />
-                      <Input
-                        placeholder="Unit (optional)"
-                        value={finQuick.unit}
-                        onChange={(e) => setFinQuick((s) => ({ ...s, unit: e.target.value }))}
-                      />
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Notes (optional)"
-                          value={finQuick.notes}
-                          onChange={(e) => setFinQuick((s) => ({ ...s, notes: e.target.value }))}
-                          className="md:hidden"
-                        />
-                        <Button type="submit" className="w-full md:w-auto">
-                          Add
-                        </Button>
-                      </div>
-                      <Input
-                        placeholder="Notes (optional)"
-                        value={finQuick.notes}
-                        onChange={(e) => setFinQuick((s) => ({ ...s, notes: e.target.value }))}
-                        className="hidden md:block md:col-span-3"
-                      />
-                    </form>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <p className="text-sm text-muted-foreground">
+                        Finished Goods are managed as Kits. Edit stock and materials in the Kits section.
+                      </p>
+                      <Button onClick={() => navigate("/kits")}>Manage Kits</Button>
+                    </div>
                   </CardContent>
 
-                  {/* Existing Finished list */}
+                  {/* Kits list */}
                   <CardContent className="space-y-3">
-                    {(fin ?? []).map((it) => (
-                      <div key={it._id} className="rounded-md border p-3">
+                    {(kits ?? []).map((k: any) => (
+                      <div key={k._id} className="rounded-md border p-3">
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="font-medium">{it.name}</div>
+                            <div className="font-medium">{k.name}</div>
                             <div className="text-xs text-muted-foreground">
-                              Qty: {it.quantity} {it.unit ? it.unit : ""}
+                              Type: {k.type} • Stock: {k.stockCount}
                             </div>
-                            {it.notes ? <div className="text-xs text-muted-foreground mt-1">{it.notes}</div> : null}
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
-                              title="Remove stock"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
-                              title="Add stock"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
-                              Delete
+                            <Button size="sm" variant="outline" onClick={() => navigate("/kits")}>
+                              Open in Kits
                             </Button>
                           </div>
                         </div>
                       </div>
                     ))}
-                    {(fin ?? []).length === 0 ? (
-                      <div className="text-sm text-muted-foreground">No items yet.</div>
+                    {(kits ?? []).length === 0 ? (
+                      <div className="flex items-center justify-between rounded-md border p-3">
+                        <div className="text-sm text-muted-foreground">No kits yet.</div>
+                        <Button size="sm" onClick={() => navigate("/kits")}>Create Kit</Button>
+                      </div>
                     ) : null}
                   </CardContent>
                 </>
