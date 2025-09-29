@@ -135,6 +135,7 @@ export const setDispatchDateForClientMonth = mutation({
     month: v.string(), // format: "YYYY-MM"
     dispatchedAt: v.number(), // epoch ms
     markDispatched: v.optional(v.boolean()),
+    grade: v.optional(v.union(v.number(), v.literal("unspecified"))),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -145,19 +146,69 @@ export const setDispatchDateForClientMonth = mutation({
       .withIndex("by_client", (q) => q.eq("clientId", args.clientId))
       .collect();
 
-    // Update assignments that match the given month key
     let updatedCount = 0;
     for (const a of rows) {
       const d = new Date(a.assignedAt);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      if (key === args.month) {
-        await ctx.db.patch(a._id, {
-          dispatchedAt: args.dispatchedAt,
-          ...(args.markDispatched ? { status: "dispatched" as const } : {}),
-          updatedAt: Date.now(),
-        });
-        updatedCount++;
+      if (key !== args.month) continue;
+
+      // Apply grade filter if provided
+      if (args.grade !== undefined) {
+        if (args.grade === "unspecified") {
+          if (typeof a.grade !== "undefined") continue;
+        } else {
+          if (a.grade !== args.grade) continue;
+        }
       }
+
+      await ctx.db.patch(a._id, {
+        dispatchedAt: args.dispatchedAt,
+        ...(args.markDispatched ? { status: "dispatched" as const } : {}),
+        updatedAt: Date.now(),
+      });
+      updatedCount++;
+    }
+    return { updatedCount };
+  },
+});
+
+export const clearDispatchDateForClientMonth = mutation({
+  args: {
+    clientId: v.id("clients"),
+    month: v.string(), // "YYYY-MM"
+    grade: v.optional(v.union(v.number(), v.literal("unspecified"))),
+    markAssigned: v.optional(v.boolean()), // optionally revert status to "assigned"
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Unauthorized");
+
+    const rows = await ctx.db
+      .query("assignments")
+      .withIndex("by_client", (q) => q.eq("clientId", args.clientId))
+      .collect();
+
+    let updatedCount = 0;
+    for (const a of rows) {
+      const d = new Date(a.assignedAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (key !== args.month) continue;
+
+      // Apply grade filter if provided
+      if (args.grade !== undefined) {
+        if (args.grade === "unspecified") {
+          if (typeof a.grade !== "undefined") continue;
+        } else {
+          if (a.grade !== args.grade) continue;
+        }
+      }
+
+      await ctx.db.patch(a._id, {
+        dispatchedAt: undefined,
+        ...(args.markAssigned ? { status: "assigned" as const } : {}),
+        updatedAt: Date.now(),
+      });
+      updatedCount++;
     }
     return { updatedCount };
   },

@@ -27,6 +27,7 @@ export default function Clients() {
   const updateClient = useMutation(api.clients.update);
   const deleteClient = useMutation(api.clients.remove);
   const setDispatchDateForClientMonth = useMutation(api.assignments.setDispatchDateForClientMonth);
+  const clearDispatchDateForClientMonth = useMutation(api.assignments.clearDispatchDateForClientMonth);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
@@ -43,6 +44,7 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [dispatchDate, setDispatchDate] = useState<string>("");
+  const [selectedGrade, setSelectedGrade] = useState<string>("all");
 
   // Load assignments for selected client only when the dialog is open and a client is selected (skip otherwise)
   const clientAssignments = useQuery(
@@ -349,33 +351,107 @@ export default function Clients() {
 
                 const monthAssignments = selectedMonth ? byMonth[selectedMonth] ?? [] : [];
 
+                // Add: compute filtered-by-grade count for confirmation
+                const computeAffectedCount = (gradeKey: string) => {
+                  if (!selectedMonth) return 0;
+                  if (gradeKey === "all") return monthAssignments.length;
+                  if (gradeKey === "unspecified") {
+                    return monthAssignments.filter((a) => typeof a.grade === "undefined").length;
+                  }
+                  const gnum = parseInt(gradeKey, 10);
+                  return monthAssignments.filter((a) => a.grade === gnum).length;
+                };
+
                 const handleApplyDispatchDate = async () => {
                   if (!selectedClient || !selectedMonth || !dispatchDate) {
                     toast("Please choose month and date");
                     return;
                   }
+                  const ts = new Date(dispatchDate).getTime();
+                  if (Number.isNaN(ts)) {
+                    toast("Invalid date");
+                    return;
+                  }
+                  // Confirmation with affected count
+                  const affected = computeAffectedCount(selectedGrade);
+                  if (affected === 0) {
+                    toast("No assignments match the selected grade and month");
+                    return;
+                  }
+                  if (!confirm(`This will set a dispatch date for ${affected} assignment(s). Continue?`)) {
+                    return;
+                  }
+
                   try {
-                    const ts = new Date(dispatchDate).getTime();
-                    if (Number.isNaN(ts)) {
-                      toast("Invalid date");
-                      return;
-                    }
-                    const res = await setDispatchDateForClientMonth({
+                    const gradeArg =
+                      selectedGrade === "all"
+                        ? undefined
+                        : selectedGrade === "unspecified"
+                        ? ("unspecified" as const)
+                        : parseInt(selectedGrade, 10);
+
+                    await setDispatchDateForClientMonth({
                       clientId: selectedClient._id,
                       month: selectedMonth,
                       dispatchedAt: ts,
                       markDispatched: true,
+                      ...(gradeArg !== undefined ? { grade: gradeArg as any } : {}),
                     } as any);
-                    toast(`Dispatch date set for ${selectedMonth}`);
+                    toast(
+                      `Dispatch date set for ${new Date(`${selectedMonth}-01`).toLocaleDateString(undefined, {
+                        month: "long",
+                        year: "numeric",
+                      })}${selectedGrade !== "all" ? ` • Grade ${selectedGrade}` : ""}`
+                    );
                   } catch (err) {
                     toast("Failed to set dispatch date", { description: err instanceof Error ? err.message : "Unknown error" });
                   }
                 };
 
+                // Add: clear dispatch date handler with confirmation
+                const handleClearDispatchDate = async () => {
+                  if (!selectedClient || !selectedMonth) {
+                    toast("Please choose a month");
+                    return;
+                  }
+                  const affected = computeAffectedCount(selectedGrade);
+                  if (affected === 0) {
+                    toast("No assignments match the selected grade and month");
+                    return;
+                  }
+                  if (!confirm(`This will clear the dispatch date for ${affected} assignment(s). Continue?`)) {
+                    return;
+                  }
+                  try {
+                    const gradeArg =
+                      selectedGrade === "all"
+                        ? undefined
+                        : selectedGrade === "unspecified"
+                        ? ("unspecified" as const)
+                        : parseInt(selectedGrade, 10);
+
+                    await clearDispatchDateForClientMonth({
+                      clientId: selectedClient._id,
+                      month: selectedMonth,
+                      ...(gradeArg !== undefined ? { grade: gradeArg as any } : {}),
+                      // markAssigned can be added later if needed
+                    } as any);
+                    toast(
+                      `Dispatch date cleared for ${new Date(`${selectedMonth}-01`).toLocaleDateString(undefined, {
+                        month: "long",
+                        year: "numeric",
+                      })}${selectedGrade !== "all" ? ` • Grade ${selectedGrade}` : ""}`
+                    );
+                  } catch (err) {
+                    toast("Failed to clear dispatch date", { description: err instanceof Error ? err.message : "Unknown error" });
+                  }
+                };
+
                 return (
                   <>
-                    {/* Month dropdown */}
-                    <div className="flex items-center gap-3">
+                    {/* Controls row */}
+                    <div className="flex flex-col md:flex-row items-stretch md:items-end gap-3">
+                      {/* Month dropdown */}
                       <div className="flex-1">
                         <Label className="text-xs">Month</Label>
                         <Select
@@ -398,6 +474,26 @@ export default function Clients() {
                         </Select>
                       </div>
 
+                      {/* Grade dropdown */}
+                      <div className="flex-1">
+                        <Label className="text-xs">Grade</Label>
+                        <Select value={selectedGrade} onValueChange={(v: string) => setSelectedGrade(v)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="All grades" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Grades</SelectItem>
+                            {/* Ensure non-empty values for SelectItem */}
+                            {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map((g) => (
+                              <SelectItem key={g} value={g}>
+                                Grade {g}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="unspecified">Unspecified</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       {/* Dispatch date picker */}
                       <div className="flex-1">
                         <Label htmlFor="dispatchDate" className="text-xs">Dispatch date</Label>
@@ -409,8 +505,9 @@ export default function Clients() {
                         />
                       </div>
 
-                      <div className="pt-5">
-                        <Button onClick={handleApplyDispatchDate}>Set Dispatch Date</Button>
+                      <div className="flex gap-2 md:pt-5">
+                        <Button onClick={handleApplyDispatchDate}>Set</Button>
+                        <Button variant="outline" onClick={handleClearDispatchDate}>Clear</Button>
                       </div>
                     </div>
 
