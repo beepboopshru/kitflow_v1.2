@@ -55,6 +55,8 @@ export default function Inventory() {
   const raw = useQuery(api.inventory.listByCategory, { category: "raw_material" });
   const pre = useQuery(api.inventory.listByCategory, { category: "pre_processed" });
   const kits = useQuery(api.kits.list, {});
+  // Load all assignments to compute pending per kit
+  const assignments = useQuery(api.assignments.list, {});
 
   const createItem = useMutation(api.inventory.create);
   const adjustStock = useMutation(api.inventory.adjustStock);
@@ -115,6 +117,19 @@ export default function Inventory() {
       fin: kits?.reduce((s: number, k: any) => s + (k?.stockCount ?? 0), 0) ?? 0,
     };
   }, [raw, pre, kits]);
+
+  // Compute pending (not yet dispatched) assigned quantity per kit
+  const pendingByKit = useMemo(() => {
+    const map: Record<string, number> = {};
+    (assignments ?? []).forEach((a: any) => {
+      // Treat anything not explicitly dispatched as pending
+      const isPending = a.status !== "dispatched" && typeof a.dispatchedAt !== "number";
+      if (!isPending) return;
+      const key = String(a.kitId);
+      map[key] = (map[key] ?? 0) + (a.quantity ?? 0);
+    });
+    return map;
+  }, [assignments]);
 
   if (isLoading || !isAuthenticated) return null;
 
@@ -936,23 +951,30 @@ export default function Inventory() {
 
                   {/* Kits list */}
                   <CardContent className="space-y-3">
-                    {(kits ?? []).map((k: any) => (
-                      <div key={k._id} className="rounded-md border p-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium">{k.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              Type: {k.type} • Stock: {k.stockCount}
+                    {(kits ?? []).map((k: any) => {
+                      const pending = pendingByKit[String(k._id)] ?? 0;
+                      const leftover = (k?.stockCount ?? 0) - pending;
+                      return (
+                        <div key={k._id} className="rounded-md border p-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium">{k.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                Type: {k.type} • In Stock: {k.stockCount}
+                              </div>
+                              <div className="text-xs mt-1">
+                                Assigned (pending): {pending} • Leftover after fulfill: {leftover}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button size="sm" variant="outline" onClick={() => navigate("/kits")}>
+                                Open in Kits
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline" onClick={() => navigate("/kits")}>
-                              Open in Kits
-                            </Button>
-                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {(kits ?? []).length === 0 ? (
                       <div className="flex items-center justify-between rounded-md border p-3">
                         <div className="text-sm text-muted-foreground">No kits yet.</div>
