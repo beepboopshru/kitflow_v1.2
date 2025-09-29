@@ -314,7 +314,7 @@ export default function Clients() {
             setDispatchDate("");
           }
         }}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {selectedClient ? `Monthwise for ${selectedClient.name}` : "Monthwise"}
@@ -513,7 +513,7 @@ export default function Clients() {
 
                     {/* Selected month's grade-wise content */}
                     {selectedMonth ? (
-                      <div className="rounded-lg border p-4">
+                      <div className="rounded-lg border p-4 w-full">
                         <div className="flex items-center justify-between mb-3">
                           <div className="font-medium">
                             {new Date(`${selectedMonth}-01`).toLocaleDateString(undefined, {
@@ -593,11 +593,13 @@ export default function Clients() {
                                           if (!hasAny) {
                                             // None set
                                             return (
-                                              <div key={i} className="px-3 py-2 flex items-center justify-between">
+                                              <div key={i} className="px-3 py-2 flex items-center justify-between gap-3">
                                                 <div className="text-sm">
                                                   {r.kitName} • Qty {r.totalQty}
                                                 </div>
-                                                <Badge variant="secondary">Not set</Badge>
+                                                <div className="shrink-0">
+                                                  <Badge variant="secondary">Not set</Badge>
+                                                </div>
                                               </div>
                                             );
                                           }
@@ -607,23 +609,27 @@ export default function Clients() {
                                           const allEqual = nums.every((v) => v === nums[0]);
                                           if (allEqual) {
                                             return (
-                                              <div key={i} className="px-3 py-2 flex items-center justify-between">
+                                              <div key={i} className="px-3 py-2 flex items-center justify-between gap-3">
                                                 <div className="text-sm">
                                                   {r.kitName} • Qty {r.totalQty}
                                                 </div>
-                                                <Badge variant="default">
-                                                  Dispatched: {new Date(nums[0]).toLocaleDateString()}
-                                                </Badge>
+                                                <div className="shrink-0">
+                                                  <Badge variant="default">
+                                                    Dispatched: {new Date(nums[0]).toLocaleDateString()}
+                                                  </Badge>
+                                                </div>
                                               </div>
                                             );
                                           }
                                           // Mixed dates
                                           return (
-                                            <div key={i} className="px-3 py-2 flex items-center justify-between">
+                                            <div key={i} className="px-3 py-2 flex items-center justify-between gap-3">
                                               <div className="text-sm">
                                                 {r.kitName} • Qty {r.totalQty}
                                               </div>
-                                              <Badge variant="outline">Dispatched: Mixed</Badge>
+                                              <div className="shrink-0">
+                                                <Badge variant="outline">Dispatched: Mixed</Badge>
+                                              </div>
                                             </div>
                                           );
                                         })}
