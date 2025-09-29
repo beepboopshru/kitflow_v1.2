@@ -213,3 +213,45 @@ export const clearDispatchDateForClientMonth = mutation({
     return { updatedCount };
   },
 });
+
+export const clearPendingByKit = mutation({
+  args: {
+    kitId: v.id("kits"),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Unauthorized");
+
+    // Fetch all assignments for this kit
+    const rows = await ctx.db
+      .query("assignments")
+      .withIndex("by_kit", (q) => q.eq("kitId", args.kitId))
+      .collect();
+
+    // Identify pending ones (anything not dispatched)
+    const pending = rows.filter((a) => a.status !== "dispatched" && typeof a.dispatchedAt !== "number");
+    if (pending.length === 0) {
+      return { deletedCount: 0, restoredQty: 0 };
+    }
+
+    // Sum quantity to restore and delete assignments
+    let restoredQty = 0;
+    for (const a of pending) {
+      restoredQty += a.quantity ?? 0;
+      await ctx.db.delete(a._id);
+    }
+
+    // Restore kit stock and status
+    const kit = await ctx.db.get(args.kitId);
+    if (!kit) throw new Error("Kit not found");
+    const newStock = (kit.stockCount ?? 0) + restoredQty;
+
+    await ctx.db.patch(args.kitId, {
+      stockCount: newStock,
+      status: newStock === 0 ? ("assigned" as const) : ("in_stock" as const),
+      // updatedAt for kit is not tracked in schema; skip
+    });
+
+    return { deletedCount: pending.length, restoredQty };
+  },
+});

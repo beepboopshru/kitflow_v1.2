@@ -30,6 +30,9 @@ export default function Kits() {
   const preProcessed = useQuery(api.inventory.listByCategory, { category: "pre_processed" });
   const finishedGoods = useQuery(api.inventory.listByCategory, { category: "finished_good" });
 
+  // Load assignments to compute pending per kit
+  const assignments = useQuery(api.assignments.list);
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingKit, setEditingKit] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -46,6 +49,9 @@ export default function Kits() {
   const [kitFilter, setKitFilter] = useState<string>("all");
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
   const [newMaterial, setNewMaterial] = useState<string>("");
+
+  // Add: mutation to clear pending assignments for a kit
+  const clearPendingByKit = useMutation(api.assignments.clearPendingByKit);
 
   // Filter kits in-memory based on dropdowns
   const filteredKits = (kits ?? []).filter((k) => {
@@ -137,6 +143,37 @@ export default function Kits() {
       setNewMaterial("");
     } catch (err) {
       toast("Failed to add material", { description: err instanceof Error ? err.message : "Unknown error" });
+    }
+  };
+
+  // Add: compute pending counts per kit
+  const getPendingForKit = (kitId: string) => {
+    const list = (assignments ?? []).filter(
+      (a: any) => String(a.kitId) === String(kitId) && a.status !== "dispatched" && typeof a.dispatchedAt !== "number"
+    );
+    const totalQty = list.reduce((s: number, a: any) => s + (a.quantity ?? 0), 0);
+    return { count: list.length, qty: totalQty };
+  };
+
+  // Add: handler to clear assignments with double confirmation
+  const handleClearAssignments = async (kit: any) => {
+    const { count, qty } = getPendingForKit(kit._id);
+    if (count === 0) {
+      toast("No pending assignments to clear for this kit");
+      return;
+    }
+    const first = confirm(
+      `This will delete ${count} pending assignment(s) for "${kit.name}" and restore ${qty} unit(s) to stock. Continue?`
+    );
+    if (!first) return;
+    const second = confirm("Are you absolutely sure? This cannot be undone.");
+    if (!second) return;
+
+    try {
+      const res = await clearPendingByKit({ kitId: kit._id } as any);
+      toast(`Cleared ${res?.deletedCount ?? count} assignment(s); restored ${res?.restoredQty ?? qty} unit(s).`);
+    } catch (err) {
+      toast("Failed to clear assignments", { description: err instanceof Error ? err.message : "Unknown error" });
     }
   };
 
@@ -470,6 +507,30 @@ export default function Kits() {
                           Add
                         </Button>
                       </div>
+
+                      {/* Add: pending and clear assignments control */}
+                      {(() => {
+                        const pending = getPendingForKit(kit._id);
+                        return (
+                          <div className="mt-4 flex items-center justify-between">
+                            <div className="text-xs text-muted-foreground">
+                              Pending assignments: {pending.count} • Qty pending: {pending.qty}
+                            </div>
+                            {pending.count > 0 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleClearAssignments(kit);
+                                }}
+                              >
+                                Clear Assignments
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </CardContent>
