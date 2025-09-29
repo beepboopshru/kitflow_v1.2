@@ -70,6 +70,33 @@ export default function Inventory() {
     notes: "",
   });
 
+  // Add: overall section collapse state
+  const [rawSectionOpen, setRawSectionOpen] = useState<boolean>(true);
+  const [preSectionOpen, setPreSectionOpen] = useState<boolean>(true);
+  const [finSectionOpen, setFinSectionOpen] = useState<boolean>(true);
+
+  // Add: quick add inline forms per section
+  const [rawQuick, setRawQuick] = useState<{ name: string; subCategory: string; quantity: number; unit: string; notes: string }>({
+    name: "",
+    subCategory: "none",
+    quantity: 0,
+    unit: "",
+    notes: "",
+  });
+  const [preQuick, setPreQuick] = useState<{ name: string; subCategory: string; quantity: number; unit: string; notes: string }>({
+    name: "",
+    subCategory: "none",
+    quantity: 0,
+    unit: "",
+    notes: "",
+  });
+  const [finQuick, setFinQuick] = useState<{ name: string; quantity: number; unit: string; notes: string }>({
+    name: "",
+    quantity: 0,
+    unit: "",
+    notes: "",
+  });
+
   const [adjustDialog, setAdjustDialog] = useState<{ open: boolean; id?: string; name?: string; delta: number }>({
     open: false,
     delta: 0,
@@ -112,6 +139,63 @@ export default function Inventory() {
       setCreateForm({ name: "", category: "raw_material", subCategory: "none", unit: "", quantity: 0, notes: "" });
     } catch (err) {
       toast("Failed to create item", { description: err instanceof Error ? err.message : "Unknown error" });
+    }
+  };
+
+  // Add: quick add handlers
+  const handleQuickAddRaw = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rawQuick.name.trim()) return;
+    try {
+      await createItem({
+        name: rawQuick.name.trim(),
+        category: "raw_material",
+        ...(rawQuick.subCategory !== "none" ? { subCategory: rawQuick.subCategory as any } : {}),
+        unit: rawQuick.unit || undefined,
+        quantity: Number.isFinite(rawQuick.quantity) ? rawQuick.quantity : 0,
+        notes: rawQuick.notes || undefined,
+      } as any);
+      toast("Raw material added");
+      setRawQuick({ name: "", subCategory: "none", quantity: 0, unit: "", notes: "" });
+    } catch (err) {
+      toast("Failed to add raw material", { description: err instanceof Error ? err.message : "Unknown error" });
+    }
+  };
+
+  const handleQuickAddPre = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!preQuick.name.trim()) return;
+    try {
+      await createItem({
+        name: preQuick.name.trim(),
+        category: "pre_processed",
+        ...(preQuick.subCategory !== "none" ? { subCategory: preQuick.subCategory as any } : {}),
+        unit: preQuick.unit || undefined,
+        quantity: Number.isFinite(preQuick.quantity) ? preQuick.quantity : 0,
+        notes: preQuick.notes || undefined,
+      } as any);
+      toast("Pre-processed item added");
+      setPreQuick({ name: "", subCategory: "none", quantity: 0, unit: "", notes: "" });
+    } catch (err) {
+      toast("Failed to add pre-processed item", { description: err instanceof Error ? err.message : "Unknown error" });
+    }
+  };
+
+  const handleQuickAddFin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!finQuick.name.trim()) return;
+    try {
+      await createItem({
+        name: finQuick.name.trim(),
+        category: "finished_good",
+        unit: finQuick.unit || undefined,
+        quantity: Number.isFinite(finQuick.quantity) ? finQuick.quantity : 0,
+        notes: finQuick.notes || undefined,
+      } as any);
+      toast("Finished good added");
+      setFinQuick({ name: "", quantity: 0, unit: "", notes: "" });
+    } catch (err) {
+      toast("Failed to add finished good", { description: err instanceof Error ? err.message : "Unknown error" });
     }
   };
 
@@ -356,311 +440,576 @@ export default function Inventory() {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Raw materials grouped by subcategory */}
+        {/* Stacked sections with collapsible headers and inline add forms */}
+        <div className="space-y-6">
+          {/* Raw Materials Section */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-medium">
-                  {`${CATEGORY_LABELS.raw_material} • Total: ${totals.raw}`}
-                </CardTitle>
+              <button
+                type="button"
+                className="w-full flex items-center justify-between px-6 py-4 border-b"
+                onClick={() => setRawSectionOpen((o) => !o)}
+                aria-expanded={rawSectionOpen}
+              >
+                <div className="flex items-center gap-2">
+                  {rawSectionOpen ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="text-base font-medium">
+                    {`${CATEGORY_LABELS.raw_material} • Total: ${totals.raw}`}
+                  </span>
+                </div>
                 <Badge variant="secondary">{raw?.length ?? 0} items</Badge>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Subcategory sections */}
-                {RAW_SUBCATEGORIES.map((sc) => {
-                  const group = (raw ?? []).filter((it) => it.subCategory === sc.value);
-                  const open = rawOpen[sc.value] ?? false;
-                  return (
-                    <div key={sc.value} className="rounded-md border">
-                      <button
-                        type="button"
-                        className="w-full flex items-center justify-between px-3 py-2"
-                        onClick={() =>
-                          setRawOpen((s) => ({ ...s, [sc.value]: !open }))
+              </button>
+
+              {rawSectionOpen ? (
+                <>
+                  {/* Inline Add New (Raw) */}
+                  <CardContent className="pt-4">
+                    <form onSubmit={handleQuickAddRaw} className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                      <Input
+                        placeholder="Name"
+                        value={rawQuick.name}
+                        onChange={(e) => setRawQuick((s) => ({ ...s, name: e.target.value }))}
+                        required
+                      />
+                      <Select
+                        value={rawQuick.subCategory}
+                        onValueChange={(v: string) => setRawQuick((s) => ({ ...s, subCategory: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Subcategory" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {RAW_SUBCATEGORIES.map((sc) => (
+                            <SelectItem key={sc.value} value={sc.value}>
+                              {sc.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        placeholder="Qty"
+                        value={rawQuick.quantity}
+                        onChange={(e) =>
+                          setRawQuick((s) => ({ ...s, quantity: Number.isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value) }))
                         }
-                        aria-expanded={open}
-                      >
-                        <div className="flex items-center gap-2">
+                        required
+                      />
+                      <Input
+                        placeholder="Unit (optional)"
+                        value={rawQuick.unit}
+                        onChange={(e) => setRawQuick((s) => ({ ...s, unit: e.target.value }))}
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Notes (optional)"
+                          value={rawQuick.notes}
+                          onChange={(e) => setRawQuick((s) => ({ ...s, notes: e.target.value }))}
+                          className="md:hidden"
+                        />
+                        <Button type="submit" className="w-full md:w-auto">
+                          Add
+                        </Button>
+                      </div>
+                      <Input
+                        placeholder="Notes (optional)"
+                        value={rawQuick.notes}
+                        onChange={(e) => setRawQuick((s) => ({ ...s, notes: e.target.value }))}
+                        className="hidden md:block md:col-span-4"
+                      />
+                    </form>
+                  </CardContent>
+
+                  {/* Existing Raw grouped by subcategory and Uncategorized */}
+                  <CardContent className="space-y-4">
+                    {/* Subcategory sections */}
+                    {RAW_SUBCATEGORIES.map((sc) => {
+                      const group = (raw ?? []).filter((it) => it.subCategory === sc.value);
+                      const open = rawOpen[sc.value] ?? false;
+                      return (
+                        <div key={sc.value} className="rounded-md border">
+                          <button
+                            type="button"
+                            className="w-full flex items-center justify-between px-3 py-2"
+                            onClick={() =>
+                              setRawOpen((s) => ({ ...s, [sc.value]: !open }))
+                            }
+                            aria-expanded={open}
+                          >
+                            <div className="flex items-center gap-2">
+                              {open ? (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <span className="font-medium">{sc.label}</span>
+                            </div>
+                            <Badge variant="outline">
+                              Total: {group.reduce((s, i) => s + i.quantity, 0)}
+                            </Badge>
+                          </button>
+
                           {open ? (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span className="font-medium">{sc.label}</span>
-                        </div>
-                        <Badge variant="outline">
-                          Total: {group.reduce((s, i) => s + i.quantity, 0)}
-                        </Badge>
-                      </button>
-
-                      {open ? (
-                        group.length === 0 ? (
-                          <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
-                        ) : (
-                          <div className="px-3 pb-3 space-y-3">
-                            {group.map((it) => (
-                              <div key={it._id} className="flex items-center justify-between rounded border p-3">
-                                <div>
-                                  <div className="font-medium">{it.name}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Qty: {it.quantity} {it.unit ? it.unit : ""}
+                            group.length === 0 ? (
+                              <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
+                            ) : (
+                              <div className="px-3 pb-3 space-y-3">
+                                {group.map((it) => (
+                                  <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                                    <div>
+                                      <div className="font-medium">{it.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                      </div>
+                                      {it.notes ? (
+                                        <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                      ) : null}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                        title="Remove stock"
+                                      >
+                                        <Minus className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                        title="Add stock"
+                                      >
+                                        <Plus className="h-4 w-4" />
+                                      </Button>
+                                      <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                        Delete
+                                      </Button>
+                                    </div>
                                   </div>
-                                  {it.notes ? (
-                                    <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
-                                  ) : null}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
-                                    title="Remove stock"
-                                  >
-                                    <Minus className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
-                                    title="Add stock"
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                  <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
-                                    Delete
-                                  </Button>
-                                </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        )
-                      ) : null}
-                    </div>
-                  );
-                })}
-                {/* Uncategorized bucket */}
-                {(() => {
-                  const uncategorized = (raw ?? []).filter((it) => !it.subCategory);
-                  return (
-                    <div className="rounded-md border">
-                      <button
-                        type="button"
-                        className="w-full flex items-center justify-between px-3 py-2"
-                        onClick={() => setRawUncatOpen((o) => !o)}
-                        aria-expanded={rawUncatOpen}
-                      >
-                        <div className="flex items-center gap-2">
+                            )
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                    {/* Uncategorized bucket */}
+                    {(() => {
+                      const uncategorized = (raw ?? []).filter((it) => !it.subCategory);
+                      return (
+                        <div className="rounded-md border">
+                          <button
+                            type="button"
+                            className="w-full flex items-center justify-between px-3 py-2"
+                            onClick={() => setRawUncatOpen((o) => !o)}
+                            aria-expanded={rawUncatOpen}
+                          >
+                            <div className="flex items-center gap-2">
+                              {rawUncatOpen ? (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <span className="font-medium">Uncategorized</span>
+                            </div>
+                            <Badge variant="outline">Total: {uncategorized.reduce((s, i) => s + i.quantity, 0)}</Badge>
+                          </button>
+
                           {rawUncatOpen ? (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span className="font-medium">Uncategorized</span>
-                        </div>
-                        <Badge variant="outline">Total: {uncategorized.reduce((s, i) => s + i.quantity, 0)}</Badge>
-                      </button>
-
-                      {rawUncatOpen ? (
-                        uncategorized.length === 0 ? (
-                          <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
-                        ) : (
-                          <div className="px-3 pb-3 space-y-3">
-                            {uncategorized.map((it) => (
-                              <div key={it._id} className="flex items-center justify-between rounded border p-3">
-                                <div>
-                                  <div className="font-medium">{it.name}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Qty: {it.quantity} {it.unit ? it.unit : ""}
+                            uncategorized.length === 0 ? (
+                              <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
+                            ) : (
+                              <div className="px-3 pb-3 space-y-3">
+                                {uncategorized.map((it) => (
+                                  <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                                    <div>
+                                      <div className="font-medium">{it.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                      </div>
+                                      {it.notes ? (
+                                        <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                      ) : null}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                        title="Remove stock"
+                                      >
+                                        <Minus className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                        title="Add stock"
+                                      >
+                                        <Plus className="h-4 w-4" />
+                                      </Button>
+                                      <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                        Delete
+                                      </Button>
+                                    </div>
                                   </div>
-                                  {it.notes ? (
-                                    <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
-                                  ) : null}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
-                                    title="Remove stock"
-                                  >
-                                    <Minus className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
-                                    title="Add stock"
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                  <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
-                                    Delete
-                                  </Button>
-                                </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        )
-                      ) : null}
-                    </div>
-                  );
-                })()}
-              </CardContent>
+                            )
+                          ) : null}
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </>
+              ) : null}
             </Card>
           </motion.div>
 
+          {/* Pre-Processed Section */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-medium">
-                  {`${CATEGORY_LABELS.pre_processed} • Total: ${totals.pre}`}
-                </CardTitle>
+              <button
+                type="button"
+                className="w-full flex items-center justify-between px-6 py-4 border-b"
+                onClick={() => setPreSectionOpen((o) => !o)}
+                aria-expanded={preSectionOpen}
+              >
+                <div className="flex items-center gap-2">
+                  {preSectionOpen ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="text-base font-medium">
+                    {`${CATEGORY_LABELS.pre_processed} • Total: ${totals.pre}`}
+                  </span>
+                </div>
                 <Badge variant="secondary">{pre?.length ?? 0} items</Badge>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {PRE_SUBCATEGORIES.map((sc) => {
-                  const group = (pre ?? []).filter((it) => it.subCategory === sc.value);
-                  const open = preOpen[sc.value] ?? false;
-                  return (
-                    <div key={sc.value} className="rounded-md border">
-                      <button
-                        type="button"
-                        className="w-full flex items-center justify-between px-3 py-2"
-                        onClick={() =>
-                          setPreOpen((s) => ({ ...s, [sc.value]: !open }))
+              </button>
+
+              {preSectionOpen ? (
+                <>
+                  {/* Inline Add New (Pre) */}
+                  <CardContent className="pt-4">
+                    <form onSubmit={handleQuickAddPre} className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                      <Input
+                        placeholder="Name"
+                        value={preQuick.name}
+                        onChange={(e) => setPreQuick((s) => ({ ...s, name: e.target.value }))}
+                        required
+                      />
+                      <Select
+                        value={preQuick.subCategory}
+                        onValueChange={(v: string) => setPreQuick((s) => ({ ...s, subCategory: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Subcategory" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {PRE_SUBCATEGORIES.map((sc) => (
+                            <SelectItem key={sc.value} value={sc.value}>
+                              {sc.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        placeholder="Qty"
+                        value={preQuick.quantity}
+                        onChange={(e) =>
+                          setPreQuick((s) => ({ ...s, quantity: Number.isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value) }))
                         }
-                        aria-expanded={open}
-                      >
-                        <div className="flex items-center gap-2">
+                        required
+                      />
+                      <Input
+                        placeholder="Unit (optional)"
+                        value={preQuick.unit}
+                        onChange={(e) => setPreQuick((s) => ({ ...s, unit: e.target.value }))}
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Notes (optional)"
+                          value={preQuick.notes}
+                          onChange={(e) => setPreQuick((s) => ({ ...s, notes: e.target.value }))}
+                          className="md:hidden"
+                        />
+                        <Button type="submit" className="w-full md:w-auto">
+                          Add
+                        </Button>
+                      </div>
+                      <Input
+                        placeholder="Notes (optional)"
+                        value={preQuick.notes}
+                        onChange={(e) => setPreQuick((s) => ({ ...s, notes: e.target.value }))}
+                        className="hidden md:block md:col-span-4"
+                      />
+                    </form>
+                  </CardContent>
+
+                  {/* Existing Pre grouped sections */}
+                  <CardContent className="space-y-4">
+                    {PRE_SUBCATEGORIES.map((sc) => {
+                      const group = (pre ?? []).filter((it) => it.subCategory === sc.value);
+                      const open = preOpen[sc.value] ?? false;
+                      return (
+                        <div key={sc.value} className="rounded-md border">
+                          <button
+                            type="button"
+                            className="w-full flex items-center justify-between px-3 py-2"
+                            onClick={() =>
+                              setPreOpen((s) => ({ ...s, [sc.value]: !open }))
+                            }
+                            aria-expanded={open}
+                          >
+                            <div className="flex items-center gap-2">
+                              {open ? (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <span className="font-medium">{sc.label}</span>
+                            </div>
+                            <Badge variant="outline">
+                              Total: {group.reduce((s, i) => s + i.quantity, 0)}
+                            </Badge>
+                          </button>
+
                           {open ? (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span className="font-medium">{sc.label}</span>
-                        </div>
-                        <Badge variant="outline">
-                          Total: {group.reduce((s, i) => s + i.quantity, 0)}
-                        </Badge>
-                      </button>
-
-                      {open ? (
-                        group.length === 0 ? (
-                          <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
-                        ) : (
-                          <div className="px-3 pb-3 space-y-3">
-                            {group.map((it) => (
-                              <div key={it._id} className="flex items-center justify-between rounded border p-3">
-                                <div>
-                                  <div className="font-medium">{it.name}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Qty: {it.quantity} {it.unit ? it.unit : ""}
+                            group.length === 0 ? (
+                              <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
+                            ) : (
+                              <div className="px-3 pb-3 space-y-3">
+                                {group.map((it) => (
+                                  <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                                    <div>
+                                      <div className="font-medium">{it.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                      </div>
+                                      {it.notes ? (
+                                        <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                      ) : null}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                        title="Remove stock"
+                                      >
+                                        <Minus className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                        title="Add stock"
+                                      >
+                                        <Plus className="h-4 w-4" />
+                                      </Button>
+                                      <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                        Delete
+                                      </Button>
+                                    </div>
                                   </div>
-                                  {it.notes ? (
-                                    <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
-                                  ) : null}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
-                                    title="Remove stock"
-                                  >
-                                    <Minus className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
-                                    title="Add stock"
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                  <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
-                                    Delete
-                                  </Button>
-                                </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        )
-                      ) : null}
-                    </div>
-                  );
-                })}
-                {(() => {
-                  const uncategorized = (pre ?? []).filter((it) => !it.subCategory);
-                  return (
-                    <div className="rounded-md border">
-                      <button
-                        type="button"
-                        className="w-full flex items-center justify-between px-3 py-2"
-                        onClick={() => setPreUncatOpen((o) => !o)}
-                        aria-expanded={preUncatOpen}
-                      >
-                        <div className="flex items-center gap-2">
+                            )
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                    {(() => {
+                      const uncategorized = (pre ?? []).filter((it) => !it.subCategory);
+                      return (
+                        <div className="rounded-md border">
+                          <button
+                            type="button"
+                            className="w-full flex items-center justify-between px-3 py-2"
+                            onClick={() => setPreUncatOpen((o) => !o)}
+                            aria-expanded={preUncatOpen}
+                          >
+                            <div className="flex items-center gap-2">
+                              {preUncatOpen ? (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <span className="font-medium">Uncategorized</span>
+                            </div>
+                            <Badge variant="outline">Total: {uncategorized.reduce((s, i) => s + i.quantity, 0)}</Badge>
+                          </button>
+
                           {preUncatOpen ? (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span className="font-medium">Uncategorized</span>
-                        </div>
-                        <Badge variant="outline">Total: {uncategorized.reduce((s, i) => s + i.quantity, 0)}</Badge>
-                      </button>
-
-                      {preUncatOpen ? (
-                        uncategorized.length === 0 ? (
-                          <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
-                        ) : (
-                          <div className="px-3 pb-3 space-y-3">
-                            {uncategorized.map((it) => (
-                              <div key={it._id} className="flex items-center justify-between rounded border p-3">
-                                <div>
-                                  <div className="font-medium">{it.name}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Qty: {it.quantity} {it.unit ? it.unit : ""}
+                            uncategorized.length === 0 ? (
+                              <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
+                            ) : (
+                              <div className="px-3 pb-3 space-y-3">
+                                {uncategorized.map((it) => (
+                                  <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                                    <div>
+                                      <div className="font-medium">{it.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                      </div>
+                                      {it.notes ? (
+                                        <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                      ) : null}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                        title="Remove stock"
+                                      >
+                                        <Minus className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                        title="Add stock"
+                                      >
+                                        <Plus className="h-4 w-4" />
+                                      </Button>
+                                      <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                        Delete
+                                      </Button>
+                                    </div>
                                   </div>
-                                  {it.notes ? (
-                                    <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
-                                  ) : null}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
-                                    title="Remove stock"
-                                  >
-                                    <Minus className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
-                                    title="Add stock"
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                  <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
-                                    Delete
-                                  </Button>
-                                </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        )
-                      ) : null}
-                    </div>
-                  );
-                })()}
-              </CardContent>
+                            )
+                          ) : null}
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </>
+              ) : null}
             </Card>
           </motion.div>
+
+          {/* Finished Goods Section */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <CategoryCard title={`${CATEGORY_LABELS.finished_good} • Total: ${totals.fin}`} items={fin ?? []} />
+            <Card>
+              <button
+                type="button"
+                className="w-full flex items-center justify-between px-6 py-4 border-b"
+                onClick={() => setFinSectionOpen((o) => !o)}
+                aria-expanded={finSectionOpen}
+              >
+                <div className="flex items-center gap-2">
+                  {finSectionOpen ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="text-base font-medium">
+                    {`${CATEGORY_LABELS.finished_good} • Total: ${totals.fin}`}
+                  </span>
+                </div>
+                <Badge variant="secondary">{fin?.length ?? 0} items</Badge>
+              </button>
+
+              {finSectionOpen ? (
+                <>
+                  {/* Inline Add New (Finished) */}
+                  <CardContent className="pt-4">
+                    <form onSubmit={handleQuickAddFin} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <Input
+                        placeholder="Name"
+                        value={finQuick.name}
+                        onChange={(e) => setFinQuick((s) => ({ ...s, name: e.target.value }))}
+                        required
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Qty"
+                        value={finQuick.quantity}
+                        onChange={(e) =>
+                          setFinQuick((s) => ({ ...s, quantity: Number.isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value) }))
+                        }
+                        required
+                      />
+                      <Input
+                        placeholder="Unit (optional)"
+                        value={finQuick.unit}
+                        onChange={(e) => setFinQuick((s) => ({ ...s, unit: e.target.value }))}
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Notes (optional)"
+                          value={finQuick.notes}
+                          onChange={(e) => setFinQuick((s) => ({ ...s, notes: e.target.value }))}
+                          className="md:hidden"
+                        />
+                        <Button type="submit" className="w-full md:w-auto">
+                          Add
+                        </Button>
+                      </div>
+                      <Input
+                        placeholder="Notes (optional)"
+                        value={finQuick.notes}
+                        onChange={(e) => setFinQuick((s) => ({ ...s, notes: e.target.value }))}
+                        className="hidden md:block md:col-span-3"
+                      />
+                    </form>
+                  </CardContent>
+
+                  {/* Existing Finished list */}
+                  <CardContent className="space-y-3">
+                    {(fin ?? []).map((it) => (
+                      <div key={it._id} className="rounded-md border p-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium">{it.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              Qty: {it.quantity} {it.unit ? it.unit : ""}
+                            </div>
+                            {it.notes ? <div className="text-xs text-muted-foreground mt-1">{it.notes}</div> : null}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                              title="Remove stock"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                              title="Add stock"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {(fin ?? []).length === 0 ? (
+                      <div className="text-sm text-muted-foreground">No items yet.</div>
+                    ) : null}
+                  </CardContent>
+                </>
+              ) : null}
+            </Card>
           </motion.div>
         </div>
       </div>
