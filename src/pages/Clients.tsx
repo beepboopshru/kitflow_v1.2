@@ -526,78 +526,114 @@ export default function Clients() {
                           </Badge>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        {/* Stacked list: Grade • Kit • Qty • Dispatch Date */}
+                        <div className="space-y-4">
                           {(() => {
-                            // Build grade buckets 1..10
-                            const buckets: Record<number, { count: number; items: Array<any> }> = {};
-                            for (let g = 1; g <= 10; g++) {
-                              buckets[g] = { count: 0, items: [] };
-                            }
-                            const unspecified: { count: number; items: Array<any> } = { count: 0, items: [] };
+                            // Build grade order: 1..10 + "unspecified"
+                            const gradeOrder: Array<number | "unspecified"> = [
+                              1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "unspecified",
+                            ];
 
-                            monthAssignments.forEach((a) => {
-                              if (a.grade && a.grade >= 1 && a.grade <= 10) {
-                                buckets[a.grade].count += a.quantity;
-                                buckets[a.grade].items.push(a);
-                              } else {
-                                unspecified.count += a.quantity;
-                                unspecified.items.push(a);
+                            // Helper to filter by grade bucket
+                            const byGrade = (g: number | "unspecified") => {
+                              if (g === "unspecified") {
+                                return monthAssignments.filter((a) => typeof a.grade === "undefined");
                               }
-                            });
+                              return monthAssignments.filter((a) => a.grade === g);
+                            };
 
+                            // For each grade bucket, group by kit and compute quantity + dispatch status
                             return (
                               <>
-                                {Array.from({ length: 10 }, (_, i) => i + 1).map((g) => (
-                                  <div key={g} className="rounded-md border p-3">
-                                    <div className="text-xs text-muted-foreground">Grade {g}</div>
-                                    <div className="mt-1 space-y-1">
-                                      {buckets[g].items.length === 0 ? (
-                                        <div className="text-xs text-muted-foreground">None</div>
-                                      ) : (
-                                        buckets[g].items.map((it) => (
-                                          <div key={it._id} className="text-xs">
-                                            {it.kit?.name ?? "Kit"} • Qty {it.quantity}
-                                          </div>
-                                        ))
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                                <div className="rounded-md border p-3">
-                                  <div className="text-xs text-muted-foreground">Unspecified</div>
-                                  <div className="mt-1 space-y-1">
-                                    {unspecified.items.length === 0 ? (
-                                      <div className="text-xs text-muted-foreground">None</div>
-                                    ) : (
-                                      unspecified.items.map((it) => (
-                                        <div key={it._id} className="text-xs">
-                                          {it.kit?.name ?? "Kit"} • Qty {it.quantity}
+                                {gradeOrder.map((g) => {
+                                  const list = byGrade(g);
+                                  if (list.length === 0) return null;
+
+                                  // Group by kitId
+                                  const byKit: Record<
+                                    string,
+                                    {
+                                      kitName: string;
+                                      totalQty: number;
+                                      dispatchedValues: Array<number | undefined>;
+                                    }
+                                  > = {};
+
+                                  list.forEach((a) => {
+                                    const key = String(a.kitId);
+                                    if (!byKit[key]) {
+                                      byKit[key] = {
+                                        kitName: a.kit?.name ?? "Kit",
+                                        totalQty: 0,
+                                        dispatchedValues: [],
+                                      };
+                                    }
+                                    byKit[key].totalQty += a.quantity;
+                                    byKit[key].dispatchedValues.push(a.dispatchedAt);
+                                  });
+
+                                  const rows = Object.values(byKit);
+
+                                  return (
+                                    <div key={`grade-${g}`} className="rounded-md border">
+                                      <div className="px-3 py-2 border-b flex items-center justify-between">
+                                        <div className="font-medium">
+                                          {g === "unspecified" ? "Unspecified" : `Grade ${g}`}
                                         </div>
-                                      ))
-                                    )}
-                                  </div>
-                                </div>
+                                        <Badge variant="outline">
+                                          Total: {rows.reduce((s, r) => s + r.totalQty, 0)}
+                                        </Badge>
+                                      </div>
+
+                                      <div className="divide-y">
+                                        {rows.map((r, i) => {
+                                          // Determine dispatch summary for this grade+kit
+                                          const values = r.dispatchedValues;
+                                          const hasAny = values.some((v) => typeof v === "number");
+                                          if (!hasAny) {
+                                            // None set
+                                            return (
+                                              <div key={i} className="px-3 py-2 flex items-center justify-between">
+                                                <div className="text-sm">
+                                                  {r.kitName} • Qty {r.totalQty}
+                                                </div>
+                                                <Badge variant="secondary">Not set</Badge>
+                                              </div>
+                                            );
+                                          }
+                                          // Normalize to numbers only (filter undefined)
+                                          const nums = values.filter((v): v is number => typeof v === "number");
+                                          // Are all equal?
+                                          const allEqual = nums.every((v) => v === nums[0]);
+                                          if (allEqual) {
+                                            return (
+                                              <div key={i} className="px-3 py-2 flex items-center justify-between">
+                                                <div className="text-sm">
+                                                  {r.kitName} • Qty {r.totalQty}
+                                                </div>
+                                                <Badge variant="default">
+                                                  Dispatched: {new Date(nums[0]).toLocaleDateString()}
+                                                </Badge>
+                                              </div>
+                                            );
+                                          }
+                                          // Mixed dates
+                                          return (
+                                            <div key={i} className="px-3 py-2 flex items-center justify-between">
+                                              <div className="text-sm">
+                                                {r.kitName} • Qty {r.totalQty}
+                                              </div>
+                                              <Badge variant="outline">Dispatched: Mixed</Badge>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </>
                             );
                           })()}
-                        </div>
-
-                        <div className="mt-4 space-y-2">
-                          {monthAssignments.map((a) => (
-                            <div key={a._id} className="text-sm flex items-center justify-between">
-                              <span className="text-muted-foreground">
-                                {a.kit?.name} • Qty {a.quantity} {a.grade ? `• Grade ${a.grade}` : ""}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                {a.dispatchedAt ? (
-                                  <Badge variant="default">Dispatched: {new Date(a.dispatchedAt).toLocaleDateString()}</Badge>
-                                ) : null}
-                                <Badge variant="outline">
-                                  Assigned: {new Date(a.assignedAt).toLocaleDateString()}
-                                </Badge>
-                              </div>
-                            </div>
-                          ))}
                         </div>
                       </div>
                     ) : null}
