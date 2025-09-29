@@ -15,6 +15,8 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 export default function Clients() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -24,6 +26,7 @@ export default function Clients() {
   const createClient = useMutation(api.clients.create);
   const updateClient = useMutation(api.clients.update);
   const deleteClient = useMutation(api.clients.remove);
+  const setDispatchDateForClientMonth = useMutation(api.assignments.setDispatchDateForClientMonth);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
@@ -38,6 +41,8 @@ export default function Clients() {
 
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [dispatchDate, setDispatchDate] = useState<string>("");
 
   // Load assignments for selected client only when the dialog is open and a client is selected (skip otherwise)
   const clientAssignments = useQuery(
@@ -301,7 +306,11 @@ export default function Clients() {
         {/* Monthwise & Gradewise dialog */}
         <Dialog open={isDetailsOpen} onOpenChange={(o) => {
           setIsDetailsOpen(o);
-          if (!o) setSelectedClient(null);
+          if (!o) {
+            setSelectedClient(null);
+            setSelectedMonth("");
+            setDispatchDate("");
+          }
         }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -309,12 +318,12 @@ export default function Clients() {
                 {selectedClient ? `Monthwise for ${selectedClient.name}` : "Monthwise"}
               </DialogTitle>
               <DialogDescription>
-                Grouped by month; inside each month, grade-wise (1–10).
+                Choose a month, view grade-wise details, and optionally set a dispatch date for that month.
               </DialogDescription>
             </DialogHeader>
 
-            {/* Monthwise content */}
-            <div className="space-y-4 max-h-[60vh] overflow-auto">
+            {/* Month selector and dispatch controls */}
+            <div className="space-y-3">
               {(() => {
                 if (!clientAssignments) {
                   return <div className="text-sm text-muted-foreground">Loading...</div>;
@@ -323,7 +332,7 @@ export default function Clients() {
                   return <div className="text-sm text-muted-foreground">No assignments yet.</div>;
                 }
 
-                // Group by YYYY-MM
+                // Build month options from data
                 const byMonth: Record<string, Array<any>> = {};
                 clientAssignments.forEach((a) => {
                   const d = new Date(a.assignedAt);
@@ -331,92 +340,172 @@ export default function Clients() {
                   if (!byMonth[key]) byMonth[key] = [];
                   byMonth[key].push(a);
                 });
-
                 const months = Object.keys(byMonth).sort((a, b) => (a < b ? 1 : -1));
 
-                return months.map((mKey) => {
-                  const monthAssignments = byMonth[mKey];
+                // Ensure selectedMonth has a default value
+                if (!selectedMonth && months.length > 0) {
+                  setSelectedMonth(months[0]);
+                }
 
-                  // Build grade buckets 1..10
-                  const buckets: Record<number, { count: number; items: Array<any> }> = {};
-                  for (let g = 1; g <= 10; g++) {
-                    buckets[g] = { count: 0, items: [] };
+                const monthAssignments = selectedMonth ? byMonth[selectedMonth] ?? [] : [];
+
+                const handleApplyDispatchDate = async () => {
+                  if (!selectedClient || !selectedMonth || !dispatchDate) {
+                    toast("Please choose month and date");
+                    return;
                   }
-                  const unspecified: { count: number; items: Array<any> } = { count: 0, items: [] };
-
-                  monthAssignments.forEach((a) => {
-                    if (a.grade && a.grade >= 1 && a.grade <= 10) {
-                      buckets[a.grade].count += a.quantity;
-                      buckets[a.grade].items.push(a);
-                    } else {
-                      unspecified.count += a.quantity;
-                      unspecified.items.push(a);
+                  try {
+                    const ts = new Date(dispatchDate).getTime();
+                    if (Number.isNaN(ts)) {
+                      toast("Invalid date");
+                      return;
                     }
-                  });
+                    const res = await setDispatchDateForClientMonth({
+                      clientId: selectedClient._id,
+                      month: selectedMonth,
+                      dispatchedAt: ts,
+                      markDispatched: true,
+                    } as any);
+                    toast(`Dispatch date set for ${selectedMonth}`);
+                  } catch (err) {
+                    toast("Failed to set dispatch date", { description: err instanceof Error ? err.message : "Unknown error" });
+                  }
+                };
 
-                  return (
-                    <div key={mKey} className="rounded-lg border p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="font-medium">
-                          {new Date(`${mKey}-01`).toLocaleDateString(undefined, {
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </div>
-                        <Badge variant="secondary">
-                          Total Qty: {monthAssignments.reduce((s, a) => s + a.quantity, 0)}
-                        </Badge>
+                return (
+                  <>
+                    {/* Month dropdown */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <Label className="text-xs">Month</Label>
+                        <Select
+                          value={selectedMonth}
+                          onValueChange={(val: string) => setSelectedMonth(val)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select month" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {months.map((m) => (
+                              <SelectItem key={m} value={m}>
+                                {new Date(`${m}-01`).toLocaleDateString(undefined, {
+                                  month: "long",
+                                  year: "numeric",
+                                })}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                        {Array.from({ length: 10 }, (_, i) => i + 1).map((g) => (
-                          <div key={g} className="rounded-md border p-3">
-                            <div className="text-xs text-muted-foreground">Grade {g}</div>
-                            <div className="mt-1 space-y-1">
-                              {buckets[g].items.length === 0 ? (
-                                <div className="text-xs text-muted-foreground">None</div>
-                              ) : (
-                                buckets[g].items.map((it) => (
-                                  <div key={it._id} className="text-xs">
-                                    {it.kit?.name ?? "Kit"} • Qty {it.quantity}
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                        <div className="rounded-md border p-3">
-                          <div className="text-xs text-muted-foreground">Unspecified</div>
-                          <div className="mt-1 space-y-1">
-                            {unspecified.items.length === 0 ? (
-                              <div className="text-xs text-muted-foreground">None</div>
-                            ) : (
-                              unspecified.items.map((it) => (
-                                <div key={it._id} className="text-xs">
-                                  {it.kit?.name ?? "Kit"} • Qty {it.quantity}
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </div>
+                      {/* Dispatch date picker */}
+                      <div className="flex-1">
+                        <Label htmlFor="dispatchDate" className="text-xs">Dispatch date</Label>
+                        <Input
+                          id="dispatchDate"
+                          type="date"
+                          value={dispatchDate}
+                          onChange={(e) => setDispatchDate(e.target.value)}
+                        />
                       </div>
 
-                      {/* Optional: list items under the grid */}
-                      <div className="mt-4 space-y-2">
-                        {monthAssignments.map((a) => (
-                          <div key={a._id} className="text-sm flex items-center justify-between">
-                            <span className="text-muted-foreground">
-                              {a.kit?.name} • Qty {a.quantity} {a.grade ? `• Grade ${a.grade}` : ""}
-                            </span>
-                            <Badge variant="outline">
-                              {new Date(a.assignedAt).toLocaleDateString()}
-                            </Badge>
-                          </div>
-                        ))}
+                      <div className="pt-5">
+                        <Button onClick={handleApplyDispatchDate}>Set Dispatch Date</Button>
                       </div>
                     </div>
-                  );
-                });
+
+                    {/* Selected month's grade-wise content */}
+                    {selectedMonth ? (
+                      <div className="rounded-lg border p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="font-medium">
+                            {new Date(`${selectedMonth}-01`).toLocaleDateString(undefined, {
+                              month: "long",
+                              year: "numeric",
+                            })}
+                          </div>
+                          <Badge variant="secondary">
+                            Total Qty: {monthAssignments.reduce((s, a) => s + a.quantity, 0)}
+                          </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                          {(() => {
+                            // Build grade buckets 1..10
+                            const buckets: Record<number, { count: number; items: Array<any> }> = {};
+                            for (let g = 1; g <= 10; g++) {
+                              buckets[g] = { count: 0, items: [] };
+                            }
+                            const unspecified: { count: number; items: Array<any> } = { count: 0, items: [] };
+
+                            monthAssignments.forEach((a) => {
+                              if (a.grade && a.grade >= 1 && a.grade <= 10) {
+                                buckets[a.grade].count += a.quantity;
+                                buckets[a.grade].items.push(a);
+                              } else {
+                                unspecified.count += a.quantity;
+                                unspecified.items.push(a);
+                              }
+                            });
+
+                            return (
+                              <>
+                                {Array.from({ length: 10 }, (_, i) => i + 1).map((g) => (
+                                  <div key={g} className="rounded-md border p-3">
+                                    <div className="text-xs text-muted-foreground">Grade {g}</div>
+                                    <div className="mt-1 space-y-1">
+                                      {buckets[g].items.length === 0 ? (
+                                        <div className="text-xs text-muted-foreground">None</div>
+                                      ) : (
+                                        buckets[g].items.map((it) => (
+                                          <div key={it._id} className="text-xs">
+                                            {it.kit?.name ?? "Kit"} • Qty {it.quantity}
+                                          </div>
+                                        ))
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                                <div className="rounded-md border p-3">
+                                  <div className="text-xs text-muted-foreground">Unspecified</div>
+                                  <div className="mt-1 space-y-1">
+                                    {unspecified.items.length === 0 ? (
+                                      <div className="text-xs text-muted-foreground">None</div>
+                                    ) : (
+                                      unspecified.items.map((it) => (
+                                        <div key={it._id} className="text-xs">
+                                          {it.kit?.name ?? "Kit"} • Qty {it.quantity}
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+
+                        <div className="mt-4 space-y-2">
+                          {monthAssignments.map((a) => (
+                            <div key={a._id} className="text-sm flex items-center justify-between">
+                              <span className="text-muted-foreground">
+                                {a.kit?.name} • Qty {a.quantity} {a.grade ? `• Grade ${a.grade}` : ""}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                {a.dispatchedAt ? (
+                                  <Badge variant="default">Dispatched: {new Date(a.dispatchedAt).toLocaleDateString()}</Badge>
+                                ) : null}
+                                <Badge variant="outline">
+                                  Assigned: {new Date(a.assignedAt).toLocaleDateString()}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
+                );
               })()}
             </div>
           </DialogContent>

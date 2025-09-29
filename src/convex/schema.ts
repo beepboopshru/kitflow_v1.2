@@ -67,6 +67,7 @@ const schema = defineSchema(
       assignedAt: v.number(),
       updatedAt: v.optional(v.number()),
       grade: v.optional(v.number()),
+      dispatchedAt: v.optional(v.number()),
     }).index("by_kit", ["kitId"]).index("by_client", ["clientId"]).index("by_status", ["status"]),
 
     // Inventory Management

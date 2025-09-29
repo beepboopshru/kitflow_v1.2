@@ -128,3 +128,37 @@ export const updateStatus = mutation({
     });
   },
 });
+
+export const setDispatchDateForClientMonth = mutation({
+  args: {
+    clientId: v.id("clients"),
+    month: v.string(), // format: "YYYY-MM"
+    dispatchedAt: v.number(), // epoch ms
+    markDispatched: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Unauthorized");
+
+    const rows = await ctx.db
+      .query("assignments")
+      .withIndex("by_client", (q) => q.eq("clientId", args.clientId))
+      .collect();
+
+    // Update assignments that match the given month key
+    let updatedCount = 0;
+    for (const a of rows) {
+      const d = new Date(a.assignedAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (key === args.month) {
+        await ctx.db.patch(a._id, {
+          dispatchedAt: args.dispatchedAt,
+          ...(args.markDispatched ? { status: "dispatched" as const } : {}),
+          updatedAt: Date.now(),
+        });
+        updatedCount++;
+      }
+    }
+    return { updatedCount };
+  },
+});
