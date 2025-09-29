@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Plus, Minus, PlusCircle } from "lucide-react";
+import { Plus, Minus, PlusCircle, ChevronDown, ChevronRight } from "lucide-react";
 
 type Category = "raw_material" | "pre_processed" | "finished_good";
 
@@ -70,6 +70,17 @@ export default function Inventory() {
     notes: "",
   });
 
+  const [adjustDialog, setAdjustDialog] = useState<{ open: boolean; id?: string; name?: string; delta: number }>({
+    open: false,
+    delta: 0,
+  });
+
+  // Add: collapse state for dropdown sections
+  const [rawOpen, setRawOpen] = useState<Record<string, boolean>>({});
+  const [preOpen, setPreOpen] = useState<Record<string, boolean>>({});
+  const [rawUncatOpen, setRawUncatOpen] = useState<boolean>(false);
+  const [preUncatOpen, setPreUncatOpen] = useState<boolean>(false);
+
   const totals = useMemo(() => {
     return {
       raw: raw?.reduce((s, i) => s + i.quantity, 0) ?? 0,
@@ -77,11 +88,6 @@ export default function Inventory() {
       fin: fin?.reduce((s, i) => s + i.quantity, 0) ?? 0,
     };
   }, [raw, pre, fin]);
-
-  const [adjustDialog, setAdjustDialog] = useState<{ open: boolean; id?: string; name?: string; delta: number }>({
-    open: false,
-    delta: 0,
-  });
 
   if (isLoading || !isAuthenticated) return null;
 
@@ -364,52 +370,72 @@ export default function Inventory() {
                 {/* Subcategory sections */}
                 {RAW_SUBCATEGORIES.map((sc) => {
                   const group = (raw ?? []).filter((it) => it.subCategory === sc.value);
+                  const open = rawOpen[sc.value] ?? false;
                   return (
-                    <div key={sc.value} className="rounded-md border p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium">{sc.label}</div>
-                        <Badge variant="outline">Total: {group.reduce((s, i) => s + i.quantity, 0)}</Badge>
-                      </div>
-                      {group.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">No items yet.</div>
-                      ) : (
-                        <div className="space-y-3">
-                          {group.map((it) => (
-                            <div key={it._id} className="flex items-center justify-between rounded border p-3">
-                              <div>
-                                <div className="font-medium">{it.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  Qty: {it.quantity} {it.unit ? it.unit : ""}
-                                </div>
-                                {it.notes ? (
-                                  <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
-                                ) : null}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
-                                  title="Remove stock"
-                                >
-                                  <Minus className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
-                                  title="Add stock"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
-                                  Delete
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+                    <div key={sc.value} className="rounded-md border">
+                      <button
+                        type="button"
+                        className="w-full flex items-center justify-between px-3 py-2"
+                        onClick={() =>
+                          setRawOpen((s) => ({ ...s, [sc.value]: !open }))
+                        }
+                        aria-expanded={open}
+                      >
+                        <div className="flex items-center gap-2">
+                          {open ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span className="font-medium">{sc.label}</span>
                         </div>
-                      )}
+                        <Badge variant="outline">
+                          Total: {group.reduce((s, i) => s + i.quantity, 0)}
+                        </Badge>
+                      </button>
+
+                      {open ? (
+                        group.length === 0 ? (
+                          <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
+                        ) : (
+                          <div className="px-3 pb-3 space-y-3">
+                            {group.map((it) => (
+                              <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                                <div>
+                                  <div className="font-medium">{it.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                  </div>
+                                  {it.notes ? (
+                                    <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                  ) : null}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                    title="Remove stock"
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                    title="Add stock"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                    Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      ) : null}
                     </div>
                   );
                 })}
@@ -417,51 +443,66 @@ export default function Inventory() {
                 {(() => {
                   const uncategorized = (raw ?? []).filter((it) => !it.subCategory);
                   return (
-                    <div className="rounded-md border p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium">Uncategorized</div>
-                        <Badge variant="outline">Total: {uncategorized.reduce((s, i) => s + i.quantity, 0)}</Badge>
-                      </div>
-                      {uncategorized.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">No items yet.</div>
-                      ) : (
-                        <div className="space-y-3">
-                          {uncategorized.map((it) => (
-                            <div key={it._id} className="flex items-center justify-between rounded border p-3">
-                              <div>
-                                <div className="font-medium">{it.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  Qty: {it.quantity} {it.unit ? it.unit : ""}
-                                </div>
-                                {it.notes ? (
-                                  <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
-                                ) : null}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
-                                  title="Remove stock"
-                                >
-                                  <Minus className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
-                                  title="Add stock"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
-                                  Delete
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+                    <div className="rounded-md border">
+                      <button
+                        type="button"
+                        className="w-full flex items-center justify-between px-3 py-2"
+                        onClick={() => setRawUncatOpen((o) => !o)}
+                        aria-expanded={rawUncatOpen}
+                      >
+                        <div className="flex items-center gap-2">
+                          {rawUncatOpen ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span className="font-medium">Uncategorized</span>
                         </div>
-                      )}
+                        <Badge variant="outline">Total: {uncategorized.reduce((s, i) => s + i.quantity, 0)}</Badge>
+                      </button>
+
+                      {rawUncatOpen ? (
+                        uncategorized.length === 0 ? (
+                          <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
+                        ) : (
+                          <div className="px-3 pb-3 space-y-3">
+                            {uncategorized.map((it) => (
+                              <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                                <div>
+                                  <div className="font-medium">{it.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                  </div>
+                                  {it.notes ? (
+                                    <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                  ) : null}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                    title="Remove stock"
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                    title="Add stock"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                    Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      ) : null}
                     </div>
                   );
                 })()}
@@ -480,103 +521,138 @@ export default function Inventory() {
               <CardContent className="space-y-4">
                 {PRE_SUBCATEGORIES.map((sc) => {
                   const group = (pre ?? []).filter((it) => it.subCategory === sc.value);
+                  const open = preOpen[sc.value] ?? false;
                   return (
-                    <div key={sc.value} className="rounded-md border p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium">{sc.label}</div>
-                        <Badge variant="outline">Total: {group.reduce((s, i) => s + i.quantity, 0)}</Badge>
-                      </div>
-                      {group.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">No items yet.</div>
-                      ) : (
-                        <div className="space-y-3">
-                          {group.map((it) => (
-                            <div key={it._id} className="flex items-center justify-between rounded border p-3">
-                              <div>
-                                <div className="font-medium">{it.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  Qty: {it.quantity} {it.unit ? it.unit : ""}
-                                </div>
-                                {it.notes ? (
-                                  <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
-                                ) : null}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
-                                  title="Remove stock"
-                                >
-                                  <Minus className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
-                                  title="Add stock"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
-                                  Delete
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+                    <div key={sc.value} className="rounded-md border">
+                      <button
+                        type="button"
+                        className="w-full flex items-center justify-between px-3 py-2"
+                        onClick={() =>
+                          setPreOpen((s) => ({ ...s, [sc.value]: !open }))
+                        }
+                        aria-expanded={open}
+                      >
+                        <div className="flex items-center gap-2">
+                          {open ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span className="font-medium">{sc.label}</span>
                         </div>
-                      )}
+                        <Badge variant="outline">
+                          Total: {group.reduce((s, i) => s + i.quantity, 0)}
+                        </Badge>
+                      </button>
+
+                      {open ? (
+                        group.length === 0 ? (
+                          <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
+                        ) : (
+                          <div className="px-3 pb-3 space-y-3">
+                            {group.map((it) => (
+                              <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                                <div>
+                                  <div className="font-medium">{it.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                  </div>
+                                  {it.notes ? (
+                                    <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                  ) : null}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                    title="Remove stock"
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                    title="Add stock"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                    Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      ) : null}
                     </div>
                   );
                 })}
                 {(() => {
                   const uncategorized = (pre ?? []).filter((it) => !it.subCategory);
                   return (
-                    <div className="rounded-md border p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium">Uncategorized</div>
-                        <Badge variant="outline">Total: {uncategorized.reduce((s, i) => s + i.quantity, 0)}</Badge>
-                      </div>
-                      {uncategorized.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">No items yet.</div>
-                      ) : (
-                        <div className="space-y-3">
-                          {uncategorized.map((it) => (
-                            <div key={it._id} className="flex items-center justify-between rounded border p-3">
-                              <div>
-                                <div className="font-medium">{it.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  Qty: {it.quantity} {it.unit ? it.unit : ""}
-                                </div>
-                                {it.notes ? (
-                                  <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
-                                ) : null}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
-                                  title="Remove stock"
-                                >
-                                  <Minus className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
-                                  title="Add stock"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
-                                  Delete
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+                    <div className="rounded-md border">
+                      <button
+                        type="button"
+                        className="w-full flex items-center justify-between px-3 py-2"
+                        onClick={() => setPreUncatOpen((o) => !o)}
+                        aria-expanded={preUncatOpen}
+                      >
+                        <div className="flex items-center gap-2">
+                          {preUncatOpen ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span className="font-medium">Uncategorized</span>
                         </div>
-                      )}
+                        <Badge variant="outline">Total: {uncategorized.reduce((s, i) => s + i.quantity, 0)}</Badge>
+                      </button>
+
+                      {preUncatOpen ? (
+                        uncategorized.length === 0 ? (
+                          <div className="px-3 pb-3 text-sm text-muted-foreground">No items yet.</div>
+                        ) : (
+                          <div className="px-3 pb-3 space-y-3">
+                            {uncategorized.map((it) => (
+                              <div key={it._id} className="flex items-center justify-between rounded border p-3">
+                                <div>
+                                  <div className="font-medium">{it.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Qty: {it.quantity} {it.unit ? it.unit : ""}
+                                  </div>
+                                  {it.notes ? (
+                                    <div className="text-xs text-muted-foreground mt-1">{it.notes}</div>
+                                  ) : null}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: -1 })}
+                                    title="Remove stock"
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setAdjustDialog({ open: true, id: it._id, name: it.name, delta: 1 })}
+                                    title="Add stock"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => handleRemove(it._id)}>
+                                    Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      ) : null}
                     </div>
                   );
                 })()}
