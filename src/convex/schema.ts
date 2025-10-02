@@ -40,7 +40,8 @@ const schema = defineSchema(
       image: v.optional(v.string()),
       stockCount: v.number(),
       lowStockThreshold: v.number(),
-      packingRequirements: v.optional(v.string()),
+      packingRequirements: v.optional(v.string()), // Can store JSON string for structured pouches or legacy comma-separated
+      isStructured: v.optional(v.boolean()), // Flag to indicate if packingRequirements contains JSON structure
       status: v.union(v.literal("in_stock"), v.literal("assigned")),
       createdBy: v.id("users"),
     }).index("by_type", ["type"]).index("by_status", ["status"]),

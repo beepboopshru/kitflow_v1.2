@@ -10,11 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp, FileText, Download } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { KitSheetMaker } from "@/components/KitSheetMaker";
+import { useAction } from "convex/react";
 
 export default function Kits() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -53,12 +55,16 @@ export default function Kits() {
   // Add: mutation to clear pending assignments for a kit
   const clearPendingByKit = useMutation(api.assignments.clearPendingByKit);
 
+  // Add: export kit sheet functionality
+  const [isKitSheetMakerOpen, setIsKitSheetMakerOpen] = useState(false);
+  const generatePdf = useAction(api.kitPdf.generateKitSheetPdf);
+
   // Filter kits in-memory based on dropdowns
   const filteredKits = (kits ?? []).filter((k) => {
     const typeOk = typeFilter === "all" ? true : k.type === typeFilter;
     const statusOk = statusFilter === "all" ? true : k.status === statusFilter;
     const kitOk = kitFilter === "all" ? true : k._id === kitFilter;
-    return typeOk && statusOk && kitOk;
+    return typeOk && statusFilter && kitOk;
   });
 
   useEffect(() => {
@@ -193,6 +199,39 @@ export default function Kits() {
     }
   };
 
+  const handleExportPdf = async (kit: any) => {
+    try {
+      toast("Generating PDF...");
+      const result = await generatePdf({ kitId: kit._id });
+      
+      // Create a blob and download
+      const blob = new Blob([result.html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${result.kitName}_sheet.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast("Kit sheet downloaded! Open in browser and print to PDF.");
+    } catch (err) {
+      toast("Failed to generate PDF", { 
+        description: err instanceof Error ? err.message : "Unknown error" 
+      });
+    }
+  };
+
+  const parseStructuredMaterials = (kit: any): Array<{ name: string; materials: Array<{ name: string; quantity: number; unit: string }> }> => {
+    if (!kit.isStructured || !kit.packingRequirements) return [];
+    try {
+      return JSON.parse(kit.packingRequirements);
+    } catch {
+      return [];
+    }
+  };
+
   if (isLoading || !isAuthenticated) {
     return null;
   }
@@ -268,275 +307,321 @@ export default function Kits() {
             </div>
           </div>
           
-          <Dialog open={isCreateOpen} onOpenChange={(open) => {
-            setIsCreateOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Kit
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editingKit ? "Edit Kit" : "Create New Kit"}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Kit Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="type">Kit Type</Label>
-                  <Select value={formData.type} onValueChange={(value: "cstem" | "robotics") => 
-                    setFormData({ ...formData, type: value })
-                  }>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cstem">CSTEM</SelectItem>
-                      <SelectItem value="robotics">Robotics</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+          <div className="flex gap-2">
+            <Button onClick={() => setIsKitSheetMakerOpen(true)} variant="outline">
+              <FileText className="h-4 w-4 mr-2" />
+              Kit Sheet Maker
+            </Button>
+            <Dialog open={isCreateOpen} onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Kit
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{editingKit ? "Edit Kit" : "Create New Kit"}</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Label htmlFor="stockCount">Stock Count</Label>
+                    <Label htmlFor="name">Kit Name</Label>
                     <Input
-                      id="stockCount"
-                      type="number"
-                      min="0"
-                      value={formData.stockCount}
-                      onChange={(e) => setFormData({ ...formData, stockCount: parseInt(e.target.value) || 0 })}
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="lowStockThreshold">Low Stock Alert</Label>
-                    <Input
-                      id="lowStockThreshold"
-                      type="number"
-                      min="0"
-                      value={formData.lowStockThreshold}
-                      onChange={(e) => setFormData({ ...formData, lowStockThreshold: parseInt(e.target.value) || 0 })}
-                      required
+                    <Label htmlFor="type">Kit Type</Label>
+                    <Select value={formData.type} onValueChange={(value: "cstem" | "robotics") => 
+                      setFormData({ ...formData, type: value })
+                    }>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cstem">CSTEM</SelectItem>
+                        <SelectItem value="robotics">Robotics</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={3}
                     />
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="packingRequirements">Packing Requirements</Label>
-                  <Textarea
-                    id="packingRequirements"
-                    value={formData.packingRequirements}
-                    onChange={(e) => setFormData({ ...formData, packingRequirements: e.target.value })}
-                    rows={2}
-                    placeholder="e.g., 5 sensors, 2 controllers, 1 manual"
-                  />
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="stockCount">Stock Count</Label>
+                      <Input
+                        id="stockCount"
+                        type="number"
+                        min="0"
+                        value={formData.stockCount}
+                        onChange={(e) => setFormData({ ...formData, stockCount: parseInt(e.target.value) || 0 })}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="lowStockThreshold">Low Stock Alert</Label>
+                      <Input
+                        id="lowStockThreshold"
+                        type="number"
+                        min="0"
+                        value={formData.lowStockThreshold}
+                        onChange={(e) => setFormData({ ...formData, lowStockThreshold: parseInt(e.target.value) || 0 })}
+                        required
+                      />
+                    </div>
+                  </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    {editingKit ? "Update" : "Create"} Kit
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <div>
+                    <Label htmlFor="packingRequirements">Packing Requirements</Label>
+                    <Textarea
+                      id="packingRequirements"
+                      value={formData.packingRequirements}
+                      onChange={(e) => setFormData({ ...formData, packingRequirements: e.target.value })}
+                      rows={2}
+                      placeholder="e.g., 5 sensors, 2 controllers, 1 manual"
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">
+                      {editingKit ? "Update" : "Create"} Kit
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Kits Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredKits.map((kit, index) => (
-            <motion.div
-              key={kit._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div
-                      className="group cursor-pointer select-none"
-                      onClick={() => toggleExpand(kit._id)}
-                    >
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        {kit.name}
-                        {expandedKitId === kit._id ? (
-                          <ChevronUp className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                        )}
-                      </CardTitle>
-                      <Badge variant="outline" className="mt-1">
-                        {kit.type.toUpperCase()}
-                      </Badge>
-                    </div>
-                    <div className="flex space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(kit);
-                        }}
+          {filteredKits.map((kit, index) => {
+            const structuredPouches = parseStructuredMaterials(kit);
+            const isStructured = kit.isStructured && structuredPouches.length > 0;
+            
+            return (
+              <motion.div
+                key={kit._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div
+                        className="group cursor-pointer select-none flex-1"
+                        onClick={() => toggleExpand(kit._id)}
                       >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(kit._id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {kit.description && (
-                    <p className="text-sm text-muted-foreground">{kit.description}</p>
-                  )}
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Stock: {kit.stockCount}</span>
-                    </div>
-                    {kit.stockCount <= kit.lowStockThreshold && (
-                      <div className="flex items-center space-x-1 text-red-600">
-                        <AlertTriangle className="h-4 w-4" />
-                        <span className="text-xs">Low Stock</span>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          {kit.name}
+                          {expandedKitId === kit._id ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                          )}
+                        </CardTitle>
+                        <Badge variant="outline" className="mt-1">
+                          {kit.type.toUpperCase()}
+                        </Badge>
                       </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Status:</span>
-                    <Badge variant={kit.status === "in_stock" ? "default" : "secondary"}>
-                      {kit.status === "in_stock" ? "In Stock" : "Assigned"}
-                    </Badge>
-                  </div>
-
-                  {expandedKitId === kit._id && (
-                    <div className="mt-2 rounded-md border p-3 bg-muted/30">
-                      <div className="text-xs text-muted-foreground mb-2">Materials Required</div>
-                      {kit.packingRequirements && kit.packingRequirements.trim().length > 0 ? (
-                        <ul className="list-disc pl-5 space-y-1 text-sm">
-                          {kit.packingRequirements
-                            .split(",")
-                            .map((s: string) => s.trim())
-                            .filter((s: string) => s.length > 0)
-                            .map((item: string, idx: number) => (
-                              <li key={idx} className="flex items-center justify-between gap-2">
-                                <span>{item}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveMaterial(kit, idx);
-                                  }}
-                                >
-                                  Remove
-                                </Button>
-                              </li>
-                            ))}
-                        </ul>
-                      ) : (
-                        <div className="text-sm text-muted-foreground">No materials specified.</div>
-                      )}
-                      <div className="mt-3 flex items-center gap-2">
-                        <Select
-                          onValueChange={(v: string) => setNewMaterial(v)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select material from inventory" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(rawMaterials ?? []).map((i: any) => (
-                              <SelectItem key={`raw-${i._id}`} value={i.name}>
-                                {i.name} • Raw
-                              </SelectItem>
-                            ))}
-                            {(preProcessed ?? []).map((i: any) => (
-                              <SelectItem key={`pre-${i._id}`} value={i.name}>
-                                {i.name} • Pre-Processed
-                              </SelectItem>
-                            ))}
-                            {(finishedGoods ?? []).map((i: any) => (
-                              <SelectItem key={`fin-${i._id}`} value={i.name}>
-                                {i.name} • Finished
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="flex space-x-1">
+                        {isStructured && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleExportPdf(kit);
+                            }}
+                            title="Export Kit Sheet"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleAddMaterial(kit);
+                            handleEdit(kit);
                           }}
                         >
-                          Add
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(kit._id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {kit.description && (
+                      <p className="text-sm text-muted-foreground">{kit.description}</p>
+                    )}
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Stock: {kit.stockCount}</span>
+                      </div>
+                      {kit.stockCount <= kit.lowStockThreshold && (
+                        <div className="flex items-center space-x-1 text-red-600">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="text-xs">Low Stock</span>
+                        </div>
+                      )}
+                    </div>
 
-                      {/* Add: pending and clear assignments control */}
-                      {(() => {
-                        const pending = getPendingForKit(kit._id);
-                        return (
-                          <div className="mt-4 flex items-center justify-between">
-                            <div className="text-xs text-muted-foreground">
-                              Pending assignments: {pending.count} • Qty pending: {pending.qty}
-                            </div>
-                            {pending.count > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Status:</span>
+                      <Badge variant={kit.status === "in_stock" ? "default" : "secondary"}>
+                        {kit.status === "in_stock" ? "In Stock" : "Assigned"}
+                      </Badge>
+                    </div>
+
+                    {expandedKitId === kit._id && (
+                      <div className="mt-2 rounded-md border p-3 bg-muted/30">
+                        <div className="text-xs text-muted-foreground mb-2">
+                          {isStructured ? "Pouches & Materials" : "Materials Required"}
+                        </div>
+                        
+                        {isStructured ? (
+                          <div className="space-y-3">
+                            {structuredPouches.map((pouch, pIdx) => (
+                              <div key={pIdx} className="border rounded p-2 bg-background">
+                                <div className="font-medium text-sm mb-1">{pouch.name}</div>
+                                <ul className="list-disc pl-5 space-y-1 text-xs">
+                                  {pouch.materials.map((material, mIdx) => (
+                                    <li key={mIdx}>
+                                      {material.name} - {material.quantity} {material.unit}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <>
+                            {kit.packingRequirements && kit.packingRequirements.trim().length > 0 ? (
+                              <ul className="list-disc pl-5 space-y-1 text-sm">
+                                {kit.packingRequirements
+                                  .split(",")
+                                  .map((s: string) => s.trim())
+                                  .filter((s: string) => s.length > 0)
+                                  .map((item: string, idx: number) => (
+                                    <li key={idx} className="flex items-center justify-between gap-2">
+                                      <span>{item}</span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRemoveMaterial(kit, idx);
+                                        }}
+                                      >
+                                        Remove
+                                      </Button>
+                                    </li>
+                                  ))}
+                              </ul>
+                            ) : (
+                              <div className="text-sm text-muted-foreground">No materials specified.</div>
+                            )}
+                            <div className="mt-3 flex items-center gap-2">
+                              <Select
+                                onValueChange={(v: string) => setNewMaterial(v)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select material from inventory" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {(rawMaterials ?? []).map((i: any) => (
+                                    <SelectItem key={`raw-${i._id}`} value={i.name}>
+                                      {i.name} • Raw
+                                    </SelectItem>
+                                  ))}
+                                  {(preProcessed ?? []).map((i: any) => (
+                                    <SelectItem key={`pre-${i._id}`} value={i.name}>
+                                      {i.name} • Pre-Processed
+                                    </SelectItem>
+                                  ))}
+                                  {(finishedGoods ?? []).map((i: any) => (
+                                    <SelectItem key={`fin-${i._id}`} value={i.name}>
+                                      {i.name} • Finished
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                               <Button
-                                variant="outline"
-                                size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleClearAssignments(kit);
+                                  handleAddMaterial(kit);
                                 }}
                               >
-                                Clear Assignments
+                                Add
                               </Button>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                            </div>
+
+                            {/* Add: pending and clear assignments control */}
+                            {(() => {
+                              const pending = getPendingForKit(kit._id);
+                              return (
+                                <div className="mt-4 flex items-center justify-between">
+                                  <div className="text-xs text-muted-foreground">
+                                    Pending assignments: {pending.count} • Qty pending: {pending.qty}
+                                  </div>
+                                  {pending.count > 0 && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleClearAssignments(kit);
+                                      }}
+                                    >
+                                      Clear Assignments
+                                    </Button>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
 
         {filteredKits.length === 0 && (
@@ -547,6 +632,11 @@ export default function Kits() {
           </div>
         )}
       </div>
+
+      <KitSheetMaker 
+        open={isKitSheetMakerOpen} 
+        onOpenChange={setIsKitSheetMakerOpen}
+      />
     </Layout>
   );
 }

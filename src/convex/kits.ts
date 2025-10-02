@@ -11,6 +11,7 @@ export const create = mutation({
     stockCount: v.number(),
     lowStockThreshold: v.number(),
     packingRequirements: v.optional(v.string()),
+    isStructured: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -48,6 +49,7 @@ export const update = mutation({
     stockCount: v.optional(v.number()),
     lowStockThreshold: v.optional(v.number()),
     packingRequirements: v.optional(v.string()),
+    isStructured: v.optional(v.boolean()),
     status: v.optional(v.union(v.literal("in_stock"), v.literal("assigned"))),
   },
   handler: async (ctx, args) => {
