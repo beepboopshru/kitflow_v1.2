@@ -149,3 +149,31 @@ export const seedSpecificInventoryItems = internalMutation({
     return { count: items.length };
   },
 });
+
+export const seedAdditionalInventoryItems = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await ctx.db.query("users").first();
+    if (!user) throw new Error("No user found");
+
+    const items = [
+      { name: "Card Template", category: "raw_material" as const, subCategory: "printable", unit: "pcs", quantity: 50, notes: "Star War with hole for LED", createdBy: user._id },
+      { name: "Straw", category: "raw_material" as const, subCategory: "uncategorized", unit: "pcs", quantity: 200, notes: "100mm length -plastic (any colour except dark colour)", createdBy: user._id },
+      { name: "Sticker", category: "raw_material" as const, subCategory: "stationery", unit: "sheets", quantity: 100, notes: "A5 size sheet print( half cut)", createdBy: user._id },
+      { name: "LED", category: "raw_material" as const, subCategory: "electronics", unit: "pcs", quantity: 100, notes: "Blue dip LED", createdBy: user._id },
+      { name: "LED", category: "raw_material" as const, subCategory: "electronics", unit: "pcs", quantity: 100, notes: "Green dip LED", createdBy: user._id },
+      { name: "Copper Plate", category: "raw_material" as const, subCategory: "uncategorized", unit: "pcs", quantity: 50, notes: "10mm*30mm round edges", createdBy: user._id },
+      { name: "Cell", category: "raw_material" as const, subCategory: "electronics", unit: "pcs", quantity: 100, notes: "2032", createdBy: user._id },
+      { name: "Aluminium Tape", category: "raw_material" as const, subCategory: "stationery", unit: "strips", quantity: 50, notes: "Strip 10mm x 30 mm", createdBy: user._id },
+      { name: "Insulation Tape", category: "raw_material" as const, subCategory: "stationery", unit: "rolls", quantity: 30, notes: "12mm*100mm (sand blast sheet)", createdBy: user._id },
+      { name: "Double side tape", category: "raw_material" as const, subCategory: "stationery", unit: "pcs", quantity: 50, notes: "10mm*10mm", createdBy: user._id },
+      { name: "Bond Paper", category: "raw_material" as const, subCategory: "printable", unit: "sheets", quantity: 100, notes: "A4 (Mandala Print)", createdBy: user._id },
+    ];
+
+    for (const item of items) {
+      await ctx.db.insert("inventory", item);
+    }
+
+    return { count: items.length };
+  },
+});
