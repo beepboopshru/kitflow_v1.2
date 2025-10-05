@@ -32,8 +32,6 @@ const RAW_SUBCATEGORIES: Array<{ value: string; label: string }> = [
 
 const PRE_SUBCATEGORIES: Array<{ value: string; label: string }> = [
   { value: "laser_cut", label: "Laser Cut" },
-  { value: "cnc", label: "CNC Machined" },
-  { value: "3d_printed", label: "3D Printed" },
   { value: "painted", label: "Painted" },
   { value: "assembled", label: "Assembled" },
 ];
