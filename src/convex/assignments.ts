@@ -122,9 +122,67 @@ export const updateStatus = mutation({
     const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
 
+    const assignment = await ctx.db.get(args.id);
+    if (!assignment) throw new Error("Assignment not found");
+
+    // If marking as dispatched, deduct materials from inventory
+    if (args.status === "dispatched" && assignment.status !== "dispatched") {
+      const kit = await ctx.db.get(assignment.kitId);
+      if (!kit) throw new Error("Kit not found");
+
+      // Only process if kit has structured packing requirements
+      if (kit.isStructured && kit.packingRequirements) {
+        try {
+          const pouches = JSON.parse(kit.packingRequirements);
+          
+          // Collect all materials across all pouches
+          const materialsToDeduct: Array<{ name: string; quantity: number }> = [];
+          for (const pouch of pouches) {
+            if (pouch.materials && Array.isArray(pouch.materials)) {
+              for (const material of pouch.materials) {
+                materialsToDeduct.push({
+                  name: material.name,
+                  quantity: material.quantity * assignment.quantity, // multiply by assignment quantity
+                });
+              }
+            }
+          }
+
+          // Deduct from inventory
+          for (const material of materialsToDeduct) {
+            // Find inventory item by name (case-insensitive search)
+            const allInventory = await ctx.db.query("inventory").collect();
+            const inventoryItem = allInventory.find(
+              (item) => item.name.toLowerCase() === material.name.toLowerCase()
+            );
+
+            if (inventoryItem) {
+              const newQty = inventoryItem.quantity - material.quantity;
+              if (newQty < 0) {
+                console.warn(
+                  `Warning: Inventory for "${material.name}" would go negative (${newQty}). Setting to 0.`
+                );
+                await ctx.db.patch(inventoryItem._id, { quantity: 0 });
+              } else {
+                await ctx.db.patch(inventoryItem._id, { quantity: newQty });
+              }
+            } else {
+              console.warn(
+                `Warning: Material "${material.name}" not found in inventory. Skipping deduction.`
+              );
+            }
+          }
+        } catch (e) {
+          console.error("Error processing kit materials for inventory deduction:", e);
+          // Continue with status update even if inventory deduction fails
+        }
+      }
+    }
+
     return await ctx.db.patch(args.id, {
       status: args.status,
       updatedAt: Date.now(),
+      ...(args.status === "dispatched" ? { dispatchedAt: Date.now() } : {}),
     });
   },
 });
