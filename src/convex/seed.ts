@@ -117,3 +117,35 @@ export const seedData = internalMutation({
     };
   },
 });
+
+export const seedSpecificInventoryItems = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await ctx.db.query("users").first();
+    if (!user) throw new Error("No user found");
+
+    const items = [
+      { name: "Cardboard tube", category: "raw_material" as const, subCategory: "tubes", unit: "pcs", quantity: 100, notes: "180mm with -6mm hole(from bottom side at 3 cm)", createdBy: user._id },
+      { name: "Tube sticker", category: "raw_material" as const, subCategory: "stationery", unit: "pcs", quantity: 100, notes: "logo sticker to be attached", createdBy: user._id },
+      { name: "Mirror", category: "raw_material" as const, subCategory: "uncategorized", unit: "pcs", quantity: 50, notes: "48mm Dia with middle 2 Slot", createdBy: user._id },
+      { name: "Plastic container", category: "raw_material" as const, subCategory: "uncategorized", unit: "pcs", quantity: 50, notes: "50mm with 2 hole(Single Dabbi -33)", createdBy: user._id },
+      { name: "Glitter tape", category: "raw_material" as const, subCategory: "stationery", unit: "rolls", quantity: 20, notes: "12mm", createdBy: user._id },
+      { name: "Battery", category: "raw_material" as const, subCategory: "electronics", unit: "pcs", quantity: 100, notes: "9v", createdBy: user._id },
+      { name: "Cardboard tube cap", category: "raw_material" as const, subCategory: "tubes", unit: "pcs", quantity: 100, notes: "50mm - without hole", createdBy: user._id },
+      { name: "Templates", category: "raw_material" as const, subCategory: "printable", unit: "sheets", quantity: 50, notes: "Shadow Templates 300 gsm (Moon & Star)", createdBy: user._id },
+      { name: "Skewer", category: "raw_material" as const, subCategory: "uncategorized", unit: "pcs", quantity: 200, notes: "full length-150mm", createdBy: user._id },
+      { name: "Battery Snap", category: "raw_material" as const, subCategory: "electronics", unit: "pcs", quantity: 100, notes: "Snap with 100ohm resistor", createdBy: user._id },
+      { name: "LED", category: "raw_material" as const, subCategory: "electronics", unit: "pcs", quantity: 100, notes: "1w SMD (white) LED with 200mm wire 20mm strip", createdBy: user._id },
+      { name: "Push Switch", category: "raw_material" as const, subCategory: "electronics", unit: "pcs", quantity: 100, notes: "Push with 100 mm wire", createdBy: user._id },
+      { name: "Washer", category: "raw_material" as const, subCategory: "fasteners", unit: "pcs", quantity: 200, notes: "M4/11", createdBy: user._id },
+      { name: "Double side tape", category: "raw_material" as const, subCategory: "stationery", unit: "pcs", quantity: 50, notes: "10*10mm", createdBy: user._id },
+      { name: "Insulation Tape", category: "raw_material" as const, subCategory: "stationery", unit: "rolls", quantity: 30, notes: "12mm*100mm (sand blast sheet)", createdBy: user._id },
+    ];
+
+    for (const item of items) {
+      await ctx.db.insert("inventory", item);
+    }
+
+    return { count: items.length };
+  },
+});
