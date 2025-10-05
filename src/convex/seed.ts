@@ -177,3 +177,31 @@ export const seedAdditionalInventoryItems = internalMutation({
     return { count: items.length };
   },
 });
+
+export const seedAdditionalInventoryItems2 = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await ctx.db.query("users").first();
+    if (!user) throw new Error("No user found");
+
+    const items = [
+      { name: "MDF Structure", category: "raw_material" as const, subCategory: "mdf", unit: "sets", quantity: 50, notes: "Top Base Foot board (3 Parts)", createdBy: user._id },
+      { name: "Head", category: "raw_material" as const, subCategory: "uncategorized", unit: "pcs", quantity: 50, notes: "4mm acrylic laser cut", createdBy: user._id },
+      { name: "Pencil", category: "raw_material" as const, subCategory: "stationery", unit: "pcs", quantity: 100, notes: "Nataraja", createdBy: user._id },
+      { name: "Sticker", category: "raw_material" as const, subCategory: "stationery", unit: "pcs", quantity: 100, notes: "ScienceUtsav Logo", createdBy: user._id },
+      { name: "Magnet", category: "raw_material" as const, subCategory: "uncategorized", unit: "pcs", quantity: 100, notes: "Ring", createdBy: user._id },
+      { name: "Base and top", category: "raw_material" as const, subCategory: "mdf", unit: "sets", quantity: 50, notes: "MDF (2 Parts)", createdBy: user._id },
+      { name: "Template", category: "raw_material" as const, subCategory: "printable", unit: "sheets", quantity: 100, notes: "300 gsm", createdBy: user._id },
+      { name: "Pencil", category: "raw_material" as const, subCategory: "stationery", unit: "pcs", quantity: 100, notes: "Nataraja", createdBy: user._id },
+      { name: "Bolt", category: "raw_material" as const, subCategory: "fasteners", unit: "pcs", quantity: 200, notes: "M4*80mm", createdBy: user._id },
+      { name: "Nut", category: "raw_material" as const, subCategory: "fasteners", unit: "pcs", quantity: 200, notes: "M4 mm", createdBy: user._id },
+      { name: "Magnet", category: "raw_material" as const, subCategory: "uncategorized", unit: "pcs", quantity: 100, notes: "Ring", createdBy: user._id },
+    ];
+
+    for (const item of items) {
+      await ctx.db.insert("inventory", item);
+    }
+
+    return { count: items.length };
+  },
+});
