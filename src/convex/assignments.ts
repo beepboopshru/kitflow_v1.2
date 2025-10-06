@@ -9,6 +9,7 @@ export const create = mutation({
     quantity: v.number(),
     notes: v.optional(v.string()),
     grade: v.optional(v.number()),
+    dispatchedAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -28,6 +29,7 @@ export const create = mutation({
       status: "assigned" as const,
       assignedBy: user._id,
       assignedAt: Date.now(),
+      dispatchedAt: args.dispatchedAt,
     });
 
     await ctx.db.patch(args.kitId, {

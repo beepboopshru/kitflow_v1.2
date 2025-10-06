@@ -7,15 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { Package, Plus, Truck } from "lucide-react";
+import { Package, Plus, Truck, CalendarIcon } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
 
 export default function Assignments() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -33,8 +36,8 @@ export default function Assignments() {
     clientId: "",
     quantity: 1,
     notes: "",
-    // Add optional grade for 1-10 levels
     grade: null as number | null,
+    dispatchDate: undefined as Date | undefined,
   });
 
   // Filter states
@@ -63,6 +66,7 @@ export default function Assignments() {
       quantity: 1,
       notes: "",
       grade: null,
+      dispatchDate: undefined,
     });
   };
 
@@ -76,6 +80,7 @@ export default function Assignments() {
         quantity: formData.quantity,
         notes: formData.notes || undefined,
         grade: formData.grade ?? undefined,
+        dispatchedAt: formData.dispatchDate ? formData.dispatchDate.getTime() : undefined,
       });
       toast("Assignment created successfully");
       setIsCreateOpen(false);
@@ -199,7 +204,6 @@ export default function Assignments() {
                       <SelectValue placeholder="Select grade (1-10)" />
                     </SelectTrigger>
                     <SelectContent>
-                      {/* Provide a clearable option with a non-empty value per shadcn guidance */}
                       <SelectItem value="none">No Grade</SelectItem>
                       <Separator className="my-1" />
                       <SelectItem value="1">Grade 1</SelectItem>
@@ -214,6 +218,29 @@ export default function Assignments() {
                       <SelectItem value="10">Grade 10</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <Label>Dispatch Date (optional)</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.dispatchDate ? format(formData.dispatchDate, "PPP") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={formData.dispatchDate}
+                        onSelect={(date) => setFormData({ ...formData, dispatchDate: date })}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div>
