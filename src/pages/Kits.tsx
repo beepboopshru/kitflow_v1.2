@@ -57,6 +57,7 @@ export default function Kits() {
 
   // Add: export kit sheet functionality
   const [isKitSheetMakerOpen, setIsKitSheetMakerOpen] = useState(false);
+  const [editingKitForSheetMaker, setEditingKitForSheetMaker] = useState<any>(null);
   const generatePdf = useAction(api.kitPdf.generateKitSheetPdf);
 
   // Filter kits in-memory based on dropdowns
@@ -108,16 +109,23 @@ export default function Kits() {
   };
 
   const handleEdit = (kit: any) => {
-    setFormData({
-      name: kit.name,
-      type: kit.type,
-      description: kit.description || "",
-      stockCount: kit.stockCount,
-      lowStockThreshold: kit.lowStockThreshold,
-      packingRequirements: kit.packingRequirements || "",
-    });
-    setEditingKit(kit);
-    setIsCreateOpen(true);
+    // If it's a structured kit, open Kit Sheet Maker
+    if (kit.isStructured) {
+      setEditingKitForSheetMaker(kit);
+      setIsKitSheetMakerOpen(true);
+    } else {
+      // Otherwise use the basic form
+      setFormData({
+        name: kit.name,
+        type: kit.type,
+        description: kit.description || "",
+        stockCount: kit.stockCount,
+        lowStockThreshold: kit.lowStockThreshold,
+        packingRequirements: kit.packingRequirements || "",
+      });
+      setEditingKit(kit);
+      setIsCreateOpen(true);
+    }
   };
 
   const handleDelete = async (kitId: string) => {
@@ -645,7 +653,11 @@ export default function Kits() {
 
       <KitSheetMaker 
         open={isKitSheetMakerOpen} 
-        onOpenChange={setIsKitSheetMakerOpen}
+        onOpenChange={(open) => {
+          setIsKitSheetMakerOpen(open);
+          if (!open) setEditingKitForSheetMaker(null);
+        }}
+        editingKit={editingKitForSheetMaker}
       />
     </Layout>
   );

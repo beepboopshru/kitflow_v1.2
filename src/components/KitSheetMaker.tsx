@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,9 +25,10 @@ interface Pouch {
 interface KitSheetMakerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  editingKit?: any;
 }
 
-export function KitSheetMaker({ open, onOpenChange }: KitSheetMakerProps) {
+export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerProps) {
   const [step, setStep] = useState(1);
   const [kitName, setKitName] = useState("");
   const [kitType, setKitType] = useState<"cstem" | "robotics">("cstem");
@@ -47,12 +48,30 @@ export function KitSheetMaker({ open, onOpenChange }: KitSheetMakerProps) {
   const finishedGoods = useQuery(api.inventory.listByCategory, { category: "finished_good" });
   
   const createKit = useMutation(api.kits.create);
+  const updateKit = useMutation(api.kits.update);
 
   const allInventoryItems = [
     ...(rawMaterials ?? []).map(i => ({ ...i, category: "Raw" })),
     ...(preProcessed ?? []).map(i => ({ ...i, category: "Pre-Processed" })),
     ...(finishedGoods ?? []).map(i => ({ ...i, category: "Finished" })),
   ];
+
+  // Load editing kit data when dialog opens
+  useEffect(() => {
+    if (open && editingKit) {
+      setKitName(editingKit.name);
+      setKitType(editingKit.type);
+      setStockCount(editingKit.stockCount);
+      if (editingKit.isStructured && editingKit.packingRequirements) {
+        try {
+          const parsed = JSON.parse(editingKit.packingRequirements);
+          setPouches(parsed);
+        } catch {
+          setPouches([]);
+        }
+      }
+    }
+  }, [open, editingKit]);
 
   const resetForm = () => {
     setStep(1);
@@ -149,20 +168,33 @@ export function KitSheetMaker({ open, onOpenChange }: KitSheetMakerProps) {
 
     try {
       const structuredData = JSON.stringify(pouches);
-      await createKit({
-        name: kitName,
-        type: kitType,
-        stockCount: stockCount,
-        lowStockThreshold: 5,
-        packingRequirements: structuredData,
-        isStructured: true,
-      });
       
-      toast("Kit created successfully!");
+      if (editingKit) {
+        await updateKit({
+          id: editingKit._id,
+          name: kitName,
+          type: kitType,
+          stockCount: stockCount,
+          packingRequirements: structuredData,
+          isStructured: true,
+        });
+        toast("Kit updated successfully!");
+      } else {
+        await createKit({
+          name: kitName,
+          type: kitType,
+          stockCount: stockCount,
+          lowStockThreshold: 5,
+          packingRequirements: structuredData,
+          isStructured: true,
+        });
+        toast("Kit created successfully!");
+      }
+      
       onOpenChange(false);
       resetForm();
     } catch (error) {
-      toast("Error creating kit", { 
+      toast(editingKit ? "Error updating kit" : "Error creating kit", { 
         description: error instanceof Error ? error.message : "Unknown error" 
       });
     }
@@ -180,7 +212,7 @@ export function KitSheetMaker({ open, onOpenChange }: KitSheetMakerProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Kit Sheet Maker - Step {step} of 3
+            {editingKit ? "Edit" : "Create"} Kit Sheet - Step {step} of 3
           </DialogTitle>
         </DialogHeader>
 
