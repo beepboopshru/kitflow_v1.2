@@ -334,13 +334,16 @@ export default function Clients() {
                   return <div className="text-sm text-muted-foreground">No assignments yet.</div>;
                 }
 
-                // Build month options from data
+                // Build month options from data based on dispatchedAt date
                 const byMonth: Record<string, Array<any>> = {};
                 clientAssignments.forEach((a) => {
-                  const d = new Date(a.assignedAt);
-                  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-                  if (!byMonth[key]) byMonth[key] = [];
-                  byMonth[key].push(a);
+                  // Only include assignments that have a dispatch date set
+                  if (typeof a.dispatchedAt === "number") {
+                    const d = new Date(a.dispatchedAt);
+                    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                    if (!byMonth[key]) byMonth[key] = [];
+                    byMonth[key].push(a);
+                  }
                 });
                 const months = Object.keys(byMonth).sort((a, b) => (a < b ? 1 : -1));
 
