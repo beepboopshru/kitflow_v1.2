@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { Package, Plus, Truck, CalendarIcon } from "lucide-react";
+import { Package, Plus, Truck, CalendarIcon, Trash2 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -29,6 +29,7 @@ export default function Assignments() {
   const clients = useQuery(api.clients.list);
   const createAssignment = useMutation(api.assignments.create);
   const updateStatus = useMutation(api.assignments.updateStatus);
+  const clearAllPending = useMutation(api.assignments.clearAllPendingAssignments);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -107,6 +108,34 @@ export default function Assignments() {
     }
   };
 
+  const handleClearAllAssignments = async () => {
+    const pendingCount = (assignments ?? []).filter(
+      (a) => a.status !== "dispatched" && typeof a.dispatchedAt !== "number"
+    ).length;
+
+    if (pendingCount === 0) {
+      toast("No pending assignments to clear");
+      return;
+    }
+
+    const first = confirm(
+      `This will delete ${pendingCount} pending assignment(s) and restore stock to all affected kits. Continue?`
+    );
+    if (!first) return;
+
+    const second = confirm("Are you absolutely sure? This cannot be undone.");
+    if (!second) return;
+
+    try {
+      const result = await clearAllPending();
+      toast(`Cleared ${result.deletedCount} assignment(s) successfully`);
+    } catch (error) {
+      toast("Error clearing assignments", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "assigned": return "secondary";
@@ -131,149 +160,159 @@ export default function Assignments() {
             </p>
           </div>
           
-          <Dialog open={isCreateOpen} onOpenChange={(open) => {
-            setIsCreateOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                New Assignment
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create New Assignment</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="kitId">Kit</Label>
-                  <Select value={formData.kitId} onValueChange={(value) => 
-                    setFormData({ ...formData, kitId: value })
-                  }>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a kit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {kits?.filter(kit => kit.stockCount > 0).map((kit) => (
-                        <SelectItem key={kit._id} value={kit._id}>
-                          {kit.name} (Stock: {kit.stockCount})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="clientId">Client</Label>
-                  <Select value={formData.clientId} onValueChange={(value) => 
-                    setFormData({ ...formData, clientId: value })
-                  }>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients?.map((client) => (
-                        <SelectItem key={client._id} value={client._id}>
-                          {client.name} - {client.organization}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleClearAllAssignments}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear All Pending
+            </Button>
+            <Dialog open={isCreateOpen} onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Assignment
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create New Assignment</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="kitId">Kit</Label>
+                    <Select value={formData.kitId} onValueChange={(value) => 
+                      setFormData({ ...formData, kitId: value })
+                    }>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a kit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {kits?.filter(kit => kit.stockCount > 0).map((kit) => (
+                          <SelectItem key={kit._id} value={kit._id}>
+                            {kit.name} (Stock: {kit.stockCount})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="clientId">Client</Label>
+                    <Select value={formData.clientId} onValueChange={(value) => 
+                      setFormData({ ...formData, clientId: value })
+                    }>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients?.map((client) => (
+                          <SelectItem key={client._id} value={client._id}>
+                            {client.name} - {client.organization}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label htmlFor="quantity">Quantity</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    placeholder="Enter quantity"
-                    value={formData.quantity}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setFormData({ ...formData, quantity: val === "" ? "" : parseInt(val) || "" });
-                    }}
-                    required
-                  />
-                </div>
+                  <div>
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      min="1"
+                      placeholder="Enter quantity"
+                      value={formData.quantity}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, quantity: val === "" ? "" : parseInt(val) || "" });
+                      }}
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <Label htmlFor="grade">Grade (optional)</Label>
-                  <Select
-                    value={formData.grade === null ? "none" : String(formData.grade)}
-                    onValueChange={(value) =>
-                      setFormData({
-                        ...formData,
-                        grade: value === "none" ? null : parseInt(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select grade (1-10)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No Grade</SelectItem>
-                      <Separator className="my-1" />
-                      <SelectItem value="1">Grade 1</SelectItem>
-                      <SelectItem value="2">Grade 2</SelectItem>
-                      <SelectItem value="3">Grade 3</SelectItem>
-                      <SelectItem value="4">Grade 4</SelectItem>
-                      <SelectItem value="5">Grade 5</SelectItem>
-                      <SelectItem value="6">Grade 6</SelectItem>
-                      <SelectItem value="7">Grade 7</SelectItem>
-                      <SelectItem value="8">Grade 8</SelectItem>
-                      <SelectItem value="9">Grade 9</SelectItem>
-                      <SelectItem value="10">Grade 10</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div>
+                    <Label htmlFor="grade">Grade (optional)</Label>
+                    <Select
+                      value={formData.grade === null ? "none" : String(formData.grade)}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          grade: value === "none" ? null : parseInt(value),
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select grade (1-10)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Grade</SelectItem>
+                        <Separator className="my-1" />
+                        <SelectItem value="1">Grade 1</SelectItem>
+                        <SelectItem value="2">Grade 2</SelectItem>
+                        <SelectItem value="3">Grade 3</SelectItem>
+                        <SelectItem value="4">Grade 4</SelectItem>
+                        <SelectItem value="5">Grade 5</SelectItem>
+                        <SelectItem value="6">Grade 6</SelectItem>
+                        <SelectItem value="7">Grade 7</SelectItem>
+                        <SelectItem value="8">Grade 8</SelectItem>
+                        <SelectItem value="9">Grade 9</SelectItem>
+                        <SelectItem value="10">Grade 10</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label>Dispatch Date (optional)</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.dispatchDate ? format(formData.dispatchDate, "PPP") : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={formData.dispatchDate}
-                        onSelect={(date) => setFormData({ ...formData, dispatchDate: date })}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                  <div>
+                    <Label>Dispatch Date (optional)</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {formData.dispatchDate ? format(formData.dispatchDate, "PPP") : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={formData.dispatchDate}
+                          onSelect={(date) => setFormData({ ...formData, dispatchDate: date })}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
 
-                <div>
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={3}
-                    placeholder="Additional notes for this assignment..."
-                  />
-                </div>
+                  <div>
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      rows={3}
+                      placeholder="Additional notes for this assignment..."
+                    />
+                  </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    Create Assignment
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">
+                      Create Assignment
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Filter Section */}

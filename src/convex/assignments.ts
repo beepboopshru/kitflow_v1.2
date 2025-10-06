@@ -315,3 +315,45 @@ export const clearPendingByKit = mutation({
     return { deletedCount: pending.length, restoredQty };
   },
 });
+
+export const clearAllPendingAssignments = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Unauthorized");
+
+    // Fetch all assignments
+    const allAssignments = await ctx.db.query("assignments").collect();
+
+    // Filter pending ones (not dispatched)
+    const pending = allAssignments.filter(
+      (a) => a.status !== "dispatched" && typeof a.dispatchedAt !== "number"
+    );
+
+    if (pending.length === 0) {
+      return { deletedCount: 0, restoredByKit: {} };
+    }
+
+    // Group by kit to restore stock
+    const qtyByKit: Record<string, number> = {};
+    for (const a of pending) {
+      const kitId = a.kitId;
+      qtyByKit[kitId] = (qtyByKit[kitId] || 0) + (a.quantity ?? 0);
+      await ctx.db.delete(a._id);
+    }
+
+    // Restore stock for each affected kit
+    for (const [kitId, qty] of Object.entries(qtyByKit)) {
+      const kit = await ctx.db.get(kitId as any);
+      if (kit && "stockCount" in kit) {
+        const newStock = (kit.stockCount ?? 0) + qty;
+        await ctx.db.patch(kitId as any, {
+          stockCount: newStock,
+          status: newStock === 0 ? ("assigned" as const) : ("in_stock" as const),
+        });
+      }
+    }
+
+    return { deletedCount: pending.length, restoredByKit: qtyByKit };
+  },
+});
