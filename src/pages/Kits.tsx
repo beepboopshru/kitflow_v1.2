@@ -564,21 +564,27 @@ export default function Kits() {
                                   list="inventory-items"
                                 />
                                 <datalist id="inventory-items">
-                                  {(rawMaterials ?? []).map((i: any) => (
-                                    <option key={`raw-${i._id}`} value={i.name}>
-                                      {i.name} • Raw • {i.quantity} available
-                                    </option>
-                                  ))}
-                                  {(preProcessed ?? []).map((i: any) => (
-                                    <option key={`pre-${i._id}`} value={i.name}>
-                                      {i.name} • Pre-Processed • {i.quantity} available
-                                    </option>
-                                  ))}
-                                  {(finishedGoods ?? []).map((i: any) => (
-                                    <option key={`fin-${i._id}`} value={i.name}>
-                                      {i.name} • Finished • {i.quantity} available
-                                    </option>
-                                  ))}
+                                  {[...(rawMaterials ?? [])]
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .map((i: any) => (
+                                      <option key={`raw-${i._id}`} value={i.name}>
+                                        {i.name} • Raw • {i.quantity} available
+                                      </option>
+                                    ))}
+                                  {[...(preProcessed ?? [])]
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .map((i: any) => (
+                                      <option key={`pre-${i._id}`} value={i.name}>
+                                        {i.name} • Pre-Processed • {i.quantity} available
+                                      </option>
+                                    ))}
+                                  {[...(finishedGoods ?? [])]
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .map((i: any) => (
+                                      <option key={`fin-${i._id}`} value={i.name}>
+                                        {i.name} • Finished • {i.quantity} available
+                                      </option>
+                                    ))}
                                 </datalist>
                               </div>
                               <Button
