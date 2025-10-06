@@ -314,7 +314,7 @@ export default function Clients() {
             setDispatchDate("");
           }
         }}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {selectedClient ? `Monthwise for ${selectedClient.name}` : "Monthwise"}
