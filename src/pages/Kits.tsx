@@ -518,10 +518,13 @@ export default function Kits() {
                             {structuredPouches.map((pouch, pIdx) => (
                               <div key={pIdx} className="border rounded p-2 bg-background">
                                 <div className="font-medium text-sm mb-1">{pouch.name}</div>
-                                <ul className="list-disc pl-5 space-y-1 text-xs">
+                                <ul className="space-y-1 text-xs">
                                   {pouch.materials.map((material, mIdx) => (
-                                    <li key={mIdx}>
-                                      {material.name} - {material.quantity} {material.unit}
+                                    <li key={mIdx} className="flex justify-between gap-2">
+                                      <span className="flex-1 break-words">• {material.name}</span>
+                                      <span className="flex-shrink-0 font-medium whitespace-nowrap">
+                                        {material.quantity} {material.unit}
+                                      </span>
                                     </li>
                                   ))}
                                 </ul>
