@@ -556,30 +556,31 @@ export default function Kits() {
                               <div className="text-sm text-muted-foreground">No materials specified.</div>
                             )}
                             <div className="mt-3 flex items-center gap-2">
-                              <Select
-                                onValueChange={(v: string) => setNewMaterial(v)}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select material from inventory" />
-                                </SelectTrigger>
-                                <SelectContent>
+                              <div className="flex-1">
+                                <Input
+                                  placeholder="Search inventory items..."
+                                  value={newMaterial}
+                                  onChange={(e) => setNewMaterial(e.target.value)}
+                                  list="inventory-items"
+                                />
+                                <datalist id="inventory-items">
                                   {(rawMaterials ?? []).map((i: any) => (
-                                    <SelectItem key={`raw-${i._id}`} value={i.name}>
-                                      {i.name} • Raw
-                                    </SelectItem>
+                                    <option key={`raw-${i._id}`} value={i.name}>
+                                      {i.name} • Raw • {i.quantity} available
+                                    </option>
                                   ))}
                                   {(preProcessed ?? []).map((i: any) => (
-                                    <SelectItem key={`pre-${i._id}`} value={i.name}>
-                                      {i.name} • Pre-Processed
-                                    </SelectItem>
+                                    <option key={`pre-${i._id}`} value={i.name}>
+                                      {i.name} • Pre-Processed • {i.quantity} available
+                                    </option>
                                   ))}
                                   {(finishedGoods ?? []).map((i: any) => (
-                                    <SelectItem key={`fin-${i._id}`} value={i.name}>
-                                      {i.name} • Finished
-                                    </SelectItem>
+                                    <option key={`fin-${i._id}`} value={i.name}>
+                                      {i.name} • Finished • {i.quantity} available
+                                    </option>
                                   ))}
-                                </SelectContent>
-                              </Select>
+                                </datalist>
+                              </div>
                               <Button
                                 onClick={(e) => {
                                   e.stopPropagation();
