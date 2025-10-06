@@ -265,7 +265,12 @@ export function KitSheetMaker({ open, onOpenChange }: KitSheetMakerProps) {
                         <SelectContent>
                           {allInventoryItems.map((item) => (
                             <SelectItem key={item._id} value={item._id}>
-                              {item.name} • {item.category} • {item.quantity} available
+                              <div className="flex flex-col gap-0.5 py-1">
+                                <span className="break-words">{item.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {item.category} • {item.quantity} available
+                                </span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
