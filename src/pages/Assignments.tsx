@@ -240,73 +240,82 @@ export default function Assignments() {
           </Dialog>
         </div>
 
-        {/* Assignments List */}
-        <div className="space-y-4">
-          {assignments?.map((assignment, index) => (
-            <motion.div
-              key={assignment._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div>
-                        <CardTitle className="text-lg">
-                          {assignment.kit?.name} → {assignment.client?.name}
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          {assignment.client?.organization} • Qty: {assignment.quantity}
-                        </p>
+        {/* Assignments Table */}
+        <div className="rounded-md border">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Kit</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Client</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Qty</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Grade</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Assigned</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Notes</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAssignments.map((assignment, index) => (
+                  <motion.tr
+                    key={assignment._id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.02 }}
+                    className="border-b hover:bg-muted/30 transition-colors"
+                  >
+                    <td className="px-4 py-3 text-sm font-medium">{assignment.kit?.name}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <div>{assignment.client?.name}</div>
+                      <div className="text-xs text-muted-foreground">{assignment.client?.organization}</div>
+                    </td>
+                    <td className="px-4 py-3 text-sm">{assignment.quantity}</td>
+                    <td className="px-4 py-3 text-sm">
+                      {assignment.grade ? `Grade ${assignment.grade}` : "-"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={getStatusColor(assignment.status) as any} className="text-xs">
+                        {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {new Date(assignment.assignedAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-sm max-w-[200px] truncate" title={assignment.notes || ""}>
+                      {assignment.notes || "-"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex space-x-1">
+                        {assignment.status === "assigned" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusUpdate(assignment._id, "packed")}
+                            className="h-8 px-2"
+                          >
+                            <Package className="h-3 w-3 mr-1" />
+                            Pack
+                          </Button>
+                        )}
+                        {assignment.status === "packed" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusUpdate(assignment._id, "dispatched")}
+                            className="h-8 px-2"
+                          >
+                            <Truck className="h-3 w-3 mr-1" />
+                            Dispatch
+                          </Button>
+                        )}
                       </div>
-                    </div>
-                    <Badge variant={getStatusColor(assignment.status) as any}>
-                      {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="text-sm text-muted-foreground">
-                        Assigned: {new Date(assignment.assignedAt).toLocaleDateString()}
-                      </div>
-                      {assignment.notes && (
-                        <div className="text-sm">
-                          <span className="text-muted-foreground">Notes:</span> {assignment.notes}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      {assignment.status === "assigned" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleStatusUpdate(assignment._id, "packed")}
-                        >
-                          <Package className="h-4 w-4 mr-1" />
-                          Mark Packed
-                        </Button>
-                      )}
-                      {assignment.status === "packed" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleStatusUpdate(assignment._id, "dispatched")}
-                        >
-                          <Truck className="h-4 w-4 mr-1" />
-                          Mark Dispatched
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {filteredAssignments.length === 0 && (
