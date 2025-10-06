@@ -240,6 +240,77 @@ export default function Assignments() {
           </Dialog>
         </div>
 
+        {/* Filter Section */}
+        <Card className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <Label className="text-xs mb-2">Status</Label>
+              <Select
+                value={statusFilter}
+                onValueChange={(v: "all" | "assigned" | "packed" | "dispatched") => setStatusFilter(v)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="assigned">Assigned</SelectItem>
+                  <SelectItem value="packed">Packed</SelectItem>
+                  <SelectItem value="dispatched">Dispatched</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-xs mb-2">Kit</Label>
+              <Select
+                value={kitFilter}
+                onValueChange={(v: string) => setKitFilter(v)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="All Kits" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Kits</SelectItem>
+                  {kits?.map((kit) => (
+                    <SelectItem key={kit._id} value={kit._id}>
+                      {kit.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-xs mb-2">Client</Label>
+              <Select
+                value={clientFilter}
+                onValueChange={(v: string) => setClientFilter(v)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="All Clients" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {clients?.map((client) => (
+                    <SelectItem key={client._id} value={client._id}>
+                      {client.name} - {client.organization}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {filteredAssignments.length > 0 && (
+              <div className="flex items-end">
+                <div className="text-sm text-muted-foreground">
+                  Showing {filteredAssignments.length} of {assignments?.length || 0} assignments
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+
         {/* Assignments Table */}
         <div className="rounded-md border">
           <div className="overflow-x-auto">
