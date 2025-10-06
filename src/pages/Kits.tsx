@@ -421,225 +421,237 @@ export default function Kits() {
           </div>
         </div>
 
-        {/* Kits Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredKits.map((kit, index) => {
-            const structuredPouches = parseStructuredMaterials(kit);
-            const isStructured = kit.isStructured && structuredPouches.length > 0;
-            
-            return (
-              <motion.div
-                key={kit._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div
-                        className="group cursor-pointer select-none flex-1"
+        {/* Kits Table */}
+        <div className="rounded-md border">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Kit Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Type</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Stock</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Pending</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredKits.map((kit, index) => {
+                  const structuredPouches = parseStructuredMaterials(kit);
+                  const isStructured = kit.isStructured && structuredPouches.length > 0;
+                  const pending = getPendingForKit(kit._id);
+                  const isExpanded = expandedKitId === kit._id;
+                  
+                  return (
+                    <>
+                      <motion.tr
+                        key={kit._id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.02 }}
+                        className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
                         onClick={() => toggleExpand(kit._id)}
                       >
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          {kit.name}
-                          {expandedKitId === kit._id ? (
-                            <ChevronUp className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                          )}
-                        </CardTitle>
-                        <Badge variant="outline" className="mt-1">
-                          {kit.type.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <div className="flex space-x-1">
-                        {isStructured && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleExportPdf(kit);
-                            }}
-                            title="Export Kit Sheet"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(kit);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(kit._id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {kit.description && (
-                      <p className="text-sm text-muted-foreground">{kit.description}</p>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">Stock: {kit.stockCount}</span>
-                      </div>
-                      {kit.stockCount <= kit.lowStockThreshold && (
-                        <div className="flex items-center space-x-1 text-red-600">
-                          <AlertTriangle className="h-4 w-4" />
-                          <span className="text-xs">Low Stock</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Status:</span>
-                      <Badge variant={kit.status === "in_stock" ? "default" : "secondary"}>
-                        {kit.status === "in_stock" ? "In Stock" : "Assigned"}
-                      </Badge>
-                    </div>
-
-                    {expandedKitId === kit._id && (
-                      <div className="mt-2 rounded-md border p-3 bg-muted/30">
-                        <div className="text-xs text-muted-foreground mb-2">
-                          {isStructured ? "Pouches & Materials" : "Materials Required"}
-                        </div>
-                        
-                        {isStructured ? (
-                          <div className="space-y-3">
-                            {structuredPouches.map((pouch, pIdx) => (
-                              <div key={pIdx} className="border rounded p-2 bg-background">
-                                <div className="font-medium text-sm mb-1">{pouch.name}</div>
-                                <ul className="space-y-1 text-xs">
-                                  {pouch.materials.map((material, mIdx) => (
-                                    <li key={mIdx} className="flex justify-between gap-2">
-                                      <span className="flex-1 break-words">• {material.name}</span>
-                                      <span className="flex-shrink-0 font-medium whitespace-nowrap">
-                                        {material.quantity} {material.unit}
-                                      </span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <>
-                            {kit.packingRequirements && kit.packingRequirements.trim().length > 0 ? (
-                              <ul className="list-disc pl-5 space-y-1 text-sm">
-                                {kit.packingRequirements
-                                  .split(",")
-                                  .map((s: string) => s.trim())
-                                  .filter((s: string) => s.length > 0)
-                                  .map((item: string, idx: number) => (
-                                    <li key={idx} className="flex items-center justify-between gap-2">
-                                      <span>{item}</span>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRemoveMaterial(kit, idx);
-                                        }}
-                                      >
-                                        Remove
-                                      </Button>
-                                    </li>
-                                  ))}
-                              </ul>
+                        <td className="px-4 py-3 text-sm font-medium">
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
                             ) : (
-                              <div className="text-sm text-muted-foreground">No materials specified.</div>
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
                             )}
-                            <div className="mt-3 flex items-center gap-2">
-                              <div className="flex-1">
-                                <Input
-                                  placeholder="Search inventory items..."
-                                  value={newMaterial}
-                                  onChange={(e) => setNewMaterial(e.target.value)}
-                                  list="inventory-items"
-                                />
-                                <datalist id="inventory-items">
-                                  {[...(rawMaterials ?? [])]
-                                    .sort((a, b) => a.name.localeCompare(b.name))
-                                    .map((i: any) => (
-                                      <option key={`raw-${i._id}`} value={i.name}>
-                                        {i.name} • Raw • {i.quantity} available
-                                      </option>
-                                    ))}
-                                  {[...(preProcessed ?? [])]
-                                    .sort((a, b) => a.name.localeCompare(b.name))
-                                    .map((i: any) => (
-                                      <option key={`pre-${i._id}`} value={i.name}>
-                                        {i.name} • Pre-Processed • {i.quantity} available
-                                      </option>
-                                    ))}
-                                  {[...(finishedGoods ?? [])]
-                                    .sort((a, b) => a.name.localeCompare(b.name))
-                                    .map((i: any) => (
-                                      <option key={`fin-${i._id}`} value={i.name}>
-                                        {i.name} • Finished • {i.quantity} available
-                                      </option>
-                                    ))}
-                                </datalist>
-                              </div>
+                            {kit.name}
+                            {kit.stockCount <= kit.lowStockThreshold && (
+                              <AlertTriangle className="h-4 w-4 text-red-600" />
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant="outline" className="text-xs">
+                            {kit.type.toUpperCase()}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm">{kit.stockCount}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant={kit.status === "in_stock" ? "default" : "secondary"} className="text-xs">
+                            {kit.status === "in_stock" ? "In Stock" : "Assigned"}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                          {pending.count > 0 ? `${pending.count} (${pending.qty} units)` : "-"}
+                        </td>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex space-x-1">
+                            {isStructured && (
                               <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleAddMaterial(kit);
+                                  handleExportPdf(kit);
                                 }}
+                                title="Export Kit Sheet"
                               >
-                                Add
+                                <Download className="h-4 w-4" />
                               </Button>
-                            </div>
-
-                            {/* Add: pending and clear assignments control */}
-                            {(() => {
-                              const pending = getPendingForKit(kit._id);
-                              return (
-                                <div className="mt-4 flex items-center justify-between">
-                                  <div className="text-xs text-muted-foreground">
-                                    Pending assignments: {pending.count} • Qty pending: {pending.qty}
-                                  </div>
-                                  {pending.count > 0 && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleClearAssignments(kit);
-                                      }}
-                                    >
-                                      Clear Assignments
-                                    </Button>
-                                  )}
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(kit);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(kit._id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                      
+                      {/* Expanded Details Row */}
+                      {isExpanded && (
+                        <tr className="bg-muted/20">
+                          <td colSpan={6} className="px-4 py-4">
+                            <div className="space-y-3">
+                              {kit.description && (
+                                <div>
+                                  <span className="text-xs font-medium text-muted-foreground">Description:</span>
+                                  <p className="text-sm mt-1">{kit.description}</p>
                                 </div>
-                              );
-                            })()}
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
+                              )}
+                              
+                              <div>
+                                <span className="text-xs font-medium text-muted-foreground">
+                                  {isStructured ? "Pouches & Materials" : "Materials Required"}
+                                </span>
+                                
+                                {isStructured ? (
+                                  <div className="mt-2 space-y-3">
+                                    {structuredPouches.map((pouch, pIdx) => (
+                                      <div key={pIdx} className="border rounded p-2 bg-background">
+                                        <div className="font-medium text-sm mb-1">{pouch.name}</div>
+                                        <ul className="space-y-1 text-xs">
+                                          {pouch.materials.map((material, mIdx) => (
+                                            <li key={mIdx} className="flex justify-between gap-2">
+                                              <span className="flex-1 break-words">• {material.name}</span>
+                                              <span className="flex-shrink-0 font-medium whitespace-nowrap">
+                                                {material.quantity} {material.unit}
+                                              </span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <>
+                                    {kit.packingRequirements && kit.packingRequirements.trim().length > 0 ? (
+                                      <ul className="list-disc pl-5 space-y-1 text-sm mt-2">
+                                        {kit.packingRequirements
+                                          .split(",")
+                                          .map((s: string) => s.trim())
+                                          .filter((s: string) => s.length > 0)
+                                          .map((item: string, idx: number) => (
+                                            <li key={idx} className="flex items-center justify-between gap-2">
+                                              <span>{item}</span>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleRemoveMaterial(kit, idx);
+                                                }}
+                                              >
+                                                Remove
+                                              </Button>
+                                            </li>
+                                          ))}
+                                      </ul>
+                                    ) : (
+                                      <div className="text-sm text-muted-foreground mt-2">No materials specified.</div>
+                                    )}
+                                    <div className="mt-3 flex items-center gap-2">
+                                      <div className="flex-1">
+                                        <Input
+                                          placeholder="Search inventory items..."
+                                          value={newMaterial}
+                                          onChange={(e) => setNewMaterial(e.target.value)}
+                                          list="inventory-items"
+                                        />
+                                        <datalist id="inventory-items">
+                                          {[...(rawMaterials ?? [])]
+                                            .sort((a, b) => a.name.localeCompare(b.name))
+                                            .map((i: any) => (
+                                              <option key={`raw-${i._id}`} value={i.name}>
+                                                {i.name} • Raw • {i.quantity} available
+                                              </option>
+                                            ))}
+                                          {[...(preProcessed ?? [])]
+                                            .sort((a, b) => a.name.localeCompare(b.name))
+                                            .map((i: any) => (
+                                              <option key={`pre-${i._id}`} value={i.name}>
+                                                {i.name} • Pre-Processed • {i.quantity} available
+                                              </option>
+                                            ))}
+                                          {[...(finishedGoods ?? [])]
+                                            .sort((a, b) => a.name.localeCompare(b.name))
+                                            .map((i: any) => (
+                                              <option key={`fin-${i._id}`} value={i.name}>
+                                                {i.name} • Finished • {i.quantity} available
+                                              </option>
+                                            ))}
+                                        </datalist>
+                                      </div>
+                                      <Button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleAddMaterial(kit);
+                                        }}
+                                      >
+                                        Add
+                                      </Button>
+                                    </div>
+
+                                    {pending.count > 0 && (
+                                      <div className="mt-4 flex items-center justify-between">
+                                        <div className="text-xs text-muted-foreground">
+                                          Pending assignments: {pending.count} • Qty pending: {pending.qty}
+                                        </div>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleClearAssignments(kit);
+                                          }}
+                                        >
+                                          Clear Assignments
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {filteredKits.length === 0 && (
