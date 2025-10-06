@@ -37,6 +37,19 @@ export default function Assignments() {
     grade: null as number | null,
   });
 
+  // Filter states
+  const [statusFilter, setStatusFilter] = useState<"all" | "assigned" | "packed" | "dispatched">("all");
+  const [kitFilter, setKitFilter] = useState<string>("all");
+  const [clientFilter, setClientFilter] = useState<string>("all");
+
+  // Filter assignments based on selected filters
+  const filteredAssignments = (assignments ?? []).filter((assignment) => {
+    const statusOk = statusFilter === "all" ? true : assignment.status === statusFilter;
+    const kitOk = kitFilter === "all" ? true : assignment.kitId === kitFilter;
+    const clientOk = clientFilter === "all" ? true : assignment.clientId === clientFilter;
+    return statusOk && kitOk && clientOk;
+  });
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       navigate("/auth");
@@ -296,7 +309,7 @@ export default function Assignments() {
           ))}
         </div>
 
-        {assignments?.length === 0 && (
+        {filteredAssignments.length === 0 && (
           <div className="text-center py-12">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium">No assignments found</h3>
