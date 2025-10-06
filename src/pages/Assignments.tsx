@@ -34,7 +34,7 @@ export default function Assignments() {
   const [formData, setFormData] = useState({
     kitId: "",
     clientId: "",
-    quantity: 1,
+    quantity: "" as number | "",
     notes: "",
     grade: null as number | null,
     dispatchDate: undefined as Date | undefined,
@@ -63,7 +63,7 @@ export default function Assignments() {
     setFormData({
       kitId: "",
       clientId: "",
-      quantity: 1,
+      quantity: "",
       notes: "",
       grade: null,
       dispatchDate: undefined,
@@ -73,11 +73,16 @@ export default function Assignments() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formData.quantity || formData.quantity <= 0) {
+      toast("Error creating assignment", { description: "Please enter a valid quantity" });
+      return;
+    }
+    
     try {
       await createAssignment({
         kitId: formData.kitId as any,
         clientId: formData.clientId as any,
-        quantity: formData.quantity,
+        quantity: formData.quantity as number,
         notes: formData.notes || undefined,
         grade: formData.grade ?? undefined,
         dispatchedAt: formData.dispatchDate ? formData.dispatchDate.getTime() : undefined,
@@ -183,8 +188,12 @@ export default function Assignments() {
                     id="quantity"
                     type="number"
                     min="1"
+                    placeholder="Enter quantity"
                     value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData({ ...formData, quantity: val === "" ? "" : parseInt(val) || "" });
+                    }}
                     required
                   />
                 </div>
