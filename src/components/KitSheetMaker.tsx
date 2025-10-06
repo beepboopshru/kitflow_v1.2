@@ -40,7 +40,7 @@ export function KitSheetMaker({ open, onOpenChange }: KitSheetMakerProps) {
   const [pouchName, setPouchName] = useState("");
   const [pouchMaterials, setPouchMaterials] = useState<Material[]>([]);
   const [selectedItem, setSelectedItem] = useState("");
-  const [itemQuantity, setItemQuantity] = useState(1);
+  const [itemQuantity, setItemQuantity] = useState<number | "">("");
 
   const rawMaterials = useQuery(api.inventory.listByCategory, { category: "raw_material" });
   const preProcessed = useQuery(api.inventory.listByCategory, { category: "pre_processed" });
@@ -63,7 +63,7 @@ export function KitSheetMaker({ open, onOpenChange }: KitSheetMakerProps) {
     setPouchName("");
     setPouchMaterials([]);
     setSelectedItem("");
-    setItemQuantity(1);
+    setItemQuantity("");
     setEditingPouchIndex(null);
   };
 
@@ -73,18 +73,23 @@ export function KitSheetMaker({ open, onOpenChange }: KitSheetMakerProps) {
       return;
     }
     
+    if (!itemQuantity || itemQuantity <= 0) {
+      toast("Please enter a valid quantity");
+      return;
+    }
+    
     const item = allInventoryItems.find(i => i._id === selectedItem);
     if (!item) return;
 
     const newMaterial: Material = {
       name: item.name,
-      quantity: itemQuantity,
+      quantity: itemQuantity as number,
       unit: item.unit || "units",
     };
 
     setPouchMaterials([...pouchMaterials, newMaterial]);
     setSelectedItem("");
-    setItemQuantity(1);
+    setItemQuantity("");
     toast("Material added to pouch");
   };
 
@@ -284,8 +289,12 @@ export function KitSheetMaker({ open, onOpenChange }: KitSheetMakerProps) {
                       <Input
                         type="number"
                         min="1"
+                        placeholder="Enter quantity"
                         value={itemQuantity}
-                        onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setItemQuantity(val === "" ? "" : parseInt(val) || "");
+                        }}
                       />
                     </div>
                   </div>
