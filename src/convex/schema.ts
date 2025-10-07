@@ -57,8 +57,7 @@ const schema = defineSchema(
       remarks: v.optional(v.string()),
       serialNumber: v.optional(v.string()),
       createdBy: v.id("users"),
-    }).index("by_type", ["type"]).index("by_status", ["status"]).index("by_serial_number", ["serialNumber"]),
-=======
+    }).index("by_type", ["type"]).index("by_status", ["status"]),
 
     // Client Database
     clients: defineTable({
