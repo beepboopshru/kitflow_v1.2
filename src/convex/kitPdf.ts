@@ -48,6 +48,7 @@ export const generateKitSheetPdf = action({
           .kit-info-container { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
           .kit-info { flex: 1; }
           .kit-info p { margin: 2px 0; line-height: 1.3; }
+          .kit-info p:first-child { font-size: 14px; font-weight: bold; }
           .kit-image { flex-shrink: 0; }
           .kit-image img { max-width: 150px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px; }
         </style>
