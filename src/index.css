@@ -1,3 +1,6 @@
+/* FONT IMPORTS GO HERE */
+
+
 /* DO NOT CHANGE */
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -51,7 +54,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: oklch(0.000 0.000 0);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -70,7 +73,7 @@
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary: oklch(0.000 0.000 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
@@ -115,12 +118,19 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    letter-spacing: 0em;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: system-ui, system-ui, sans-serif;
   }
-  button:not([disabled]),
-  [role="button"]:not([disabled]) {
-    cursor: pointer;
+  .font-sans {
+    font-family: system-ui, system-ui, sans-serif;
+  }
+  .font-serif {
+    font-family: Georgia, Georgia, serif;
+  }
+  .font-mono {
+    font-family: Menlo, "Courier New", monospace;
   }
 }
