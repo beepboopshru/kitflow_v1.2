@@ -41,6 +41,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
   const [serialNumber, setSerialNumber] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadedImageId, setUploadedImageId] = useState<string | null>(null);
   
   // Pouch builder state
   const [showPouchBuilder, setShowPouchBuilder] = useState(false);
@@ -76,6 +77,8 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
       setStockCount(editingKit.stockCount);
       setLowStockThreshold(editingKit.lowStockThreshold || 5);
       setSerialNumber(editingKit.serialNumber || "");
+      setUploadedImageId(editingKit.image || null);
+      setImagePreview(null);
       if (editingKit.isStructured && editingKit.packingRequirements) {
         try {
           const parsed = JSON.parse(editingKit.packingRequirements);
@@ -103,6 +106,8 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
     setItemQuantity("");
     setItemNotes("");
     setEditingPouchIndex(null);
+    setUploadedImageId(null);
+    setImagePreview(null);
   };
 
   const handleAddMaterialToPouch = () => {
@@ -210,8 +215,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
 
       const { storageId } = await result.json();
       
-      // Store the storage ID (will be saved with the kit)
-      // We'll need to pass this to handleFinalSave
+      setUploadedImageId(storageId);
       
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -249,6 +253,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
           packingRequirements: structuredData,
           isStructured: true,
           serialNumber: serialNumber.trim() || undefined,
+          image: uploadedImageId || editingKit.image || undefined,
         });
         toast("Kit updated successfully!");
       } else {
@@ -262,6 +267,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
           packingRequirements: structuredData,
           isStructured: true,
           serialNumber: serialNumber.trim() || undefined,
+          image: uploadedImageId || undefined,
         });
         toast("Kit created successfully!");
       }
@@ -303,6 +309,32 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                 placeholder="Enter kit name"
               />
             </div>
+            
+            <div>
+              <Label htmlFor="kitImage">Kit Image (optional)</Label>
+              <div className="space-y-2">
+                <Input
+                  id="kitImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                />
+                {uploadingImage && (
+                  <p className="text-sm text-muted-foreground">Uploading image...</p>
+                )}
+                {imagePreview && (
+                  <div className="relative w-32 h-32 border rounded overflow-hidden">
+                    <img
+                      src={imagePreview}
+                      alt="Kit preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <div>
               <Label htmlFor="kitType">Kit Type</Label>
               <Select value={kitType} onValueChange={(v: string) => {
