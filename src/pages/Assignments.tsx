@@ -206,21 +206,6 @@ export default function Assignments() {
           </div>
           
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleClearAllAssignments}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Clear All Pending
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleClearAllAssignmentsIncludingDispatched}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Clear All
-            </Button>
             <Dialog open={isCreateOpen} onOpenChange={(open) => {
               setIsCreateOpen(open);
               if (!open) resetForm();
@@ -531,6 +516,30 @@ export default function Assignments() {
             <p className="text-muted-foreground">Create your first kit assignment to get started.</p>
           </div>
         )}
+
+        {/* Danger Zone - Clear Actions */}
+        <div className="border-t pt-8 mt-8">
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-sm text-muted-foreground">Danger Zone</div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleClearAllAssignments}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Clear All Pending
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleClearAllAssignmentsIncludingDispatched}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Clear All
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </Layout>
   );
