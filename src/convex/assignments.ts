@@ -393,6 +393,8 @@ export const deleteAssignment = mutation({
     // If not dispatched, restore stock
     if (assignment.status !== "dispatched" && typeof assignment.dispatchedAt !== "number") {
       const kit = await ctx.db.get(assignment.kitId);
+      console.log("Restoring stock for kit:", kit?.name, "Current stock:", kit?.stockCount, "Adding:", assignment.quantity);
+      
       if (kit && "stockCount" in kit) {
         const newStock = (kit.stockCount ?? 0) + (assignment.quantity ?? 0);
         let newStatus: "in_stock" | "assigned" | "to_be_made";
@@ -405,11 +407,17 @@ export const deleteAssignment = mutation({
           newStatus = "in_stock";
         }
         
+        console.log("New stock will be:", newStock, "New status:", newStatus);
+        
         await ctx.db.patch(assignment.kitId, {
           stockCount: newStock,
           status: newStatus,
         });
+        
+        console.log("Stock restored successfully");
       }
+    } else {
+      console.log("Not restoring stock - assignment status:", assignment.status, "dispatchedAt:", assignment.dispatchedAt);
     }
 
     await ctx.db.delete(args.id);
