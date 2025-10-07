@@ -10,13 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp, FileText, Download } from "lucide-react";
+import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp, FileText, Download, ArrowLeft, Box } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { KitSheetMaker } from "@/components/KitSheetMaker";
 import { useAction } from "convex/react";
+
+type ProgramType = "cstem" | "robotics" | null;
 
 export default function Kits() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -27,13 +29,13 @@ export default function Kits() {
   const updateKit = useMutation(api.kits.update);
   const deleteKit = useMutation(api.kits.remove);
 
-  // Add: pull inventory items across all categories to use as materials
   const rawMaterials = useQuery(api.inventory.listByCategory, { category: "raw_material" });
   const preProcessed = useQuery(api.inventory.listByCategory, { category: "pre_processed" });
   const finishedGoods = useQuery(api.inventory.listByCategory, { category: "finished_good" });
-
-  // Load assignments to compute pending per kit
   const assignments = useQuery(api.assignments.list);
+
+  // Navigation state: null = landing view, "cstem" | "robotics" = program view
+  const [selectedProgram, setSelectedProgram] = useState<ProgramType>(null);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingKit, setEditingKit] = useState<any>(null);
@@ -47,27 +49,35 @@ export default function Kits() {
     packingRequirements: "",
   });
 
-  const [typeFilter, setTypeFilter] = useState<"all" | "cstem" | "robotics">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "assigned">("all");
   const [kitFilter, setKitFilter] = useState<string>("all");
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
   const [newMaterial, setNewMaterial] = useState<string>("");
 
-  // Add: mutation to clear pending assignments for a kit
   const clearPendingByKit = useMutation(api.assignments.clearPendingByKit);
-
-  // Add: export kit sheet functionality
   const [isKitSheetMakerOpen, setIsKitSheetMakerOpen] = useState(false);
   const [editingKitForSheetMaker, setEditingKitForSheetMaker] = useState<any>(null);
   const generatePdf = useAction(api.kitPdf.generateKitSheetPdf);
 
-  // Filter kits in-memory based on dropdowns
+  // Filter kits based on selected program and other filters
   const filteredKits = (kits ?? []).filter((k) => {
-    const typeOk = typeFilter === "all" ? true : k.type === typeFilter;
+    if (selectedProgram && k.type !== selectedProgram) return false;
     const statusOk = statusFilter === "all" ? true : k.status === statusFilter;
     const kitOk = kitFilter === "all" ? true : k._id === kitFilter;
-    return typeOk && statusFilter && kitOk;
+    return statusOk && kitOk;
   });
+
+  // Get program-specific kits for stats
+  const cstemKits = (kits ?? []).filter(k => k.type === "cstem");
+  const roboticsKits = (kits ?? []).filter(k => k.type === "robotics");
+
+  // Calculate stats for each program
+  const getProgramStats = (programKits: any[]) => {
+    const total = programKits.length;
+    const lowStock = programKits.filter(k => k.stockCount <= k.lowStockThreshold).length;
+    const totalStock = programKits.reduce((sum, k) => sum + k.stockCount, 0);
+    return { total, lowStock, totalStock };
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -78,7 +88,7 @@ export default function Kits() {
   const resetForm = () => {
     setFormData({
       name: "",
-      type: "cstem",
+      type: selectedProgram || "cstem",
       cstemVariant: undefined,
       description: "",
       stockCount: 0,
@@ -111,12 +121,10 @@ export default function Kits() {
   };
 
   const handleEdit = (kit: any) => {
-    // If it's a structured kit, open Kit Sheet Maker
     if (kit.isStructured) {
       setEditingKitForSheetMaker(kit);
       setIsKitSheetMakerOpen(true);
     } else {
-      // Otherwise use the basic form
       setFormData({
         name: kit.name,
         type: kit.type,
@@ -163,7 +171,6 @@ export default function Kits() {
     }
   };
 
-  // Add: compute pending counts per kit
   const getPendingForKit = (kitId: string) => {
     const list = (assignments ?? []).filter(
       (a: any) => String(a.kitId) === String(kitId) && a.status !== "dispatched" && typeof a.dispatchedAt !== "number"
@@ -172,7 +179,6 @@ export default function Kits() {
     return { count: list.length, qty: totalQty };
   };
 
-  // Add: handler to clear assignments with double confirmation
   const handleClearAssignments = async (kit: any) => {
     const { count, qty } = getPendingForKit(kit._id);
     if (count === 0) {
@@ -215,7 +221,6 @@ export default function Kits() {
       toast("Generating PDF...");
       const result = await generatePdf({ kitId: kit._id });
       
-      // Create a blob and download
       const blob = new Blob([result.html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -247,79 +252,184 @@ export default function Kits() {
     return null;
   }
 
+  // Landing View: Program Type Selection
+  if (selectedProgram === null) {
+    const cstemStats = getProgramStats(cstemKits);
+    const roboticsStats = getProgramStats(roboticsKits);
+
+    return (
+      <Layout>
+        <div className="space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Kit Management</h1>
+            <p className="text-muted-foreground mt-2">
+              Select a program type to manage kits
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* CSTEM Program Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all hover:border-primary"
+                onClick={() => setSelectedProgram("cstem")}
+              >
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Box className="h-6 w-6" />
+                    CSTEM Program
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Kits</p>
+                      <p className="text-2xl font-bold">{cstemStats.total}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Stock</p>
+                      <p className="text-2xl font-bold">{cstemStats.totalStock}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Low Stock</p>
+                      <p className="text-2xl font-bold text-red-600">{cstemStats.lowStock}</p>
+                    </div>
+                  </div>
+                  {cstemStats.lowStock > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-red-600">
+                      <AlertTriangle className="h-4 w-4" />
+                      {cstemStats.lowStock} kit{cstemStats.lowStock > 1 ? 's' : ''} need restocking
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Robotics Program Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all hover:border-primary"
+                onClick={() => setSelectedProgram("robotics")}
+              >
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Box className="h-6 w-6" />
+                    Robotics Program
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Kits</p>
+                      <p className="text-2xl font-bold">{roboticsStats.total}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Stock</p>
+                      <p className="text-2xl font-bold">{roboticsStats.totalStock}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Low Stock</p>
+                      <p className="text-2xl font-bold text-red-600">{roboticsStats.lowStock}</p>
+                    </div>
+                  </div>
+                  {roboticsStats.lowStock > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-red-600">
+                      <AlertTriangle className="h-4 w-4" />
+                      {roboticsStats.lowStock} kit{roboticsStats.lowStock > 1 ? 's' : ''} need restocking
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Program View: Kit Management for Selected Program
   return (
     <Layout>
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Kit Management</h1>
-            <p className="text-muted-foreground mt-2">
-              Manage your CSTEM and Robotics kits inventory
-            </p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedProgram(null);
+                setStatusFilter("all");
+                setKitFilter("all");
+              }}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Programs
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                {selectedProgram === "cstem" ? "CSTEM" : "Robotics"} Kits
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Manage your {selectedProgram === "cstem" ? "CSTEM" : "Robotics"} kits inventory
+              </p>
 
-            {/* Filters: Options (Type), Kit lists, Pouching plan (Status) */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Options: Kit Type */}
-              <div>
-                <Label className="text-xs">Options • Kit Type</Label>
-                <Select
-                  value={typeFilter}
-                  onValueChange={(v: "all" | "cstem" | "robotics") => setTypeFilter(v)}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="All types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="cstem">CSTEM</SelectItem>
-                    <SelectItem value="robotics">Robotics</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Filters: Status and Specific Kit */}
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Status</Label>
+                  <Select
+                    value={statusFilter}
+                    onValueChange={(v: "all" | "in_stock" | "assigned") => setStatusFilter(v)}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="in_stock">In Stock</SelectItem>
+                      <SelectItem value="assigned">Assigned</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Kit lists: Specific Kit */}
-              <div>
-                <Label className="text-xs">Kit Lists • Select Kit</Label>
-                <Select
-                  value={kitFilter}
-                  onValueChange={(v: string) => setKitFilter(v)}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="All kits" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Kits</SelectItem>
-                    {(kits ?? []).map((k) => (
-                      <SelectItem key={k._id} value={k._id}>
-                        {k.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Pouching plan: Status */}
-              <div>
-                <Label className="text-xs">Pouching Plan • Status</Label>
-                <Select
-                  value={statusFilter}
-                  onValueChange={(v: "all" | "in_stock" | "assigned") => setStatusFilter(v)}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="All statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="in_stock">In Stock</SelectItem>
-                    <SelectItem value="assigned">Assigned</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <Label className="text-xs">Select Kit</Label>
+                  <Select
+                    value={kitFilter}
+                    onValueChange={(v: string) => setKitFilter(v)}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="All kits" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Kits</SelectItem>
+                      {(kits ?? [])
+                        .filter(k => k.type === selectedProgram)
+                        .map((k) => (
+                          <SelectItem key={k._id} value={k._id}>
+                            {k.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </div>
           
           <div className="flex gap-2">
-            <Button onClick={() => setIsKitSheetMakerOpen(true)} variant="outline">
+            <Button onClick={() => {
+              setFormData({ ...formData, type: selectedProgram });
+              setIsKitSheetMakerOpen(true);
+            }} variant="outline">
               <FileText className="h-4 w-4 mr-2" />
               Kit Sheet Maker
             </Button>
@@ -328,7 +438,7 @@ export default function Kits() {
               if (!open) resetForm();
             }}>
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => setFormData({ ...formData, type: selectedProgram })}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Kit
                 </Button>
