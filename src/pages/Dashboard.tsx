@@ -231,43 +231,42 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Client Reports */}
+        {/* Client Reports - Upcoming Dispatches */}
         {clientAllocations && clientAllocations.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Users className="h-5 w-5 text-blue-600" />
-                <span>Client Reports</span>
+                <span>Client Reports - Upcoming Dispatches This Month</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {clientAllocations.map((allocation) => (
-                  <div key={allocation.client._id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex-1">
-                      <p className="font-medium">{allocation.client.name}</p>
-                      <p className="text-sm text-muted-foreground">{allocation.client.organization}</p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="text-center">
-                        <div className="text-sm font-medium">{allocation.totalAssigned}</div>
-                        <div className="text-xs text-muted-foreground">Total Qty</div>
+                {clientAllocations
+                  .filter(allocation => allocation.upcomingThisMonth > 0)
+                  .map((allocation) => (
+                    <div key={allocation.client._id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium">{allocation.client.name}</p>
+                        <p className="text-sm text-muted-foreground">{allocation.client.organization}</p>
                       </div>
-                      <div className="text-center">
-                        <div className="text-sm font-medium">{allocation.assignments}</div>
-                        <div className="text-xs text-muted-foreground">Assignments</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm font-medium">{allocation.packed}</div>
-                        <div className="text-xs text-muted-foreground">Packed</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm font-medium">{allocation.dispatched}</div>
-                        <div className="text-xs text-muted-foreground">Dispatched</div>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-center">
+                          <div className="text-sm font-medium">{allocation.upcomingQty}</div>
+                          <div className="text-xs text-muted-foreground">Upcoming Qty</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm font-medium">{allocation.upcomingThisMonth}</div>
+                          <div className="text-xs text-muted-foreground">Assignments</div>
+                        </div>
                       </div>
                     </div>
+                  ))}
+                {clientAllocations.filter(allocation => allocation.upcomingThisMonth > 0).length === 0 && (
+                  <div className="text-sm text-muted-foreground text-center py-4">
+                    No upcoming dispatches scheduled for this month
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>

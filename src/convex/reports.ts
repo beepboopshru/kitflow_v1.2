@@ -36,17 +36,38 @@ export const getClientAllocation = query({
     const clients = await ctx.db.query("clients").collect();
     const assignments = await ctx.db.query("assignments").collect();
 
+    // Get current month boundaries
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
+
     const clientAllocations = await Promise.all(
       clients.map(async (client) => {
         const clientAssignments = assignments.filter(a => a.clientId === client._id);
         const totalAssigned = clientAssignments.reduce((sum, a) => sum + a.quantity, 0);
         
+        // Filter for upcoming dispatches in current month (not yet dispatched)
+        const upcomingThisMonth = clientAssignments.filter(a => {
+          // Check if dispatchedAt is set and falls in current month
+          if (typeof a.dispatchedAt === "number") {
+            const isInCurrentMonth = a.dispatchedAt >= currentMonthStart && a.dispatchedAt <= currentMonthEnd;
+            // Not yet dispatched (status is not "dispatched")
+            const notYetDispatched = a.status !== "dispatched";
+            return isInCurrentMonth && notYetDispatched;
+          }
+          return false;
+        });
+
+        const upcomingQty = upcomingThisMonth.reduce((sum, a) => sum + a.quantity, 0);
+
         return {
           client,
           totalAssigned,
           assignments: clientAssignments.length,
           packed: clientAssignments.filter(a => a.status === "packed").length,
           dispatched: clientAssignments.filter(a => a.status === "dispatched").length,
+          upcomingThisMonth: upcomingThisMonth.length,
+          upcomingQty,
         };
       })
     );
