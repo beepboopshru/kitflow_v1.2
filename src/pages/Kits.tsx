@@ -783,7 +783,7 @@ const getImageUrl = useQuery(
                   Add Kit
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{editingKit ? "Edit Kit" : "Create New Kit"}</DialogTitle>
                 </DialogHeader>
