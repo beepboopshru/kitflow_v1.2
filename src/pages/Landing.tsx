@@ -69,7 +69,7 @@ export default function Landing() {
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
               <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
-              <span className="text-xl font-semibold tracking-tight">science Utsav Management system</span>
+              <span className="text-xl font-semibold tracking-tight">Science Utsav Management System</span>
             </div>
             
             <div className="flex items-center space-x-4">
