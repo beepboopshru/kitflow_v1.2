@@ -38,22 +38,23 @@ export const generateKitSheetPdf = action({
       <html>
       <head>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { color: #333; border-bottom: 2px solid #666; padding-bottom: 10px; }
-          h2 { color: #666; margin-top: 20px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          body { font-family: Arial, sans-serif; padding: 10px; font-size: 12px; }
+          h1 { color: #333; border-bottom: 1px solid #666; padding-bottom: 5px; margin: 0 0 5px 0; font-size: 16px; }
+          h2 { color: #666; margin: 10px 0 5px 0; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+          th, td { border: 1px solid #ddd; padding: 4px 6px; text-align: left; font-size: 11px; }
           th { background-color: #f2f2f2; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .kit-info-container { display: flex; gap: 20px; margin-bottom: 20px; align-items: flex-start; }
+          .header { text-align: center; margin-bottom: 10px; }
+          .kit-info-container { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
           .kit-info { flex: 1; }
+          .kit-info p { margin: 2px 0; line-height: 1.3; }
           .kit-image { flex-shrink: 0; }
-          .kit-image img { max-width: 250px; max-height: 250px; border: 2px solid #ddd; border-radius: 8px; }
+          .kit-image img { max-width: 150px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px; }
         </style>
       </head>
       <body>
         <div class="header">
-          <h1>science Utsav Management system</h1>
+          <h1>Science Utsav Management System</h1>
           <h2>Kit Sheet</h2>
         </div>
         <div class="kit-info-container">
