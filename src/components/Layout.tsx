@@ -64,7 +64,7 @@ export default function Layout({ children }: LayoutProps) {
       <header className="border-b border-border bg-card">
         <div className="flex h-16 items-center justify-between px-8">
           <Link to="/dashboard" className="flex items-center space-x-3">
-            <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
+            <img src="https://harmless-tapir-303.convex.cloud/api/storage/1467edc0-3490-4b04-9260-93ea45159890" alt="Logo" className="h-8 w-8" />
             <span className="text-xl font-semibold tracking-tight">Inventory</span>
           </Link>
           
