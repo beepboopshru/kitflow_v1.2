@@ -11,6 +11,16 @@ export const generateKitSheetPdf = action({
     const kit: any = await ctx.runQuery(api.kits.get, { id: args.kitId });
     if (!kit) throw new Error("Kit not found");
 
+    // Fetch image URL if kit has an image
+    let imageUrl: string | null = null;
+    if (kit.image) {
+      try {
+        imageUrl = await ctx.runQuery(api.storage.getImageUrl, { storageId: kit.image });
+      } catch (e) {
+        console.error("Failed to fetch kit image:", e);
+      }
+    }
+
     // Parse structured data if available
     let pouches: Array<{ name: string; materials: Array<{ name: string; quantity: number; unit: string; notes?: string }> }> = [];
     
@@ -36,6 +46,8 @@ export const generateKitSheetPdf = action({
           th { background-color: #f2f2f2; }
           .header { text-align: center; margin-bottom: 30px; }
           .kit-info { margin-bottom: 20px; }
+          .kit-image { text-align: center; margin: 20px 0; }
+          .kit-image img { max-width: 300px; max-height: 300px; border: 2px solid #ddd; border-radius: 8px; }
         </style>
       </head>
       <body>
@@ -47,8 +59,18 @@ export const generateKitSheetPdf = action({
           <p><strong>Kit Name:</strong> ${kit.name}</p>
           <p><strong>Type:</strong> ${kit.type.toUpperCase()}</p>
           <p><strong>Stock Count:</strong> ${kit.stockCount}</p>
+          ${kit.serialNumber ? `<p><strong>Serial Number:</strong> ${kit.serialNumber}</p>` : ''}
         </div>
     `;
+
+    // Add kit image if available
+    if (imageUrl) {
+      htmlContent += `
+        <div class="kit-image">
+          <img src="${imageUrl}" alt="${kit.name}" />
+        </div>
+      `;
+    }
 
     if (pouches.length > 0) {
       pouches.forEach((pouch) => {
