@@ -1,1 +1,14 @@
-if (assignment.status !== "dispatched" && typeof assignment.dispatchedAt !== "number")
+{kit.image && (
+  <Button
+    variant="ghost"
+    size="sm"
+    onClick={(e) => {
+      e.stopPropagation();
+      setViewingImageKit(kit);
+      setIsImageViewerOpen(true);
+    }}
+    title="View Kit Image"
+  >
+    <ImageIcon className="h-4 w-4" />
+  </Button>
+)}

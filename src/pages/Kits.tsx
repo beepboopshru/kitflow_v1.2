@@ -304,10 +304,14 @@ const getImageUrl = useQuery(
         await updateKit({
           id: editingKit._id,
           ...formData,
+          image: editingKit.image, // Include the image from editingKit state
         });
         toast("Kit updated successfully");
       } else {
-        await createKit(formData);
+        await createKit({
+          ...formData,
+          image: editingKit?.image, // Include the image if uploaded
+        });
         toast("Kit created successfully");
       }
       
