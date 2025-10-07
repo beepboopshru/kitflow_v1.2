@@ -45,9 +45,10 @@ export const generateKitSheetPdf = action({
           th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
           th { background-color: #f2f2f2; }
           .header { text-align: center; margin-bottom: 30px; }
-          .kit-info { margin-bottom: 20px; }
-          .kit-image { text-align: center; margin: 20px 0; }
-          .kit-image img { max-width: 300px; max-height: 300px; border: 2px solid #ddd; border-radius: 8px; }
+          .kit-info-container { display: flex; gap: 20px; margin-bottom: 20px; align-items: flex-start; }
+          .kit-info { flex: 1; }
+          .kit-image { flex-shrink: 0; }
+          .kit-image img { max-width: 250px; max-height: 250px; border: 2px solid #ddd; border-radius: 8px; }
         </style>
       </head>
       <body>
@@ -55,22 +56,20 @@ export const generateKitSheetPdf = action({
           <h1>science Utsav Management system</h1>
           <h2>Kit Sheet</h2>
         </div>
-        <div class="kit-info">
-          <p><strong>Kit Name:</strong> ${kit.name}</p>
-          <p><strong>Type:</strong> ${kit.type.toUpperCase()}</p>
-          <p><strong>Stock Count:</strong> ${kit.stockCount}</p>
-          ${kit.serialNumber ? `<p><strong>Serial Number:</strong> ${kit.serialNumber}</p>` : ''}
+        <div class="kit-info-container">
+          <div class="kit-info">
+            <p><strong>Kit Name:</strong> ${kit.name}</p>
+            <p><strong>Type:</strong> ${kit.type.toUpperCase()}</p>
+            <p><strong>Stock Count:</strong> ${kit.stockCount}</p>
+            ${kit.serialNumber ? `<p><strong>Serial Number:</strong> ${kit.serialNumber}</p>` : ''}
+          </div>
+          ${imageUrl ? `
+          <div class="kit-image">
+            <img src="${imageUrl}" alt="${kit.name}" />
+          </div>
+          ` : ''}
         </div>
     `;
-
-    // Add kit image if available
-    if (imageUrl) {
-      htmlContent += `
-        <div class="kit-image">
-          <img src="${imageUrl}" alt="${kit.name}" />
-        </div>
-      `;
-    }
 
     if (pouches.length > 0) {
       pouches.forEach((pouch) => {
