@@ -60,8 +60,7 @@ export const generateKitSheetPdf = action({
         <div class="kit-info-container">
           <div class="kit-info">
             <p><strong>Kit Name:</strong> ${kit.name}</p>
-            <p><strong>Type:</strong> ${kit.type.toUpperCase()}</p>
-            <p><strong>Stock Count:</strong> ${kit.stockCount}</p>
+            <p><strong>Type:</strong> ${kit.category ? kit.category.toUpperCase() : (kit.cstemVariant ? kit.cstemVariant.toUpperCase() : kit.type.toUpperCase())}</p>
             ${kit.serialNumber ? `<p><strong>Serial Number:</strong> ${kit.serialNumber}</p>` : ''}
           </div>
           ${imageUrl ? `
