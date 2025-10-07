@@ -30,6 +30,8 @@ export default function Assignments() {
   const createAssignment = useMutation(api.assignments.create);
   const updateStatus = useMutation(api.assignments.updateStatus);
   const clearAllPending = useMutation(api.assignments.clearAllPendingAssignments);
+  const deleteAssignment = useMutation(api.assignments.deleteAssignment);
+  const clearAll = useMutation(api.assignments.clearAllAssignments);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -136,6 +138,49 @@ export default function Assignments() {
     }
   };
 
+  const handleClearAllAssignmentsIncludingDispatched = async () => {
+    const totalCount = assignments?.length ?? 0;
+
+    if (totalCount === 0) {
+      toast("No assignments to clear");
+      return;
+    }
+
+    const first = confirm(
+      `This will delete ALL ${totalCount} assignment(s) including dispatched ones. Stock will be restored for pending assignments only. Continue?`
+    );
+    if (!first) return;
+
+    const second = confirm("Are you absolutely sure? This action is IRREVERSIBLE and will delete ALL assignment history.");
+    if (!second) return;
+
+    try {
+      const result = await clearAll();
+      toast(`Cleared ${result.deletedCount} assignment(s) successfully`);
+    } catch (error) {
+      toast("Error clearing all assignments", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  const handleDeleteAssignment = async (assignmentId: string, assignmentStatus: string) => {
+    const confirmMsg = assignmentStatus === "dispatched" 
+      ? "This assignment is dispatched. Stock will NOT be restored. Delete anyway?"
+      : "Delete this assignment? Stock will be restored to the kit.";
+    
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      await deleteAssignment({ id: assignmentId as any });
+      toast("Assignment deleted successfully");
+    } catch (error) {
+      toast("Error deleting assignment", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "assigned": return "secondary";
@@ -168,6 +213,13 @@ export default function Assignments() {
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear All Pending
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleClearAllAssignmentsIncludingDispatched}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear All
             </Button>
             <Dialog open={isCreateOpen} onOpenChange={(open) => {
               setIsCreateOpen(open);
@@ -455,6 +507,14 @@ export default function Assignments() {
                             Dispatch
                           </Button>
                         )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteAssignment(assignment._id, assignment.status)}
+                          className="h-8 px-2 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     </td>
                   </motion.tr>

@@ -357,3 +357,71 @@ export const clearAllPendingAssignments = mutation({
     return { deletedCount: pending.length, restoredByKit: qtyByKit };
   },
 });
+
+export const deleteAssignment = mutation({
+  args: {
+    id: v.id("assignments"),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Unauthorized");
+
+    const assignment = await ctx.db.get(args.id);
+    if (!assignment) throw new Error("Assignment not found");
+
+    // If not dispatched, restore stock
+    if (assignment.status !== "dispatched" && typeof assignment.dispatchedAt !== "number") {
+      const kit = await ctx.db.get(assignment.kitId);
+      if (kit && "stockCount" in kit) {
+        const newStock = (kit.stockCount ?? 0) + (assignment.quantity ?? 0);
+        await ctx.db.patch(assignment.kitId, {
+          stockCount: newStock,
+          status: newStock === 0 ? ("assigned" as const) : ("in_stock" as const),
+        });
+      }
+    }
+
+    await ctx.db.delete(args.id);
+    return { success: true };
+  },
+});
+
+export const clearAllAssignments = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Unauthorized");
+
+    // Fetch all assignments
+    const allAssignments = await ctx.db.query("assignments").collect();
+
+    if (allAssignments.length === 0) {
+      return { deletedCount: 0, restoredByKit: {} };
+    }
+
+    // Group by kit to restore stock (only for non-dispatched)
+    const qtyByKit: Record<string, number> = {};
+    for (const a of allAssignments) {
+      // Only restore stock for non-dispatched assignments
+      if (a.status !== "dispatched" && typeof a.dispatchedAt !== "number") {
+        const kitId = a.kitId;
+        qtyByKit[kitId] = (qtyByKit[kitId] || 0) + (a.quantity ?? 0);
+      }
+      await ctx.db.delete(a._id);
+    }
+
+    // Restore stock for each affected kit
+    for (const [kitId, qty] of Object.entries(qtyByKit)) {
+      const kit = await ctx.db.get(kitId as any);
+      if (kit && "stockCount" in kit) {
+        const newStock = (kit.stockCount ?? 0) + qty;
+        await ctx.db.patch(kitId as any, {
+          stockCount: newStock,
+          status: newStock === 0 ? ("assigned" as const) : ("in_stock" as const),
+        });
+      }
+    }
+
+    return { deletedCount: allAssignments.length, restoredByKit: qtyByKit };
+  },
+});
