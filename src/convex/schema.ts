@@ -36,6 +36,7 @@ const schema = defineSchema(
     kits: defineTable({
       name: v.string(),
       type: v.union(v.literal("cstem"), v.literal("robotics")),
+      cstemVariant: v.optional(v.union(v.literal("explorer"), v.literal("discoverer"))),
       description: v.optional(v.string()),
       image: v.optional(v.string()),
       stockCount: v.number(),

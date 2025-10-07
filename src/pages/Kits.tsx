@@ -40,6 +40,7 @@ export default function Kits() {
   const [formData, setFormData] = useState({
     name: "",
     type: "cstem" as "cstem" | "robotics",
+    cstemVariant: undefined as "explorer" | "discoverer" | undefined,
     description: "",
     stockCount: 0,
     lowStockThreshold: 5,
@@ -78,6 +79,7 @@ export default function Kits() {
     setFormData({
       name: "",
       type: "cstem",
+      cstemVariant: undefined,
       description: "",
       stockCount: 0,
       lowStockThreshold: 5,
@@ -118,6 +120,7 @@ export default function Kits() {
       setFormData({
         name: kit.name,
         type: kit.type,
+        cstemVariant: kit.cstemVariant,
         description: kit.description || "",
         stockCount: kit.stockCount,
         lowStockThreshold: kit.lowStockThreshold,
@@ -348,7 +351,7 @@ export default function Kits() {
                   <div>
                     <Label htmlFor="type">Kit Type</Label>
                     <Select value={formData.type} onValueChange={(value: "cstem" | "robotics") => 
-                      setFormData({ ...formData, type: value })
+                      setFormData({ ...formData, type: value, cstemVariant: value === "robotics" ? undefined : formData.cstemVariant })
                     }>
                       <SelectTrigger>
                         <SelectValue />
@@ -359,6 +362,26 @@ export default function Kits() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {formData.type === "cstem" && (
+                    <div>
+                      <Label htmlFor="cstemVariant">CSTEM Variant</Label>
+                      <Select 
+                        value={formData.cstemVariant || ""} 
+                        onValueChange={(value: "explorer" | "discoverer") => 
+                          setFormData({ ...formData, cstemVariant: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select variant" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="explorer">Explorer</SelectItem>
+                          <SelectItem value="discoverer">Discoverer</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   <div>
                     <Label htmlFor="description">Description</Label>
