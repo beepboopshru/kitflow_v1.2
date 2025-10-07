@@ -60,6 +60,14 @@ export default function Kits() {
     categories: "",
   });
 
+  const [isEditProgramOpen, setIsEditProgramOpen] = useState(false);
+  const [editingProgram, setEditingProgram] = useState<any>(null);
+  const [editProgramData, setEditProgramData] = useState({
+    name: "",
+    description: "",
+    categories: "",
+  });
+
   const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "low_stock">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
@@ -69,6 +77,7 @@ export default function Kits() {
 
   const copyKit = useMutation(api.kits.copy);
   const clearPendingByKit = useMutation(api.assignments.clearPendingByKit);
+  const updateProgram = useMutation(api.programs.update);
   const [isKitSheetMakerOpen, setIsKitSheetMakerOpen] = useState(false);
   const [editingKitForSheetMaker, setEditingKitForSheetMaker] = useState<any>(null);
   const generatePdf = useAction(api.kitPdf.generateKitSheetPdf);
@@ -154,6 +163,49 @@ export default function Kits() {
           description: error instanceof Error ? error.message : "Cannot delete program with associated kits" 
         });
       }
+    }
+  };
+
+  const handleEditProgram = (program: any) => {
+    setEditingProgram(program);
+    setEditProgramData({
+      name: program.name,
+      description: program.description || "",
+      categories: program.categories ? program.categories.join(", ") : "",
+    });
+    setIsEditProgramOpen(true);
+  };
+
+  const handleUpdateProgram = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingProgram || !editProgramData.name.trim()) {
+      toast("Please enter a program name");
+      return;
+    }
+
+    try {
+      // Parse categories from comma-separated string
+      const categories = editProgramData.categories
+        .split(',')
+        .map(c => c.trim())
+        .filter(c => c.length > 0);
+      
+      await updateProgram({
+        id: editingProgram._id,
+        name: editProgramData.name,
+        description: editProgramData.description,
+        categories: categories.length > 0 ? categories : undefined,
+      });
+      
+      toast("Program updated successfully");
+      setIsEditProgramOpen(false);
+      setEditingProgram(null);
+      setEditProgramData({ name: "", description: "", categories: "" });
+    } catch (error) {
+      toast("Error updating program", { 
+        description: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   };
 
@@ -459,16 +511,28 @@ export default function Kits() {
                           <Box className="h-6 w-6" />
                           {program.name}
                         </CardTitle>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteProgram(program._id, program.name);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditProgram(program);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteProgram(program._id, program.name);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                       {program.description && (
                         <p className="text-xs text-muted-foreground">{program.description}</p>
@@ -501,6 +565,54 @@ export default function Kits() {
               );
             })}
           </div>
+
+          {/* Edit Program Dialog */}
+          <Dialog open={isEditProgramOpen} onOpenChange={setIsEditProgramOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Program</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleUpdateProgram} className="space-y-4">
+                <div>
+                  <Label htmlFor="editProgramName">Program Name</Label>
+                  <Input
+                    id="editProgramName"
+                    value={editProgramData.name}
+                    onChange={(e) => setEditProgramData({ ...editProgramData, name: e.target.value })}
+                    placeholder="e.g., Electronics, Mechanics"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editProgramDescription">Description (optional)</Label>
+                  <Textarea
+                    id="editProgramDescription"
+                    value={editProgramData.description}
+                    onChange={(e) => setEditProgramData({ ...editProgramData, description: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editProgramCategories">Categories (optional)</Label>
+                  <Input
+                    id="editProgramCategories"
+                    value={editProgramData.categories}
+                    onChange={(e) => setEditProgramData({ ...editProgramData, categories: e.target.value })}
+                    placeholder="e.g., Explorer, Discoverer"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Comma-separated list of categories for this program
+                  </p>
+                </div>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setIsEditProgramOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Update Program</Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </Layout>
     );

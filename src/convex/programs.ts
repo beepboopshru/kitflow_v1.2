@@ -57,6 +57,7 @@ export const update = mutation({
     id: v.id("programs"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
+    categories: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
