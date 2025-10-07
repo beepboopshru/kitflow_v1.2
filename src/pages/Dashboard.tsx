@@ -110,7 +110,7 @@ export default function Dashboard() {
             <CardTitle>Kit Quick Filter</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
                 <Label className="text-xs">Options • Kit Type</Label>
                 <Select value={typeFilter} onValueChange={(v: "all" | "cstem" | "robotics") => setTypeFilter(v)}>
@@ -245,12 +245,12 @@ export default function Dashboard() {
                 {clientAllocations
                   .filter(allocation => allocation.upcomingThisMonth > 0)
                   .map((allocation) => (
-                    <div key={allocation.client._id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div key={allocation.client._id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted/30 rounded-lg gap-3">
                       <div className="flex-1">
                         <p className="font-medium">{allocation.client.name}</p>
                         <p className="text-sm text-muted-foreground">{allocation.client.organization}</p>
                       </div>
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center gap-4 sm:gap-6">
                         <div className="text-center">
                           <div className="text-sm font-medium">{allocation.upcomingQty}</div>
                           <div className="text-xs text-muted-foreground">Upcoming Qty</div>
