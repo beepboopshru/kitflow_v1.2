@@ -126,49 +126,74 @@ export default function Layout({ children }: LayoutProps) {
         </main>
       </div>
 
-      {/* Global Chatbot Widget */}
-      <div className="fixed bottom-4 right-4 z-50">
-        {chatOpen ? (
-          <Card className="w-80 shadow-lg">
-            <CardContent className="p-0 flex flex-col h-96">
-              <div className="flex items-center justify-between px-4 py-3 border-b">
-                <div className="font-medium">KitFlow Assistant</div>
-                <Button variant="ghost" size="sm" onClick={() => setChatOpen(false)}>
-                  Close
-                </Button>
-              </div>
-              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-                {messages.map((m, idx) => (
+      {/* AI Chat Sidebar */}
+      {chatOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={() => setChatOpen(false)}
+          />
+          
+          {/* Sidebar */}
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="ml-auto relative w-full sm:w-96 bg-card border-l border-border flex flex-col shadow-2xl"
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div className="font-semibold text-lg">KitFlow Assistant</div>
+              <Button variant="ghost" size="sm" onClick={() => setChatOpen(false)}>
+                Close
+              </Button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+              {messages.map((m, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${m.role === "assistant" ? "justify-start" : "justify-end"}`}
+                >
                   <div
-                    key={idx}
-                    className={`text-sm ${m.role === "assistant" ? "text-foreground" : "text-foreground"}`}
+                    className={`rounded-lg px-4 py-2 max-w-[85%] ${
+                      m.role === "assistant" 
+                        ? "bg-muted text-foreground" 
+                        : "bg-primary text-primary-foreground"
+                    }`}
                   >
-                    <div
-                      className={`rounded-md px-3 py-2 inline-block max-w-[85%] ${
-                        m.role === "assistant" ? "bg-muted" : "bg-primary text-primary-foreground"
-                      }`}
-                    >
-                      {m.content}
-                    </div>
+                    <p className="text-sm">{m.content}</p>
                   </div>
-                ))}
-              </div>
-              <form onSubmit={handleSend} className="border-t p-3 flex items-center gap-2">
-                <Input
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask about kits, stock, etc."
-                />
-                <Button type="submit" size="sm">
-                  Send
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        ) : (
-          <Button onClick={() => setChatOpen(true)}>Chat with AI</Button>
-        )}
-      </div>
+                </div>
+              ))}
+            </div>
+            
+            <form onSubmit={handleSend} className="border-t p-4 flex items-center gap-2">
+              <Input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask about kits, stock, etc."
+                className="flex-1"
+              />
+              <Button type="submit" size="sm">
+                Send
+              </Button>
+            </form>
+          </motion.div>
+        </div>
+      )}
+      
+      {/* Floating AI Button */}
+      {!chatOpen && (
+        <Button 
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-6 right-6 z-40 shadow-lg"
+          size="lg"
+        >
+          Chat with AI
+        </Button>
+      )}
     </div>
   );
 }
