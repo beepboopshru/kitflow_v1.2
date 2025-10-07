@@ -229,22 +229,7 @@ export default function Landing() {
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-sm text-muted-foreground">
-            Built with{" "}
-            <a
-              href="https://vly.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-primary transition-colors"
-            >
-              vly.ai
-            </a>
-          </div>
-        </div>
-      </footer>
+    
     </div>
   );
 }
