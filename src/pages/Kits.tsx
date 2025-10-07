@@ -816,9 +816,9 @@ export default function Kits() {
                                 {isStructured ? (
                                   <div className="mt-2 space-y-3">
                                     {structuredPouches.map((pouch, pIdx) => (
-                                      <div key={pIdx} className="border rounded p-2 bg-background">
-                                        <div className="font-medium text-sm mb-1">{pouch.name}</div>
-                                        <ul className="space-y-2 text-xs">
+                                      <div key={pIdx} className="border rounded p-3 bg-background">
+                                        <div className="font-medium text-sm text-center mb-3 pb-2 border-b">{pouch.name}</div>
+                                        <ul className="space-y-2 text-sm">
                                           {pouch.materials.map((material, mIdx) => (
                                             <li key={mIdx}>
                                               <div className="flex justify-between gap-2">
@@ -828,7 +828,7 @@ export default function Kits() {
                                                 </span>
                                               </div>
                                               {material.notes && (
-                                                <div className="text-muted-foreground ml-3 mt-0.5 italic">
+                                                <div className="text-muted-foreground ml-3 mt-0.5 italic text-xs">
                                                   {material.notes}
                                                 </div>
                                               )}
