@@ -230,25 +230,54 @@ export default function Clients() {
           </Dialog>
         </div>
 
-        {/* Clients Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {clients?.map((client, index) => (
-            <motion.div
-              key={client._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{client.name}</CardTitle>
-                      <Badge variant="outline" className="mt-1">
-                        {client.type === "monthly" ? "Monthly" : "One Time"}
-                      </Badge>
+        {/* Clients List */}
+        <Card>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {clients?.map((client, index) => (
+                <motion.div
+                  key={client._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="p-4 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-semibold text-base">{client.name}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          {client.type === "monthly" ? "Monthly" : "One Time"}
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                        <div className="flex items-center space-x-2">
+                          <Building className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="truncate">{client.organization}</span>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span>{client.contact}</span>
+                        </div>
+
+                        {client.email && (
+                          <div className="flex items-center space-x-2">
+                            <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="truncate">{client.email}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {client.notes && (
+                        <div className="text-xs text-muted-foreground">
+                          <span className="font-medium">Notes:</span> {client.notes}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex space-x-1">
+
+                    <div className="flex items-center space-x-1 shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -261,6 +290,7 @@ export default function Clients() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(client)}
+                        title="Edit Client"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -268,41 +298,17 @@ export default function Clients() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(client._id)}
+                        title="Delete Client"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Building className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{client.organization}</span>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{client.contact}</span>
-                  </div>
-
-                  {client.email && (
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{client.email}</span>
-                    </div>
-                  )}
-
-                  {client.notes && (
-                    <div>
-                      <span className="text-xs text-muted-foreground">Notes:</span>
-                      <p className="text-xs mt-1">{client.notes}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+                </motion.div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Monthwise & Gradewise dialog */}
         <Dialog open={isDetailsOpen} onOpenChange={(o) => {
