@@ -343,6 +343,8 @@ const getImageUrl = useQuery(
         packingRequirements: kit.packingRequirements || "",
       });
       setEditingKit(kit);
+      setUploadedImageId(kit.image || null);
+      setImagePreview(null);
       setIsCreateOpen(true);
     }
   };
