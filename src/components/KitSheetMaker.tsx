@@ -36,6 +36,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
   const [cstemVariant, setCstemVariant] = useState<"explorer" | "discoverer" | undefined>(undefined);
   const [pouches, setPouches] = useState<Pouch[]>([]);
   const [stockCount, setStockCount] = useState(0);
+  const [lowStockThreshold, setLowStockThreshold] = useState(5);
   
   // Pouch builder state
   const [showPouchBuilder, setShowPouchBuilder] = useState(false);
@@ -67,6 +68,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
       setKitType(editingKit.type);
       setCstemVariant(editingKit.cstemVariant);
       setStockCount(editingKit.stockCount);
+      setLowStockThreshold(editingKit.lowStockThreshold || 5);
       if (editingKit.isStructured && editingKit.packingRequirements) {
         try {
           const parsed = JSON.parse(editingKit.packingRequirements);
@@ -85,6 +87,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
     setCstemVariant(undefined);
     setPouches([]);
     setStockCount(0);
+    setLowStockThreshold(5);
     setPouchName("");
     setPouchMaterials([]);
     setSelectedItem("");
@@ -186,6 +189,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
           type: kitType,
           cstemVariant: kitType === "cstem" ? cstemVariant : undefined,
           stockCount: stockCount,
+          lowStockThreshold: lowStockThreshold,
           packingRequirements: structuredData,
           isStructured: true,
         });
@@ -196,7 +200,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
           type: kitType,
           cstemVariant: kitType === "cstem" ? cstemVariant : undefined,
           stockCount: stockCount,
-          lowStockThreshold: 5,
+          lowStockThreshold: lowStockThreshold,
           packingRequirements: structuredData,
           isStructured: true,
         });
@@ -492,16 +496,29 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="stockCount">Initial Stock Count (optional)</Label>
-              <Input
-                id="stockCount"
-                type="number"
-                min="0"
-                value={stockCount}
-                onChange={(e) => setStockCount(parseInt(e.target.value) || 0)}
-                placeholder="Leave 0 if not ready"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="stockCount">Initial Stock Count</Label>
+                <Input
+                  id="stockCount"
+                  type="number"
+                  min="0"
+                  value={stockCount}
+                  onChange={(e) => setStockCount(parseInt(e.target.value) || 0)}
+                  placeholder="Enter stock count"
+                />
+              </div>
+              <div>
+                <Label htmlFor="lowStockThreshold">Low Stock Alert</Label>
+                <Input
+                  id="lowStockThreshold"
+                  type="number"
+                  min="0"
+                  value={lowStockThreshold}
+                  onChange={(e) => setLowStockThreshold(parseInt(e.target.value) || 5)}
+                  placeholder="Enter threshold"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
