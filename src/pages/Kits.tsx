@@ -756,7 +756,19 @@ export default function Kits() {
                               : kit.type.toUpperCase()}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 text-sm">{kit.stockCount}</td>
+                        <td className="px-4 py-3 text-sm">
+                          {kit.stockCount >= 0 ? (
+                            <div>
+                              <div className="font-medium">{kit.stockCount}</div>
+                              <div className="text-xs text-muted-foreground">Available</div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="font-medium text-red-600">{Math.abs(kit.stockCount)}</div>
+                              <div className="text-xs text-red-600">To be Made</div>
+                            </div>
+                          )}
+                        </td>
                         <td className="px-4 py-3">
                           <Badge 
                             variant={kit.stockCount <= kit.lowStockThreshold ? "destructive" : "default"} 
