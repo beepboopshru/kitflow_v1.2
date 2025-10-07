@@ -49,7 +49,7 @@ export default function Kits() {
     packingRequirements: "",
   });
 
-  const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "assigned">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "low_stock">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
   const [newMaterial, setNewMaterial] = useState<string>("");
@@ -62,7 +62,14 @@ export default function Kits() {
   // Filter kits based on selected program and other filters
   const filteredKits = (kits ?? []).filter((k) => {
     if (selectedProgram && k.type !== selectedProgram) return false;
-    const statusOk = statusFilter === "all" ? true : k.status === statusFilter;
+    
+    // Status filter based on stock levels
+    let statusOk = true;
+    if (statusFilter === "in_stock") {
+      statusOk = k.stockCount > k.lowStockThreshold;
+    } else if (statusFilter === "low_stock") {
+      statusOk = k.stockCount <= k.lowStockThreshold;
+    }
     
     // For CSTEM kits, filter by variant (explorer/discoverer)
     let typeOk = true;
@@ -393,7 +400,7 @@ export default function Kits() {
                   <Label className="text-xs">Status</Label>
                   <Select
                     value={statusFilter}
-                    onValueChange={(v: "all" | "in_stock" | "assigned") => setStatusFilter(v)}
+                    onValueChange={(v: "all" | "in_stock" | "low_stock") => setStatusFilter(v)}
                   >
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="All statuses" />
@@ -401,7 +408,7 @@ export default function Kits() {
                     <SelectContent>
                       <SelectItem value="all">All Statuses</SelectItem>
                       <SelectItem value="in_stock">In Stock</SelectItem>
-                      <SelectItem value="assigned">Assigned</SelectItem>
+                      <SelectItem value="low_stock">Low Stock</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
