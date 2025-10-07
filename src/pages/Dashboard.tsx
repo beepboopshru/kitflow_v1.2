@@ -22,13 +22,18 @@ export default function Dashboard() {
 
   // Add local filters
   const [typeFilter, setTypeFilter] = useState<"all" | "cstem" | "robotics">("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "assigned">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "low_stock">("all");
   const [kitFilter, setKitFilter] = useState<string>("all");
 
   // Filtered kits derived from kits query
   const filteredKits = (kits ?? []).filter((k) => {
     const typeOk = typeFilter === "all" ? true : k.type === typeFilter;
-    const statusOk = statusFilter === "all" ? true : k.status === statusFilter;
+    let statusOk = true;
+    if (statusFilter === "in_stock") {
+      statusOk = k.stockCount > k.lowStockThreshold;
+    } else if (statusFilter === "low_stock") {
+      statusOk = k.stockCount <= k.lowStockThreshold;
+    }
     const kitOk = kitFilter === "all" ? true : k._id === kitFilter;
     return typeOk && statusOk && kitOk;
   });
@@ -144,14 +149,14 @@ export default function Dashboard() {
 
               <div>
                 <Label className="text-xs">Pouching Plan • Status</Label>
-                <Select value={statusFilter} onValueChange={(v: "all" | "in_stock" | "assigned") => setStatusFilter(v)}>
+                <Select value={statusFilter} onValueChange={(v: "all" | "in_stock" | "low_stock") => setStatusFilter(v)}>
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="All statuses" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="in_stock">In Stock</SelectItem>
-                    <SelectItem value="assigned">Assigned</SelectItem>
+                    <SelectItem value="low_stock">Low Stock</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
