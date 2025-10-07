@@ -358,9 +358,19 @@ export const clearAllPendingAssignments = mutation({
       const kit = await ctx.db.get(kitId as any);
       if (kit && "stockCount" in kit) {
         const newStock = (kit.stockCount ?? 0) + qty;
+        let newStatus: "in_stock" | "assigned" | "to_be_made";
+        
+        if (newStock < 0) {
+          newStatus = "to_be_made";
+        } else if (newStock === 0) {
+          newStatus = "assigned";
+        } else {
+          newStatus = "in_stock";
+        }
+        
         await ctx.db.patch(kitId as any, {
           stockCount: newStock,
-          status: newStock === 0 ? ("assigned" as const) : ("in_stock" as const),
+          status: newStatus,
         });
       }
     }
@@ -385,9 +395,19 @@ export const deleteAssignment = mutation({
       const kit = await ctx.db.get(assignment.kitId);
       if (kit && "stockCount" in kit) {
         const newStock = (kit.stockCount ?? 0) + (assignment.quantity ?? 0);
+        let newStatus: "in_stock" | "assigned" | "to_be_made";
+        
+        if (newStock < 0) {
+          newStatus = "to_be_made";
+        } else if (newStock === 0) {
+          newStatus = "assigned";
+        } else {
+          newStatus = "in_stock";
+        }
+        
         await ctx.db.patch(assignment.kitId, {
           stockCount: newStock,
-          status: newStock === 0 ? ("assigned" as const) : ("in_stock" as const),
+          status: newStatus,
         });
       }
     }
@@ -426,9 +446,19 @@ export const clearAllAssignments = mutation({
       const kit = await ctx.db.get(kitId as any);
       if (kit && "stockCount" in kit) {
         const newStock = (kit.stockCount ?? 0) + qty;
+        let newStatus: "in_stock" | "assigned" | "to_be_made";
+        
+        if (newStock < 0) {
+          newStatus = "to_be_made";
+        } else if (newStock === 0) {
+          newStatus = "assigned";
+        } else {
+          newStatus = "in_stock";
+        }
+        
         await ctx.db.patch(kitId as any, {
           stockCount: newStock,
-          status: newStock === 0 ? ("assigned" as const) : ("in_stock" as const),
+          status: newStatus,
         });
       }
     }
