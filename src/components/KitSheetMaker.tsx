@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Edit, ChevronRight, ChevronLeft, FileText } from "lucide-react";
+import { Plus, Trash2, Edit, ChevronRight, ChevronLeft, FileText, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -39,6 +39,8 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
   const [stockCount, setStockCount] = useState(0);
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [serialNumber, setSerialNumber] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   // Pouch builder state
   const [showPouchBuilder, setShowPouchBuilder] = useState(false);
@@ -56,6 +58,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
   
   const createKit = useMutation(api.kits.create);
   const updateKit = useMutation(api.kits.update);
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
 
   const allInventoryItems = [
     ...(rawMaterials ?? []).map(i => ({ ...i, category: "Raw" })),
@@ -177,6 +180,52 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
   const handleRemovePouch = (index: number) => {
     setPouches(pouches.filter((_, i) => i !== index));
     toast("Pouch removed");
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast("Image size must be less than 5MB");
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      const uploadUrl = await generateUploadUrl();
+      
+      const result = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!result.ok) throw new Error("Upload failed");
+
+      const { storageId } = await result.json();
+      
+      // Store the storage ID (will be saved with the kit)
+      // We'll need to pass this to handleFinalSave
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      
+      toast("Image uploaded successfully");
+    } catch (error) {
+      console.error("Image upload error:", error);
+      toast("Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleFinalSave = async () => {

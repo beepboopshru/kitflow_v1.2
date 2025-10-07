@@ -10,13 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp, FileText, Download, ArrowLeft, Box, Copy } from "lucide-react";
+import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp, FileText, Download, ArrowLeft, Box, Copy, ImageIcon } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { KitSheetMaker } from "@/components/KitSheetMaker";
 import { useAction } from "convex/react";
+import { KitImageViewer } from "@/components/KitImageViewer";
 
 type ProgramType = "cstem" | "robotics" | null;
 
@@ -86,6 +87,73 @@ export default function Kits() {
   const [copyingKit, setCopyingKit] = useState<any>(null);
   const [copyTargetProgram, setCopyTargetProgram] = useState<string>("");
   const [copyKitName, setCopyKitName] = useState<string>("");
+
+  // Add new state for image handling
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [viewingImageKit, setViewingImageKit] = useState<any>(null);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+const getImageUrl = useQuery(
+  api.storage.getImageUrl,
+  editingKit?.image ? { storageId: editingKit.image } : "skip"
+);
+
+  // Add image upload handler function
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast("Please select an image file");
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast("Image size must be less than 5MB");
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      
+      // Generate upload URL
+      const uploadUrl = await generateUploadUrl();
+      
+      // Upload the file
+      const result = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!result.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const { storageId } = await result.json();
+      
+      // Set the image in the form
+      setEditingKit((prev: any) => prev ? { ...prev, image: storageId } : prev);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      
+      toast("Image uploaded successfully");
+    } catch (error) {
+      console.error("Image upload error:", error);
+      toast("Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   // Filter kits based on selected program and other filters
   const filteredKits = (kits ?? []).filter((k) => {
@@ -719,6 +787,31 @@ export default function Kits() {
                   </div>
                   
                   <div>
+                    <Label htmlFor="kitImage">Kit Image (optional)</Label>
+                    <div className="space-y-2">
+                      <Input
+                        id="kitImage"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                      />
+                      {uploadingImage && (
+                        <p className="text-sm text-muted-foreground">Uploading image...</p>
+                      )}
+                      {(imagePreview || getImageUrl) && (
+                        <div className="relative w-32 h-32 border rounded overflow-hidden">
+                          <img
+                            src={imagePreview || getImageUrl || ""}
+                            alt="Kit preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
                     <Label htmlFor="type">Kit Type</Label>
                     <Select value={formData.type} onValueChange={(value: string) => 
                       setFormData({ ...formData, type: value, cstemVariant: value !== "cstem" ? undefined : formData.cstemVariant })
@@ -945,6 +1038,20 @@ export default function Kits() {
                         </td>
                         <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex space-x-1">
+                            {kit.image && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setViewingImageKit(kit);
+                                  setIsImageViewerOpen(true);
+                                }}
+                                title="View Kit Image"
+                              >
+                                <ImageIcon className="h-4 w-4" />
+                              </Button>
+                            )}
                             {isStructured && (
                               <Button
                                 variant="ghost"
@@ -1211,6 +1318,12 @@ export default function Kits() {
           if (!open) setEditingKitForSheetMaker(null);
         }}
         editingKit={editingKitForSheetMaker}
+      />
+
+      <KitImageViewer
+        open={isImageViewerOpen}
+        onOpenChange={setIsImageViewerOpen}
+        kit={viewingImageKit}
       />
     </Layout>
   );
