@@ -12,7 +12,7 @@ export const generateKitSheetPdf = action({
     if (!kit) throw new Error("Kit not found");
 
     // Parse structured data if available
-    let pouches: Array<{ name: string; materials: Array<{ name: string; quantity: number; unit: string }> }> = [];
+    let pouches: Array<{ name: string; materials: Array<{ name: string; quantity: number; unit: string; notes?: string }> }> = [];
     
     if (kit.isStructured && kit.packingRequirements) {
       try {
@@ -60,6 +60,7 @@ export const generateKitSheetPdf = action({
                 <th>Material</th>
                 <th>Quantity</th>
                 <th>Unit</th>
+                <th>Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -71,6 +72,7 @@ export const generateKitSheetPdf = action({
               <td>${material.name}</td>
               <td>${material.quantity}</td>
               <td>${material.unit || '-'}</td>
+              <td>${material.notes || '-'}</td>
             </tr>
           `;
         });

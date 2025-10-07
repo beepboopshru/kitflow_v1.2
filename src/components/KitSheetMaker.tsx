@@ -15,6 +15,7 @@ interface Material {
   name: string;
   quantity: number;
   unit: string;
+  notes?: string;
 }
 
 interface Pouch {
@@ -43,6 +44,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
   const [pouchMaterials, setPouchMaterials] = useState<Material[]>([]);
   const [selectedItem, setSelectedItem] = useState("");
   const [itemQuantity, setItemQuantity] = useState<number | "">("");
+  const [itemNotes, setItemNotes] = useState("");
 
   const rawMaterials = useQuery(api.inventory.listByCategory, { category: "raw_material" });
   const preProcessed = useQuery(api.inventory.listByCategory, { category: "pre_processed" });
@@ -87,6 +89,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
     setPouchMaterials([]);
     setSelectedItem("");
     setItemQuantity("");
+    setItemNotes("");
     setEditingPouchIndex(null);
   };
 
@@ -108,11 +111,13 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
       name: item.name,
       quantity: itemQuantity as number,
       unit: item.unit || "units",
+      notes: itemNotes.trim() || undefined,
     };
 
     setPouchMaterials([...pouchMaterials, newMaterial]);
     setSelectedItem("");
     setItemQuantity("");
+    setItemNotes("");
     toast("Material added to pouch");
   };
 
@@ -147,6 +152,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
 
     setPouchName("");
     setPouchMaterials([]);
+    setItemNotes("");
     setShowPouchBuilder(false);
     setEditingPouchIndex(null);
   };
@@ -316,9 +322,14 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                     <Label>Materials in this pouch</Label>
                     {pouchMaterials.map((material, idx) => (
                       <div key={idx} className="flex items-center justify-between p-2 border rounded">
-                        <span className="text-sm">
-                          {material.name} - {material.quantity} {material.unit}
-                        </span>
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">
+                            {material.name} - {material.quantity} {material.unit}
+                          </span>
+                          {material.notes && (
+                            <p className="text-xs text-muted-foreground mt-1">{material.notes}</p>
+                          )}
+                        </div>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -330,38 +341,49 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-2">
-                      <Label>Select Material</Label>
-                      <Select value={selectedItem} onValueChange={setSelectedItem}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Search inventory..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {allInventoryItems.map((item) => (
-                            <SelectItem key={item._id} value={item._id}>
-                              <div className="flex flex-col gap-0.5 py-1">
-                                <span className="break-words">{item.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {item.category} • {item.quantity} available
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2">
+                        <Label>Select Material</Label>
+                        <Select value={selectedItem} onValueChange={setSelectedItem}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Search inventory..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {allInventoryItems.map((item) => (
+                              <SelectItem key={item._id} value={item._id}>
+                                <div className="flex flex-col gap-0.5 py-1">
+                                  <span className="break-words">{item.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {item.category} • {item.quantity} available
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Quantity</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="Enter quantity"
+                          value={itemQuantity}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setItemQuantity(val === "" ? "" : parseInt(val) || "");
+                          }}
+                        />
+                      </div>
                     </div>
+                    
                     <div>
-                      <Label>Quantity</Label>
+                      <Label>Notes (optional)</Label>
                       <Input
-                        type="number"
-                        min="1"
-                        placeholder="Enter quantity"
-                        value={itemQuantity}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setItemQuantity(val === "" ? "" : parseInt(val) || "");
-                        }}
+                        placeholder="Add notes for this material..."
+                        value={itemNotes}
+                        onChange={(e) => setItemNotes(e.target.value)}
                       />
                     </div>
                   </div>
@@ -378,10 +400,11 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                     <Button
                       variant="outline"
                       onClick={() => {
-                        setShowPouchBuilder(false);
-                        setPouchName("");
-                        setPouchMaterials([]);
-                        setEditingPouchIndex(null);
+                      setShowPouchBuilder(false);
+                      setPouchName("");
+                      setPouchMaterials([]);
+                      setItemNotes("");
+                      setEditingPouchIndex(null);
                       }}
                       className="flex-1"
                     >
@@ -410,10 +433,17 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       {pouch.materials.map((material, mIdx) => (
-                        <div key={mIdx} className="text-xs text-muted-foreground">
-                          • {material.name} - {material.quantity} {material.unit}
+                        <div key={mIdx} className="text-xs">
+                          <div className="text-muted-foreground">
+                            • {material.name} - {material.quantity} {material.unit}
+                          </div>
+                          {material.notes && (
+                            <div className="text-muted-foreground/80 ml-3 italic">
+                              {material.notes}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -482,9 +512,16 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                     <CardTitle className="text-sm">{pouch.name}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ul className="text-xs space-y-1">
+                    <ul className="text-xs space-y-2">
                       {pouch.materials.map((m, mIdx) => (
-                        <li key={mIdx}>• {m.name} - {m.quantity} {m.unit}</li>
+                        <li key={mIdx}>
+                          <div>• {m.name} - {m.quantity} {m.unit}</div>
+                          {m.notes && (
+                            <div className="text-muted-foreground ml-3 italic mt-0.5">
+                              {m.notes}
+                            </div>
+                          )}
+                        </li>
                       ))}
                     </ul>
                   </CardContent>
