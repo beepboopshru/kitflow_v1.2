@@ -1320,12 +1320,14 @@ const getImageUrl = useQuery(
         editingKit={editingKitForSheetMaker}
       />
 
-      <KitImageViewer
-        open={isImageViewerOpen}
-        onOpenChange={setIsImageViewerOpen}
-        kitName={viewingImageKit?.name || ""}
-        storageId={viewingImageKit?.image || ""}
-      />
+      {viewingImageKit?.image && (
+        <KitImageViewer
+          open={isImageViewerOpen}
+          onOpenChange={setIsImageViewerOpen}
+          kitName={viewingImageKit.name}
+          storageId={viewingImageKit.image}
+        />
+      )}
     </Layout>
   );
 }
