@@ -37,6 +37,7 @@ const schema = defineSchema(
       name: v.string(),
       slug: v.string(),
       description: v.optional(v.string()),
+      categories: v.optional(v.array(v.string())),
       createdBy: v.id("users"),
     }).index("by_slug", ["slug"]),
 
@@ -44,6 +45,7 @@ const schema = defineSchema(
     kits: defineTable({
       name: v.string(),
       type: v.string(), // Changed from union to string to accept any program slug
+      category: v.optional(v.string()),
       cstemVariant: v.optional(v.union(v.literal("explorer"), v.literal("discoverer"))),
       description: v.optional(v.string()),
       image: v.optional(v.string()),

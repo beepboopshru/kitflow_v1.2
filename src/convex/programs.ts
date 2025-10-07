@@ -21,6 +21,7 @@ export const create = mutation({
     name: v.string(),
     slug: v.string(),
     description: v.optional(v.string()),
+    categories: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -45,6 +46,7 @@ export const create = mutation({
       name: args.name,
       slug: args.slug,
       description: args.description,
+      categories: args.categories,
       createdBy: user._id,
     });
   },

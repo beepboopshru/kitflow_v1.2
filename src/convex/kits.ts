@@ -6,6 +6,7 @@ export const create = mutation({
   args: {
     name: v.string(),
     type: v.string(),
+    category: v.optional(v.string()),
     cstemVariant: v.optional(v.union(v.literal("explorer"), v.literal("discoverer"))),
     description: v.optional(v.string()),
     image: v.optional(v.string()),
@@ -77,6 +78,7 @@ export const update = mutation({
     id: v.id("kits"),
     name: v.optional(v.string()),
     type: v.optional(v.string()),
+    category: v.optional(v.string()),
     cstemVariant: v.optional(v.union(v.literal("explorer"), v.literal("discoverer"))),
     description: v.optional(v.string()),
     image: v.optional(v.string()),

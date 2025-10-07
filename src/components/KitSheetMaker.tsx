@@ -33,6 +33,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
   const [step, setStep] = useState(1);
   const [kitName, setKitName] = useState("");
   const [kitType, setKitType] = useState<string>("cstem");
+  const [kitCategory, setKitCategory] = useState<string | undefined>(undefined);
   const [cstemVariant, setCstemVariant] = useState<"explorer" | "discoverer" | undefined>(undefined);
   const [pouches, setPouches] = useState<Pouch[]>([]);
   const [stockCount, setStockCount] = useState(0);
@@ -66,6 +67,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
     if (open && editingKit) {
       setKitName(editingKit.name);
       setKitType(editingKit.type);
+      setKitCategory(editingKit.category);
       setCstemVariant(editingKit.cstemVariant);
       setStockCount(editingKit.stockCount);
       setLowStockThreshold(editingKit.lowStockThreshold || 5);
@@ -84,6 +86,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
     setStep(1);
     setKitName("");
     setKitType("cstem");
+    setKitCategory(undefined);
     setCstemVariant(undefined);
     setPouches([]);
     setStockCount(0);
@@ -187,6 +190,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
           id: editingKit._id,
           name: kitName,
           type: kitType,
+          category: kitCategory,
           cstemVariant: kitType === "cstem" ? cstemVariant : undefined,
           stockCount: stockCount,
           lowStockThreshold: lowStockThreshold,
@@ -198,6 +202,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
         await createKit({
           name: kitName,
           type: kitType,
+          category: kitCategory,
           cstemVariant: kitType === "cstem" ? cstemVariant : undefined,
           stockCount: stockCount,
           lowStockThreshold: lowStockThreshold,
@@ -248,6 +253,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
               <Label htmlFor="kitType">Kit Type</Label>
               <Select value={kitType} onValueChange={(v: string) => {
                 setKitType(v);
+                setKitCategory(undefined);
                 if (v !== "cstem") {
                   setCstemVariant(undefined);
                 }
@@ -265,23 +271,52 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
               </Select>
             </div>
 
-            {kitType === "cstem" && (
-              <div>
-                <Label htmlFor="cstemCategory">Category</Label>
-                <Select 
-                  value={cstemVariant || ""} 
-                  onValueChange={(v: "explorer" | "discoverer") => setCstemVariant(v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="explorer">Explorer</SelectItem>
-                    <SelectItem value="discoverer">Discoverer</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {(() => {
+              const selectedProgram = (programs ?? []).find(p => p.slug === kitType);
+              const hasCategories = selectedProgram?.categories && selectedProgram.categories.length > 0;
+              
+              if (kitType === "cstem") {
+                return (
+                  <div>
+                    <Label htmlFor="cstemCategory">Category</Label>
+                    <Select 
+                      value={cstemVariant || ""} 
+                      onValueChange={(v: "explorer" | "discoverer") => setCstemVariant(v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="explorer">Explorer</SelectItem>
+                        <SelectItem value="discoverer">Discoverer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              } else if (hasCategories) {
+                return (
+                  <div>
+                    <Label htmlFor="kitCategory">Category</Label>
+                    <Select 
+                      value={kitCategory || ""} 
+                      onValueChange={(v: string) => setKitCategory(v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedProgram.categories!.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             <div className="flex justify-end pt-4">
               <Button 
                 onClick={() => setStep(2)} 
@@ -487,6 +522,8 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                 <Badge className="ml-2">
                   {kitType === "cstem" && cstemVariant 
                     ? cstemVariant.toUpperCase() 
+                    : kitCategory 
+                    ? `${kitType.toUpperCase()} - ${kitCategory.toUpperCase()}`
                     : kitType.toUpperCase()}
                 </Badge>
               </div>

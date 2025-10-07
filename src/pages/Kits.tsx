@@ -57,6 +57,7 @@ export default function Kits() {
     name: "",
     slug: "",
     description: "",
+    categories: "",
   });
 
   const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "low_stock">("all");
@@ -120,15 +121,22 @@ export default function Kits() {
       const slug = newProgramData.slug.trim() || 
         newProgramData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
+      // Parse categories from comma-separated string
+      const categories = newProgramData.categories
+        .split(',')
+        .map(c => c.trim())
+        .filter(c => c.length > 0);
+      
       await createProgram({
         name: newProgramData.name,
         slug: slug,
         description: newProgramData.description,
+        categories: categories.length > 0 ? categories : undefined,
       });
       
       toast("Program created successfully");
       setIsCreateProgramOpen(false);
-      setNewProgramData({ name: "", slug: "", description: "" });
+      setNewProgramData({ name: "", slug: "", description: "", categories: "" });
     } catch (error) {
       toast("Error creating program", { 
         description: error instanceof Error ? error.message : "Unknown error" 
@@ -407,6 +415,18 @@ export default function Kits() {
                       onChange={(e) => setNewProgramData({ ...newProgramData, description: e.target.value })}
                       rows={3}
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="programCategories">Categories (optional)</Label>
+                    <Input
+                      id="programCategories"
+                      value={newProgramData.categories}
+                      onChange={(e) => setNewProgramData({ ...newProgramData, categories: e.target.value })}
+                      placeholder="e.g., Explorer, Discoverer"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Comma-separated list of categories for this program
+                    </p>
                   </div>
                   <div className="flex justify-end space-x-2 pt-4">
                     <Button type="button" variant="outline" onClick={() => setIsCreateProgramOpen(false)}>
