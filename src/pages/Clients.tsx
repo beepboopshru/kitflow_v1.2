@@ -459,10 +459,10 @@ export default function Clients() {
                 return (
                   <>
                     {/* Controls row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
                       {/* Month dropdown */}
-                      <div className="flex-1">
-                        <Label className="text-xs">Month</Label>
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">Month</Label>
                         <Select
                           value={selectedMonth}
                           onValueChange={(val: string) => setSelectedMonth(val)}
@@ -484,8 +484,8 @@ export default function Clients() {
                       </div>
 
                       {/* Grade dropdown */}
-                      <div className="flex-1">
-                        <Label className="text-xs">Grade</Label>
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">Grade</Label>
                         <Select value={selectedGrade} onValueChange={(v: string) => setSelectedGrade(v)}>
                           <SelectTrigger>
                             <SelectValue placeholder="All grades" />
@@ -504,8 +504,8 @@ export default function Clients() {
                       </div>
 
                       {/* Dispatch date picker */}
-                      <div className="flex-1">
-                        <Label htmlFor="dispatchDate" className="text-xs">Dispatch date</Label>
+                      <div>
+                        <Label htmlFor="dispatchDate" className="text-sm font-medium mb-2 block">Dispatch date</Label>
                         <Input
                           id="dispatchDate"
                           type="date"
@@ -514,9 +514,9 @@ export default function Clients() {
                         />
                       </div>
 
-                      <div className="flex gap-2 lg:col-span-1">
-                        <Button onClick={handleApplyDispatchDate} className="flex-1">Set</Button>
-                        <Button variant="outline" onClick={handleClearDispatchDate} className="flex-1">Clear</Button>
+                      <div className="flex gap-2 lg:col-span-2">
+                        <Button onClick={handleApplyDispatchDate} className="flex-1 h-10">Set</Button>
+                        <Button variant="outline" onClick={handleClearDispatchDate} className="flex-1 h-10">Clear</Button>
                       </div>
                     </div>
 
