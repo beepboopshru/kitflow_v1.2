@@ -50,7 +50,7 @@ export default function Kits() {
   });
 
   const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "assigned">("all");
-  const [kitFilter, setKitFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
   const [newMaterial, setNewMaterial] = useState<string>("");
 
@@ -63,8 +63,14 @@ export default function Kits() {
   const filteredKits = (kits ?? []).filter((k) => {
     if (selectedProgram && k.type !== selectedProgram) return false;
     const statusOk = statusFilter === "all" ? true : k.status === statusFilter;
-    const kitOk = kitFilter === "all" ? true : k._id === kitFilter;
-    return statusOk && kitOk;
+    
+    // For CSTEM kits, filter by variant (explorer/discoverer)
+    let typeOk = true;
+    if (selectedProgram === "cstem" && typeFilter !== "all") {
+      typeOk = k.cstemVariant === typeFilter;
+    }
+    
+    return statusOk && typeOk;
   });
 
   // Get program-specific kits for stats
@@ -367,7 +373,7 @@ export default function Kits() {
               onClick={() => {
                 setSelectedProgram(null);
                 setStatusFilter("all");
-                setKitFilter("all");
+                setTypeFilter("all");
               }}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -381,7 +387,7 @@ export default function Kits() {
                 Manage your {selectedProgram === "cstem" ? "CSTEM" : "Robotics"} kits inventory
               </p>
 
-              {/* Filters: Status and Specific Kit */}
+              {/* Filters: Status and Type */}
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Status</Label>
@@ -400,27 +406,24 @@ export default function Kits() {
                   </Select>
                 </div>
 
-                <div>
-                  <Label className="text-xs">Select Kit</Label>
-                  <Select
-                    value={kitFilter}
-                    onValueChange={(v: string) => setKitFilter(v)}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="All kits" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Kits</SelectItem>
-                      {(kits ?? [])
-                        .filter(k => k.type === selectedProgram)
-                        .map((k) => (
-                          <SelectItem key={k._id} value={k._id}>
-                            {k.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {selectedProgram === "cstem" && (
+                  <div>
+                    <Label className="text-xs">Type</Label>
+                    <Select
+                      value={typeFilter}
+                      onValueChange={(v: string) => setTypeFilter(v)}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="All types" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="explorer">Explorer</SelectItem>
+                        <SelectItem value="discoverer">Discoverer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
           </div>
