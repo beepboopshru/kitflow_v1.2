@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { Building, Edit, Mail, Phone, Plus, Trash2, Users } from "lucide-react";
+import { Building, Edit, Mail, Phone, Plus, Trash2, Users, Calendar as CalendarIcon } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -255,7 +255,7 @@ export default function Clients() {
                         onClick={() => openDetails(client)}
                         title="View Monthwise"
                       >
-                        <Users className="h-4 w-4" />
+                        <CalendarIcon className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
