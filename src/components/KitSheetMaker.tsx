@@ -334,6 +334,17 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                 )}
               </div>
             </div>
+
+            <div>
+              <Label htmlFor="serialNumber">Serial Number (optional)</Label>
+              <Input
+                id="serialNumber"
+                type="text"
+                value={serialNumber}
+                onChange={(e) => setSerialNumber(e.target.value)}
+                placeholder="Enter serial number"
+              />
+            </div>
             
             <div>
               <Label htmlFor="kitType">Kit Type</Label>
@@ -642,17 +653,6 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                   placeholder="Enter threshold"
                 />
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="serialNumber">Serial Number (optional)</Label>
-              <Input
-                id="serialNumber"
-                type="text"
-                value={serialNumber}
-                onChange={(e) => setSerialNumber(e.target.value)}
-                placeholder="Enter serial number"
-              />
             </div>
 
             <div className="space-y-2">
