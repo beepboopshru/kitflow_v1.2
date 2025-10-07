@@ -5,7 +5,7 @@ import { getCurrentUser } from "./users";
 export const create = mutation({
   args: {
     name: v.string(),
-    type: v.union(v.literal("cstem"), v.literal("robotics")),
+    type: v.string(),
     cstemVariant: v.optional(v.union(v.literal("explorer"), v.literal("discoverer"))),
     description: v.optional(v.string()),
     image: v.optional(v.string()),
@@ -44,7 +44,7 @@ export const update = mutation({
   args: {
     id: v.id("kits"),
     name: v.optional(v.string()),
-    type: v.optional(v.union(v.literal("cstem"), v.literal("robotics"))),
+    type: v.optional(v.string()),
     cstemVariant: v.optional(v.union(v.literal("explorer"), v.literal("discoverer"))),
     description: v.optional(v.string()),
     image: v.optional(v.string()),

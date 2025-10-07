@@ -1,0 +1,1 @@
+npx convex run seed_programs:seedInitialPrograms

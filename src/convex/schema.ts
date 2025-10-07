@@ -32,17 +32,25 @@ const schema = defineSchema(
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
+    // Program Management
+    programs: defineTable({
+      name: v.string(),
+      slug: v.string(),
+      description: v.optional(v.string()),
+      createdBy: v.id("users"),
+    }).index("by_slug", ["slug"]),
+
     // Kit Management
     kits: defineTable({
       name: v.string(),
-      type: v.union(v.literal("cstem"), v.literal("robotics")),
+      type: v.string(), // Changed from union to string to accept any program slug
       cstemVariant: v.optional(v.union(v.literal("explorer"), v.literal("discoverer"))),
       description: v.optional(v.string()),
       image: v.optional(v.string()),
       stockCount: v.number(),
       lowStockThreshold: v.number(),
-      packingRequirements: v.optional(v.string()), // Can store JSON string for structured pouches or legacy comma-separated
-      isStructured: v.optional(v.boolean()), // Flag to indicate if packingRequirements contains JSON structure
+      packingRequirements: v.optional(v.string()),
+      isStructured: v.optional(v.boolean()),
       status: v.union(v.literal("in_stock"), v.literal("assigned")),
       createdBy: v.id("users"),
     }).index("by_type", ["type"]).index("by_status", ["status"]),

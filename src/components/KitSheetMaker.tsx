@@ -31,7 +31,7 @@ interface KitSheetMakerProps {
 export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerProps) {
   const [step, setStep] = useState(1);
   const [kitName, setKitName] = useState("");
-  const [kitType, setKitType] = useState<"cstem" | "robotics">("cstem");
+  const [kitType, setKitType] = useState<string>("cstem");
   const [cstemVariant, setCstemVariant] = useState<"explorer" | "discoverer" | undefined>(undefined);
   const [pouches, setPouches] = useState<Pouch[]>([]);
   const [stockCount, setStockCount] = useState(0);
@@ -47,6 +47,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
   const rawMaterials = useQuery(api.inventory.listByCategory, { category: "raw_material" });
   const preProcessed = useQuery(api.inventory.listByCategory, { category: "pre_processed" });
   const finishedGoods = useQuery(api.inventory.listByCategory, { category: "finished_good" });
+  const programs = useQuery(api.programs.list);
   
   const createKit = useMutation(api.kits.create);
   const updateKit = useMutation(api.kits.update);
@@ -235,9 +236,9 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
             </div>
             <div>
               <Label htmlFor="kitType">Kit Type</Label>
-              <Select value={kitType} onValueChange={(v: "cstem" | "robotics") => {
+              <Select value={kitType} onValueChange={(v: string) => {
                 setKitType(v);
-                if (v === "robotics") {
+                if (v !== "cstem") {
                   setCstemVariant(undefined);
                 }
               }}>
@@ -245,8 +246,11 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cstem">CSTEM</SelectItem>
-                  <SelectItem value="robotics">Robotics</SelectItem>
+                  {(programs ?? []).map((program) => (
+                    <SelectItem key={program._id} value={program.slug}>
+                      {program.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

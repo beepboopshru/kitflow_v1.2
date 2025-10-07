@@ -25,9 +25,12 @@ export default function Kits() {
   const navigate = useNavigate();
   
   const kits = useQuery(api.kits.list);
+  const programs = useQuery(api.programs.list);
   const createKit = useMutation(api.kits.create);
   const updateKit = useMutation(api.kits.update);
   const deleteKit = useMutation(api.kits.remove);
+  const createProgram = useMutation(api.programs.create);
+  const deleteProgram = useMutation(api.programs.remove);
 
   const rawMaterials = useQuery(api.inventory.listByCategory, { category: "raw_material" });
   const preProcessed = useQuery(api.inventory.listByCategory, { category: "pre_processed" });
@@ -41,12 +44,19 @@ export default function Kits() {
   const [editingKit, setEditingKit] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: "",
-    type: "cstem" as "cstem" | "robotics",
+    type: "cstem" as string,
     cstemVariant: undefined as "explorer" | "discoverer" | undefined,
     description: "",
     stockCount: 0,
     lowStockThreshold: 5,
     packingRequirements: "",
+  });
+
+  const [isCreateProgramOpen, setIsCreateProgramOpen] = useState(false);
+  const [newProgramData, setNewProgramData] = useState({
+    name: "",
+    slug: "",
+    description: "",
   });
 
   const [statusFilter, setStatusFilter] = useState<"all" | "in_stock" | "low_stock">("all");
@@ -80,16 +90,55 @@ export default function Kits() {
     return statusOk && typeOk;
   });
 
-  // Get program-specific kits for stats
-  const cstemKits = (kits ?? []).filter(k => k.type === "cstem");
-  const roboticsKits = (kits ?? []).filter(k => k.type === "robotics");
-
-  // Calculate stats for each program
-  const getProgramStats = (programKits: any[]) => {
+  // Calculate stats for each program dynamically
+  const getProgramStats = (programSlug: string) => {
+    const programKits = (kits ?? []).filter(k => k.type === programSlug);
     const total = programKits.length;
     const lowStock = programKits.filter(k => k.stockCount <= k.lowStockThreshold).length;
     const totalStock = programKits.reduce((sum, k) => sum + k.stockCount, 0);
     return { total, lowStock, totalStock };
+  };
+
+  const handleCreateProgram = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newProgramData.name.trim()) {
+      toast("Please enter a program name");
+      return;
+    }
+
+    try {
+      // Auto-generate slug if not provided
+      const slug = newProgramData.slug.trim() || 
+        newProgramData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      
+      await createProgram({
+        name: newProgramData.name,
+        slug: slug,
+        description: newProgramData.description,
+      });
+      
+      toast("Program created successfully");
+      setIsCreateProgramOpen(false);
+      setNewProgramData({ name: "", slug: "", description: "" });
+    } catch (error) {
+      toast("Error creating program", { 
+        description: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  };
+
+  const handleDeleteProgram = async (programId: string, programName: string) => {
+    if (confirm(`Are you sure you want to delete the "${programName}" program? This will fail if any kits are associated with it.`)) {
+      try {
+        await deleteProgram({ id: programId as any });
+        toast("Program deleted successfully");
+      } catch (error) {
+        toast("Error deleting program", { 
+          description: error instanceof Error ? error.message : "Cannot delete program with associated kits" 
+        });
+      }
+    }
   };
 
   useEffect(() => {
@@ -267,101 +316,131 @@ export default function Kits() {
 
   // Landing View: Program Type Selection
   if (selectedProgram === null) {
-    const cstemStats = getProgramStats(cstemKits);
-    const roboticsStats = getProgramStats(roboticsKits);
-
     return (
       <Layout>
         <div className="space-y-8">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Kit Management</h1>
-            <p className="text-muted-foreground mt-2">
-              Select a program type to manage kits
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Kit Management</h1>
+              <p className="text-muted-foreground mt-2">
+                Select a program type to manage kits
+              </p>
+            </div>
+            <Dialog open={isCreateProgramOpen} onOpenChange={setIsCreateProgramOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Program
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create New Program</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreateProgram} className="space-y-4">
+                  <div>
+                    <Label htmlFor="programName">Program Name</Label>
+                    <Input
+                      id="programName"
+                      value={newProgramData.name}
+                      onChange={(e) => setNewProgramData({ ...newProgramData, name: e.target.value })}
+                      placeholder="e.g., Electronics, Mechanics"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="programSlug">Slug (optional)</Label>
+                    <Input
+                      id="programSlug"
+                      value={newProgramData.slug}
+                      onChange={(e) => setNewProgramData({ ...newProgramData, slug: e.target.value })}
+                      placeholder="Auto-generated from name"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Lowercase, alphanumeric with hyphens only
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="programDescription">Description (optional)</Label>
+                    <Textarea
+                      id="programDescription"
+                      value={newProgramData.description}
+                      onChange={(e) => setNewProgramData({ ...newProgramData, description: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsCreateProgramOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">Create Program</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* CSTEM Program Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all hover:border-primary"
-                onClick={() => setSelectedProgram("cstem")}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Box className="h-6 w-6" />
-                    CSTEM Program
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Kits</p>
-                      <p className="text-2xl font-bold">{cstemStats.total}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Stock</p>
-                      <p className="text-2xl font-bold">{cstemStats.totalStock}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Low Stock</p>
-                      <p className="text-2xl font-bold text-red-600">{cstemStats.lowStock}</p>
-                    </div>
-                  </div>
-                  {cstemStats.lowStock > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-red-600">
-                      <AlertTriangle className="h-4 w-4" />
-                      {cstemStats.lowStock} kit{cstemStats.lowStock > 1 ? 's' : ''} need restocking
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Robotics Program Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all hover:border-primary"
-                onClick={() => setSelectedProgram("robotics")}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Box className="h-6 w-6" />
-                    Robotics Program
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Kits</p>
-                      <p className="text-2xl font-bold">{roboticsStats.total}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Stock</p>
-                      <p className="text-2xl font-bold">{roboticsStats.totalStock}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Low Stock</p>
-                      <p className="text-2xl font-bold text-red-600">{roboticsStats.lowStock}</p>
-                    </div>
-                  </div>
-                  {roboticsStats.lowStock > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-red-600">
-                      <AlertTriangle className="h-4 w-4" />
-                      {roboticsStats.lowStock} kit{roboticsStats.lowStock > 1 ? 's' : ''} need restocking
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(programs ?? []).map((program, index) => {
+              const stats = getProgramStats(program.slug);
+              return (
+                <motion.div
+                  key={program._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card 
+                    className="cursor-pointer hover:shadow-lg transition-all hover:border-primary"
+                    onClick={() => setSelectedProgram(program.slug as ProgramType)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <Box className="h-6 w-6" />
+                          {program.name}
+                        </CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProgram(program._id, program.name);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {program.description && (
+                        <p className="text-xs text-muted-foreground">{program.description}</p>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Kits</p>
+                          <p className="text-2xl font-bold">{stats.total}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Stock</p>
+                          <p className="text-2xl font-bold">{stats.totalStock}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Low Stock</p>
+                          <p className="text-2xl font-bold text-red-600">{stats.lowStock}</p>
+                        </div>
+                      </div>
+                      {stats.lowStock > 0 && (
+                        <div className="flex items-center gap-2 text-sm text-red-600">
+                          <AlertTriangle className="h-4 w-4" />
+                          {stats.lowStock} kit{stats.lowStock > 1 ? 's' : ''} need restocking
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </Layout>
@@ -388,10 +467,10 @@ export default function Kits() {
             </Button>
             <div>
               <h1 className="text-3xl font-bold tracking-tight">
-                {selectedProgram === "cstem" ? "CSTEM" : "Robotics"} Kits
+                {(programs ?? []).find(p => p.slug === selectedProgram)?.name || selectedProgram.toUpperCase()} Kits
               </h1>
               <p className="text-muted-foreground mt-2">
-                Manage your {selectedProgram === "cstem" ? "CSTEM" : "Robotics"} kits inventory
+                Manage your {(programs ?? []).find(p => p.slug === selectedProgram)?.name || selectedProgram} kits inventory
               </p>
 
               {/* Filters: Status and Type */}
@@ -470,15 +549,18 @@ export default function Kits() {
                   
                   <div>
                     <Label htmlFor="type">Kit Type</Label>
-                    <Select value={formData.type} onValueChange={(value: "cstem" | "robotics") => 
-                      setFormData({ ...formData, type: value, cstemVariant: value === "robotics" ? undefined : formData.cstemVariant })
+                    <Select value={formData.type} onValueChange={(value: string) => 
+                      setFormData({ ...formData, type: value, cstemVariant: value !== "cstem" ? undefined : formData.cstemVariant })
                     }>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="cstem">CSTEM</SelectItem>
-                        <SelectItem value="robotics">Robotics</SelectItem>
+                        {(programs ?? []).map((program) => (
+                          <SelectItem key={program._id} value={program.slug}>
+                            {program.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

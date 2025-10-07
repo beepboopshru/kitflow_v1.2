@@ -14,8 +14,14 @@ export const getInventorySummary = query({
     const packedCount = assignments.filter(a => a.status === "packed").length;
     const dispatchedCount = assignments.filter(a => a.status === "dispatched").length;
 
-    const cstemKits = kits.filter(kit => kit.type === "cstem");
-    const roboticsKits = kits.filter(kit => kit.type === "robotics");
+    // Dynamic stock by program type
+    const stockByType: Record<string, number> = {};
+    kits.forEach(kit => {
+      if (!stockByType[kit.type]) {
+        stockByType[kit.type] = 0;
+      }
+      stockByType[kit.type] += kit.stockCount;
+    });
 
     return {
       totalKits,
@@ -24,8 +30,10 @@ export const getInventorySummary = query({
       assignedCount,
       packedCount,
       dispatchedCount,
-      cstemStock: cstemKits.reduce((sum, kit) => sum + kit.stockCount, 0),
-      roboticsStock: roboticsKits.reduce((sum, kit) => sum + kit.stockCount, 0),
+      stockByType,
+      // Keep legacy fields for backward compatibility
+      cstemStock: stockByType["cstem"] || 0,
+      roboticsStock: stockByType["robotics"] || 0,
     };
   },
 });
