@@ -313,8 +313,8 @@ export default function Clients() {
             setDispatchDate("");
           }
         }}>
-          <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-7xl max-h-[95vh] flex flex-col">
+            <DialogHeader className="shrink-0">
               <DialogTitle>
                 {selectedClient ? `Monthwise for ${selectedClient.name}` : "Monthwise"}
               </DialogTitle>
@@ -322,9 +322,10 @@ export default function Clients() {
                 Choose a month, view grade-wise details, and optionally set a dispatch date for that month.
               </DialogDescription>
             </DialogHeader>
-
-            {/* Month selector and dispatch controls */}
-            <div className="space-y-3">
+            
+            <div className="flex-1 overflow-y-auto">
+              {/* Month selector and dispatch controls */}
+              <div className="space-y-4 pb-4">
               {(() => {
                 if (!clientAssignments) {
                   return <div className="text-sm text-muted-foreground">Loading...</div>;
@@ -452,7 +453,7 @@ export default function Clients() {
                 return (
                   <>
                     {/* Controls row */}
-                    <div className="flex flex-col md:flex-row items-stretch md:items-end gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
                       {/* Month dropdown */}
                       <div className="flex-1">
                         <Label className="text-xs">Month</Label>
@@ -507,29 +508,29 @@ export default function Clients() {
                         />
                       </div>
 
-                      <div className="flex gap-2 md:pt-5">
-                        <Button onClick={handleApplyDispatchDate}>Set</Button>
-                        <Button variant="outline" onClick={handleClearDispatchDate}>Clear</Button>
+                      <div className="flex gap-2 lg:col-span-1">
+                        <Button onClick={handleApplyDispatchDate} className="flex-1">Set</Button>
+                        <Button variant="outline" onClick={handleClearDispatchDate} className="flex-1">Clear</Button>
                       </div>
                     </div>
 
                     {/* Selected month's grade-wise content */}
                     {selectedMonth ? (
-                      <div className="rounded-lg border p-4 w-full">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="font-medium">
+                      <div className="rounded-lg border w-full">
+                        <div className="flex items-center justify-between p-4 border-b bg-muted/30">
+                          <div className="font-semibold text-lg">
                             {new Date(`${selectedMonth}-01`).toLocaleDateString(undefined, {
                               month: "long",
                               year: "numeric",
                             })}
                           </div>
-                          <Badge variant="secondary">
+                          <Badge variant="secondary" className="text-sm">
                             Total Qty: {monthAssignments.reduce((s, a) => s + a.quantity, 0)}
                           </Badge>
                         </div>
 
                         {/* Stacked list: Grade • Kit • Qty • Dispatch Date */}
-                        <div className="space-y-4">
+                        <div className="space-y-3 p-4">
                           {(() => {
                             // Build grade order: 1..10 + "unspecified"
                             const gradeOrder: Array<number | "unspecified"> = [
@@ -577,12 +578,12 @@ export default function Clients() {
                                   const rows = Object.values(byKit);
 
                                   return (
-                                    <div key={`grade-${g}`} className="rounded-md border">
-                                      <div className="px-3 py-2 border-b flex items-center justify-between">
-                                        <div className="font-medium">
-                                          {g === "unspecified" ? "Unspecified" : `Grade ${g}`}
+                                    <div key={`grade-${g}`} className="rounded-md border bg-card">
+                                      <div className="px-4 py-3 border-b bg-muted/20 flex items-center justify-between">
+                                        <div className="font-semibold text-base">
+                                          {g === "unspecified" ? "Unspecified Grade" : `Grade ${g}`}
                                         </div>
-                                        <Badge variant="outline">
+                                        <Badge variant="outline" className="font-medium">
                                           Total: {rows.reduce((s, r) => s + r.totalQty, 0)}
                                         </Badge>
                                       </div>
@@ -595,12 +596,14 @@ export default function Clients() {
                                           if (!hasAny) {
                                             // None set
                                             return (
-                                              <div key={i} className="px-3 py-2 flex items-center justify-between gap-3">
-                                                <div className="text-sm">
-                                                  {r.kitName} • Qty {r.totalQty}
+                                              <div key={i} className="px-4 py-3 flex items-center justify-between gap-4">
+                                                <div className="text-sm font-medium flex-1">
+                                                  <span className="text-foreground">{r.kitName}</span>
+                                                  <span className="text-muted-foreground mx-2">•</span>
+                                                  <span className="text-muted-foreground">Qty: {r.totalQty}</span>
                                                 </div>
                                                 <div className="shrink-0">
-                                                  <Badge variant="secondary">Not set</Badge>
+                                                  <Badge variant="secondary" className="text-xs">Not set</Badge>
                                                 </div>
                                               </div>
                                             );
@@ -611,12 +614,14 @@ export default function Clients() {
                                           const allEqual = nums.every((v) => v === nums[0]);
                                           if (allEqual) {
                                             return (
-                                              <div key={i} className="px-3 py-2 flex items-center justify-between gap-3">
-                                                <div className="text-sm">
-                                                  {r.kitName} • Qty {r.totalQty}
+                                              <div key={i} className="px-4 py-3 flex items-center justify-between gap-4">
+                                                <div className="text-sm font-medium flex-1">
+                                                  <span className="text-foreground">{r.kitName}</span>
+                                                  <span className="text-muted-foreground mx-2">•</span>
+                                                  <span className="text-muted-foreground">Qty: {r.totalQty}</span>
                                                 </div>
                                                 <div className="shrink-0">
-                                                  <Badge variant="default">
+                                                  <Badge variant="default" className="text-xs">
                                                     Dispatched: {new Date(nums[0]).toLocaleDateString()}
                                                   </Badge>
                                                 </div>
@@ -625,12 +630,14 @@ export default function Clients() {
                                           }
                                           // Mixed dates
                                           return (
-                                            <div key={i} className="px-3 py-2 flex items-center justify-between gap-3">
-                                              <div className="text-sm">
-                                                {r.kitName} • Qty {r.totalQty}
+                                            <div key={i} className="px-4 py-3 flex items-center justify-between gap-4">
+                                              <div className="text-sm font-medium flex-1">
+                                                <span className="text-foreground">{r.kitName}</span>
+                                                <span className="text-muted-foreground mx-2">•</span>
+                                                <span className="text-muted-foreground">Qty: {r.totalQty}</span>
                                               </div>
                                               <div className="shrink-0">
-                                                <Badge variant="outline">Dispatched: Mixed</Badge>
+                                                <Badge variant="outline" className="text-xs">Dispatched: Mixed</Badge>
                                               </div>
                                             </div>
                                           );
@@ -648,6 +655,7 @@ export default function Clients() {
                   </>
                 );
               })()}
+            </div>
             </div>
           </DialogContent>
         </Dialog>
