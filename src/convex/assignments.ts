@@ -338,7 +338,7 @@ export const clearAllPendingAssignments = mutation({
 
     // Filter pending ones (not dispatched)
     const pending = allAssignments.filter(
-      (a) => a.status !== "dispatched" && typeof a.dispatchedAt !== "number"
+      (a) => a.status !== "dispatched"
     );
 
     if (pending.length === 0) {
@@ -391,7 +391,7 @@ export const deleteAssignment = mutation({
     if (!assignment) throw new Error("Assignment not found");
 
     // If not dispatched, restore stock
-    if (assignment.status !== "dispatched" && typeof assignment.dispatchedAt !== "number") {
+    if (assignment.status !== "dispatched") {
       const kit = await ctx.db.get(assignment.kitId);
       console.log("Restoring stock for kit:", kit?.name, "Current stock:", kit?.stockCount, "Adding:", assignment.quantity);
       
@@ -442,7 +442,7 @@ export const clearAllAssignments = mutation({
     const qtyByKit: Record<string, number> = {};
     for (const a of allAssignments) {
       // Only restore stock for non-dispatched assignments
-      if (a.status !== "dispatched" && typeof a.dispatchedAt !== "number") {
+      if (a.status !== "dispatched") {
         const kitId = a.kitId;
         qtyByKit[kitId] = (qtyByKit[kitId] || 0) + (a.quantity ?? 0);
       }
