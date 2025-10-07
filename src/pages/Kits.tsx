@@ -600,7 +600,9 @@ export default function Kits() {
                         </td>
                         <td className="px-4 py-3">
                           <Badge variant="outline" className="text-xs">
-                            {kit.type.toUpperCase()}
+                            {kit.type === "cstem" && kit.cstemVariant 
+                              ? kit.cstemVariant.toUpperCase() 
+                              : kit.type.toUpperCase()}
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-sm">{kit.stockCount}</td>

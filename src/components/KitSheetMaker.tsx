@@ -32,6 +32,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
   const [step, setStep] = useState(1);
   const [kitName, setKitName] = useState("");
   const [kitType, setKitType] = useState<"cstem" | "robotics">("cstem");
+  const [cstemVariant, setCstemVariant] = useState<"explorer" | "discoverer" | undefined>(undefined);
   const [pouches, setPouches] = useState<Pouch[]>([]);
   const [stockCount, setStockCount] = useState(0);
   
@@ -61,6 +62,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
     if (open && editingKit) {
       setKitName(editingKit.name);
       setKitType(editingKit.type);
+      setCstemVariant(editingKit.cstemVariant);
       setStockCount(editingKit.stockCount);
       if (editingKit.isStructured && editingKit.packingRequirements) {
         try {
@@ -77,6 +79,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
     setStep(1);
     setKitName("");
     setKitType("cstem");
+    setCstemVariant(undefined);
     setPouches([]);
     setStockCount(0);
     setPouchName("");
@@ -174,6 +177,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
           id: editingKit._id,
           name: kitName,
           type: kitType,
+          cstemVariant: kitType === "cstem" ? cstemVariant : undefined,
           stockCount: stockCount,
           packingRequirements: structuredData,
           isStructured: true,
@@ -183,6 +187,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
         await createKit({
           name: kitName,
           type: kitType,
+          cstemVariant: kitType === "cstem" ? cstemVariant : undefined,
           stockCount: stockCount,
           lowStockThreshold: 5,
           packingRequirements: structuredData,
@@ -230,7 +235,12 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
             </div>
             <div>
               <Label htmlFor="kitType">Kit Type</Label>
-              <Select value={kitType} onValueChange={(v: "cstem" | "robotics") => setKitType(v)}>
+              <Select value={kitType} onValueChange={(v: "cstem" | "robotics") => {
+                setKitType(v);
+                if (v === "robotics") {
+                  setCstemVariant(undefined);
+                }
+              }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -240,8 +250,29 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
                 </SelectContent>
               </Select>
             </div>
+
+            {kitType === "cstem" && (
+              <div>
+                <Label htmlFor="cstemCategory">Category</Label>
+                <Select 
+                  value={cstemVariant || ""} 
+                  onValueChange={(v: "explorer" | "discoverer") => setCstemVariant(v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="explorer">Explorer</SelectItem>
+                    <SelectItem value="discoverer">Discoverer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex justify-end pt-4">
-              <Button onClick={() => setStep(2)} disabled={!kitName.trim()}>
+              <Button 
+                onClick={() => setStep(2)} 
+                disabled={!kitName.trim() || (kitType === "cstem" && !cstemVariant)}
+              >
                 Next <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
@@ -415,7 +446,11 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">Type:</span>
-                <Badge className="ml-2">{kitType.toUpperCase()}</Badge>
+                <Badge className="ml-2">
+                  {kitType === "cstem" && cstemVariant 
+                    ? cstemVariant.toUpperCase() 
+                    : kitType.toUpperCase()}
+                </Badge>
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">Total Pouches:</span>
