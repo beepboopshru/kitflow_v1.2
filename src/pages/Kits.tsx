@@ -63,6 +63,8 @@ export default function Kits() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
   const [newMaterial, setNewMaterial] = useState<string>("");
+  const [editingRemarksKitId, setEditingRemarksKitId] = useState<string | null>(null);
+  const [remarksInput, setRemarksInput] = useState<string>("");
 
   const copyKit = useMutation(api.kits.copy);
   const clearPendingByKit = useMutation(api.assignments.clearPendingByKit);
@@ -693,7 +695,7 @@ export default function Kits() {
                   <th className="px-4 py-3 text-left text-sm font-medium">Type</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Stock</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Pending</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Remarks</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
                 </tr>
               </thead>
@@ -743,8 +745,59 @@ export default function Kits() {
                             {kit.stockCount <= kit.lowStockThreshold ? "Low stock" : "In stock"}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground">
-                          {pending.count > 0 ? `${pending.count} (${pending.qty} units)` : "-"}
+                        <td className="px-4 py-3 text-sm" onClick={(e) => e.stopPropagation()}>
+                          {editingRemarksKitId === kit._id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={remarksInput}
+                                onChange={(e) => setRemarksInput(e.target.value)}
+                                placeholder="Add remarks..."
+                                className="h-8 text-xs"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    updateKit({ id: kit._id, remarks: remarksInput });
+                                    setEditingRemarksKitId(null);
+                                    toast("Remarks updated");
+                                  } else if (e.key === "Escape") {
+                                    setEditingRemarksKitId(null);
+                                  }
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  updateKit({ id: kit._id, remarks: remarksInput });
+                                  setEditingRemarksKitId(null);
+                                  toast("Remarks updated");
+                                }}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setEditingRemarksKitId(null)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <div
+                              className="cursor-pointer hover:bg-muted/50 rounded px-2 py-1 min-h-[32px] flex items-center"
+                              onClick={() => {
+                                setEditingRemarksKitId(kit._id);
+                                setRemarksInput(kit.remarks || "");
+                              }}
+                            >
+                              {kit.remarks ? (
+                                <span className="text-sm">{kit.remarks}</span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground italic">Click to add remarks...</span>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex space-x-1">
