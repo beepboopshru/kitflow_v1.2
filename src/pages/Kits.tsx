@@ -310,7 +310,7 @@ const getImageUrl = useQuery(
         await updateKit({
           id: editingKit._id,
           ...formData,
-          image: editingKit.image || uploadedImageId || undefined,
+          image: uploadedImageId || editingKit.image || undefined,
         });
         toast("Kit updated successfully");
       } else {
