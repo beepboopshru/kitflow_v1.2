@@ -252,6 +252,14 @@ export default function Clients() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => openDetails(client)}
+                        title="View Monthwise"
+                      >
+                        <Users className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEdit(client)}
                       >
                         <Edit className="h-4 w-4" />
@@ -272,18 +280,9 @@ export default function Clients() {
                     <span className="text-sm">{client.organization}</span>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{client.contact}</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openDetails(client)}
-                    >
-                      View Monthwise
-                    </Button>
+                  <div className="flex items-center space-x-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{client.contact}</span>
                   </div>
 
                   {client.email && (
