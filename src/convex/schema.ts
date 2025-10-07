@@ -55,8 +55,10 @@ const schema = defineSchema(
       isStructured: v.optional(v.boolean()),
       status: v.union(v.literal("in_stock"), v.literal("assigned"), v.literal("to_be_made")),
       remarks: v.optional(v.string()),
+      serialNumber: v.optional(v.string()),
       createdBy: v.id("users"),
-    }).index("by_type", ["type"]).index("by_status", ["status"]),
+    }).index("by_type", ["type"]).index("by_status", ["status"]).index("by_serial_number", ["serialNumber"]),
+=======
 
     // Client Database
     clients: defineTable({

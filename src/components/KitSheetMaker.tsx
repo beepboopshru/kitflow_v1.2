@@ -38,6 +38,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
   const [pouches, setPouches] = useState<Pouch[]>([]);
   const [stockCount, setStockCount] = useState(0);
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
+  const [serialNumber, setSerialNumber] = useState("");
   
   // Pouch builder state
   const [showPouchBuilder, setShowPouchBuilder] = useState(false);
@@ -71,6 +72,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
       setCstemVariant(editingKit.cstemVariant);
       setStockCount(editingKit.stockCount);
       setLowStockThreshold(editingKit.lowStockThreshold || 5);
+      setSerialNumber(editingKit.serialNumber || "");
       if (editingKit.isStructured && editingKit.packingRequirements) {
         try {
           const parsed = JSON.parse(editingKit.packingRequirements);
@@ -91,6 +93,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
     setPouches([]);
     setStockCount(0);
     setLowStockThreshold(5);
+    setSerialNumber("");
     setPouchName("");
     setPouchMaterials([]);
     setSelectedItem("");
@@ -196,6 +199,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
           lowStockThreshold: lowStockThreshold,
           packingRequirements: structuredData,
           isStructured: true,
+          serialNumber: serialNumber.trim() || undefined,
         });
         toast("Kit updated successfully!");
       } else {
@@ -208,6 +212,7 @@ export function KitSheetMaker({ open, onOpenChange, editingKit }: KitSheetMakerP
           lowStockThreshold: lowStockThreshold,
           packingRequirements: structuredData,
           isStructured: true,
+          serialNumber: serialNumber.trim() || undefined,
         });
         toast("Kit created successfully!");
       }
