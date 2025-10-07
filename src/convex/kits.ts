@@ -26,6 +26,38 @@ export const create = mutation({
   },
 });
 
+export const copy = mutation({
+  args: {
+    kitId: v.id("kits"),
+    newType: v.string(),
+    newName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Unauthorized");
+
+    const originalKit = await ctx.db.get(args.kitId);
+    if (!originalKit) throw new Error("Kit not found");
+
+    // Create a copy with the new program type
+    const newKit = {
+      name: args.newName || `${originalKit.name} (Copy)`,
+      type: args.newType,
+      cstemVariant: args.newType === "cstem" ? originalKit.cstemVariant : undefined,
+      description: originalKit.description,
+      image: originalKit.image,
+      stockCount: 0, // Start with 0 stock for the copy
+      lowStockThreshold: originalKit.lowStockThreshold,
+      packingRequirements: originalKit.packingRequirements,
+      isStructured: originalKit.isStructured,
+      status: "in_stock" as const,
+      createdBy: user._id,
+    };
+
+    return await ctx.db.insert("kits", newKit);
+  },
+});
+
 export const list = query({
   args: {},
   handler: async (ctx) => {

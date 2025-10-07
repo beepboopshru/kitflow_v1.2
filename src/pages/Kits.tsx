@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp, FileText, Download, ArrowLeft, Box } from "lucide-react";
+import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp, FileText, Download, ArrowLeft, Box, Copy } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -64,10 +64,16 @@ export default function Kits() {
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
   const [newMaterial, setNewMaterial] = useState<string>("");
 
+  const copyKit = useMutation(api.kits.copy);
   const clearPendingByKit = useMutation(api.assignments.clearPendingByKit);
   const [isKitSheetMakerOpen, setIsKitSheetMakerOpen] = useState(false);
   const [editingKitForSheetMaker, setEditingKitForSheetMaker] = useState<any>(null);
   const generatePdf = useAction(api.kitPdf.generateKitSheetPdf);
+
+  const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
+  const [copyingKit, setCopyingKit] = useState<any>(null);
+  const [copyTargetProgram, setCopyTargetProgram] = useState<string>("");
+  const [copyKitName, setCopyKitName] = useState<string>("");
 
   // Filter kits based on selected program and other filters
   const filteredKits = (kits ?? []).filter((k) => {
@@ -299,6 +305,37 @@ export default function Kits() {
         description: err instanceof Error ? err.message : "Unknown error" 
       });
     }
+  };
+
+  const handleCopyKit = async () => {
+    if (!copyingKit || !copyTargetProgram) {
+      toast("Please select a target program");
+      return;
+    }
+
+    try {
+      await copyKit({
+        kitId: copyingKit._id,
+        newType: copyTargetProgram,
+        newName: copyKitName.trim() || undefined,
+      });
+      toast("Kit copied successfully");
+      setIsCopyDialogOpen(false);
+      setCopyingKit(null);
+      setCopyTargetProgram("");
+      setCopyKitName("");
+    } catch (error) {
+      toast("Error copying kit", { 
+        description: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  };
+
+  const openCopyDialog = (kit: any) => {
+    setCopyingKit(kit);
+    setCopyKitName(`${kit.name} (Copy)`);
+    setCopyTargetProgram("");
+    setIsCopyDialogOpen(true);
   };
 
   const parseStructuredMaterials = (kit: any): Array<{ name: string; materials: Array<{ name: string; quantity: number; unit: string }> }> => {
@@ -729,6 +766,17 @@ export default function Kits() {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                openCopyDialog(kit);
+                              }}
+                              title="Copy to Another Program"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleEdit(kit);
                               }}
                             >
@@ -892,6 +940,65 @@ export default function Kits() {
           </div>
         )}
       </div>
+
+      {/* Copy Kit Dialog */}
+      <Dialog open={isCopyDialogOpen} onOpenChange={setIsCopyDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Copy Kit to Another Program</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Original Kit</Label>
+              <Input value={copyingKit?.name || ""} disabled />
+            </div>
+            <div>
+              <Label htmlFor="copyKitName">New Kit Name</Label>
+              <Input
+                id="copyKitName"
+                value={copyKitName}
+                onChange={(e) => setCopyKitName(e.target.value)}
+                placeholder="Enter new kit name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="targetProgram">Target Program</Label>
+              <Select value={copyTargetProgram} onValueChange={setCopyTargetProgram}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select target program" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(programs ?? [])
+                    .filter(p => p.slug !== copyingKit?.type)
+                    .map((program) => (
+                      <SelectItem key={program._id} value={program.slug}>
+                        {program.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              The copied kit will start with 0 stock and retain all packing requirements.
+            </p>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsCopyDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleCopyKit}
+                disabled={!copyTargetProgram}
+              >
+                Copy Kit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <KitSheetMaker 
         open={isKitSheetMakerOpen} 
