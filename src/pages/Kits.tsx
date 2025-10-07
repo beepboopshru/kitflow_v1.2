@@ -91,6 +91,7 @@ export default function Kits() {
   // Add new state for image handling
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadedImageId, setUploadedImageId] = useState<string | null>(null);
   const [viewingImageKit, setViewingImageKit] = useState<any>(null);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
 
@@ -136,7 +137,10 @@ const getImageUrl = useQuery(
 
       const { storageId } = await result.json();
       
-      // Set the image in the form
+      // Store the uploaded image ID
+      setUploadedImageId(storageId);
+      
+      // Set the image in editingKit if it exists
       setEditingKit((prev: any) => prev ? { ...prev, image: storageId } : prev);
       
       // Create preview
@@ -294,6 +298,8 @@ const getImageUrl = useQuery(
       packingRequirements: "",
     });
     setEditingKit(null);
+    setUploadedImageId(null);
+    setImagePreview(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -304,13 +310,13 @@ const getImageUrl = useQuery(
         await updateKit({
           id: editingKit._id,
           ...formData,
-          image: editingKit.image, // Include the image from editingKit state
+          image: editingKit.image || uploadedImageId || undefined,
         });
         toast("Kit updated successfully");
       } else {
         await createKit({
           ...formData,
-          image: editingKit?.image, // Include the image if uploaded
+          image: uploadedImageId || undefined,
         });
         toast("Kit created successfully");
       }
