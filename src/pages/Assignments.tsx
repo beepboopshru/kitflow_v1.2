@@ -27,6 +27,7 @@ export default function Assignments() {
   const assignments = useQuery(api.assignments.list);
   const kits = useQuery(api.kits.list);
   const clients = useQuery(api.clients.list);
+  const programs = useQuery(api.programs.list);
   const createAssignment = useMutation(api.assignments.create);
   const updateStatus = useMutation(api.assignments.updateStatus);
   const clearAllPending = useMutation(api.assignments.clearAllPendingAssignments);
@@ -35,6 +36,7 @@ export default function Assignments() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formData, setFormData] = useState({
+    programSlug: "",
     kitId: "",
     clientId: "",
     quantity: "" as number | "",
@@ -64,6 +66,7 @@ export default function Assignments() {
 
   const resetForm = () => {
     setFormData({
+      programSlug: "",
       kitId: "",
       clientId: "",
       quantity: "",
@@ -222,15 +225,35 @@ export default function Assignments() {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Label htmlFor="kitId">Kit</Label>
-                    <Select value={formData.kitId} onValueChange={(value) => 
-                      setFormData({ ...formData, kitId: value })
+                    <Label htmlFor="programSlug">Program</Label>
+                    <Select value={formData.programSlug} onValueChange={(value) => 
+                      setFormData({ ...formData, programSlug: value, kitId: "" })
                     }>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a kit" />
+                        <SelectValue placeholder="Select a program" />
                       </SelectTrigger>
                       <SelectContent>
-                        {kits?.map((kit) => (
+                        {programs?.map((program) => (
+                          <SelectItem key={program._id} value={program.slug}>
+                            {program.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="kitId">Kit</Label>
+                    <Select 
+                      value={formData.kitId} 
+                      onValueChange={(value) => setFormData({ ...formData, kitId: value })}
+                      disabled={!formData.programSlug}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={formData.programSlug ? "Select a kit" : "Select a program first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {kits?.filter(kit => kit.type === formData.programSlug).map((kit) => (
                           <SelectItem key={kit._id} value={kit._id}>
                             {kit.name} (Stock: {kit.stockCount}{kit.stockCount < 0 ? ' - To be Made' : ''})
                           </SelectItem>
