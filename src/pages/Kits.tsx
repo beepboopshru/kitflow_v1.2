@@ -338,7 +338,7 @@ export default function Kits() {
     setIsCopyDialogOpen(true);
   };
 
-  const parseStructuredMaterials = (kit: any): Array<{ name: string; materials: Array<{ name: string; quantity: number; unit: string }> }> => {
+  const parseStructuredMaterials = (kit: any): Array<{ name: string; materials: Array<{ name: string; quantity: number; unit: string; notes?: string }> }> => {
     if (!kit.isStructured || !kit.packingRequirements) return [];
     try {
       return JSON.parse(kit.packingRequirements);
@@ -818,13 +818,20 @@ export default function Kits() {
                                     {structuredPouches.map((pouch, pIdx) => (
                                       <div key={pIdx} className="border rounded p-2 bg-background">
                                         <div className="font-medium text-sm mb-1">{pouch.name}</div>
-                                        <ul className="space-y-1 text-xs">
+                                        <ul className="space-y-2 text-xs">
                                           {pouch.materials.map((material, mIdx) => (
-                                            <li key={mIdx} className="flex justify-between gap-2">
-                                              <span className="flex-1 break-words">• {material.name}</span>
-                                              <span className="flex-shrink-0 font-medium whitespace-nowrap">
-                                                {material.quantity} {material.unit}
-                                              </span>
+                                            <li key={mIdx}>
+                                              <div className="flex justify-between gap-2">
+                                                <span className="flex-1 break-words">• {material.name}</span>
+                                                <span className="flex-shrink-0 font-medium whitespace-nowrap">
+                                                  {material.quantity} {material.unit}
+                                                </span>
+                                              </div>
+                                              {material.notes && (
+                                                <div className="text-muted-foreground ml-3 mt-0.5 italic">
+                                                  {material.notes}
+                                                </div>
+                                              )}
                                             </li>
                                           ))}
                                         </ul>

@@ -1,0 +1,8 @@
+{pouch.materials.map((material, mIdx) => (
+  <li key={mIdx} className="flex justify-between gap-2">
+    <span className="flex-1 break-words">• {material.name}</span>
+    <span className="flex-shrink-0 font-medium whitespace-nowrap">
+      {material.quantity} {material.unit}
+    </span>
+  </li>
+))}
