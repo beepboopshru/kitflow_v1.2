@@ -1323,7 +1323,8 @@ const getImageUrl = useQuery(
       <KitImageViewer
         open={isImageViewerOpen}
         onOpenChange={setIsImageViewerOpen}
-        kit={viewingImageKit}
+        kitName={viewingImageKit?.name || ""}
+        storageId={viewingImageKit?.image || ""}
       />
     </Layout>
   );
