@@ -472,8 +472,11 @@ export default function Kits() {
                         </td>
                         <td className="px-4 py-3 text-sm">{kit.stockCount}</td>
                         <td className="px-4 py-3">
-                          <Badge variant={kit.status === "in_stock" ? "default" : "secondary"} className="text-xs">
-                            {kit.status === "in_stock" ? "In Stock" : "Assigned"}
+                          <Badge 
+                            variant={kit.stockCount <= kit.lowStockThreshold ? "destructive" : "default"} 
+                            className="text-xs"
+                          >
+                            {kit.stockCount <= kit.lowStockThreshold ? "Low stock" : "In stock"}
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-sm text-muted-foreground">
