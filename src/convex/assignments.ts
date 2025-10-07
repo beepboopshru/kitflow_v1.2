@@ -16,8 +16,8 @@ export const create = mutation({
     if (!user) throw new Error("Unauthorized");
 
     const kit = await ctx.db.get(args.kitId);
-    if (!kit || kit.stockCount < args.quantity) {
-      throw new Error("Insufficient stock");
+    if (!kit) {
+      throw new Error("Kit not found");
     }
 
     const assignmentId = await ctx.db.insert("assignments", {
@@ -32,9 +32,20 @@ export const create = mutation({
       dispatchedAt: args.dispatchedAt,
     });
 
+    const newStockCount = kit.stockCount - args.quantity;
+    let newStatus: "in_stock" | "assigned" | "to_be_made";
+    
+    if (newStockCount < 0) {
+      newStatus = "to_be_made";
+    } else if (newStockCount === 0) {
+      newStatus = "assigned";
+    } else {
+      newStatus = "in_stock";
+    }
+
     await ctx.db.patch(args.kitId, {
-      stockCount: kit.stockCount - args.quantity,
-      status: kit.stockCount - args.quantity === 0 ? "assigned" as const : "in_stock" as const,
+      stockCount: newStockCount,
+      status: newStatus,
     });
 
     return assignmentId;

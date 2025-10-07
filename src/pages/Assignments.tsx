@@ -230,9 +230,9 @@ export default function Assignments() {
                         <SelectValue placeholder="Select a kit" />
                       </SelectTrigger>
                       <SelectContent>
-                        {kits?.filter(kit => kit.stockCount > 0).map((kit) => (
+                        {kits?.map((kit) => (
                           <SelectItem key={kit._id} value={kit._id}>
-                            {kit.name} (Stock: {kit.stockCount})
+                            {kit.name} (Stock: {kit.stockCount}{kit.stockCount < 0 ? ' - To be Made' : ''})
                           </SelectItem>
                         ))}
                       </SelectContent>

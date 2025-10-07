@@ -53,7 +53,7 @@ const schema = defineSchema(
       lowStockThreshold: v.number(),
       packingRequirements: v.optional(v.string()),
       isStructured: v.optional(v.boolean()),
-      status: v.union(v.literal("in_stock"), v.literal("assigned")),
+      status: v.union(v.literal("in_stock"), v.literal("assigned"), v.literal("to_be_made")),
       remarks: v.optional(v.string()),
       createdBy: v.id("users"),
     }).index("by_type", ["type"]).index("by_status", ["status"]),
