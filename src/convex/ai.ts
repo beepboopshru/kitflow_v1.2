@@ -10,7 +10,6 @@ export const chat = action({
   handler: async (ctx, args) => {
     // Fetch live DB context (reuse existing queries)
     // Using dynamic import with loose typing to avoid heavy generated types
-    // Using dynamic import with loose typing to avoid heavy generated types
     // @ts-ignore - suppress deep type instantiation from generated API types
     const mod: any = await import("./_generated/api");
     const api = mod.api as any;
@@ -49,7 +48,7 @@ export const chat = action({
           "X-Title": "KitFlow",
         },
         body: JSON.stringify({
-          model: "deepseek/deepseek-r1-0528:free",
+          model: "deepseek/deepseek-chat",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: args.message },
@@ -62,7 +61,7 @@ export const chat = action({
         const errText = await response.text();
         console.error("OpenRouter error:", response.status, errText);
         return { content: "Sorry, there was an error generating a response. Please try again." };
-        }
+      }
 
       const data: any = await response.json();
       const content: string = data?.choices?.[0]?.message?.content ?? "No response.";
