@@ -18,6 +18,7 @@ export default function Dashboard() {
   const summary = useQuery(api.reports.getInventorySummary);
   const lowStockKits = useQuery(api.kits.getLowStockKits);
   const kits = useQuery(api.kits.list);
+  const clientAllocations = useQuery(api.reports.getClientAllocation);
 
   // Add local filters
   const [typeFilter, setTypeFilter] = useState<"all" | "cstem" | "robotics">("all");
@@ -229,6 +230,48 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Client Reports */}
+        {clientAllocations && clientAllocations.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                <span>Client Reports</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {clientAllocations.map((allocation) => (
+                  <div key={allocation.client._id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium">{allocation.client.name}</p>
+                      <p className="text-sm text-muted-foreground">{allocation.client.organization}</p>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <div className="text-sm font-medium">{allocation.totalAssigned}</div>
+                        <div className="text-xs text-muted-foreground">Total Qty</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm font-medium">{allocation.assignments}</div>
+                        <div className="text-xs text-muted-foreground">Assignments</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm font-medium">{allocation.packed}</div>
+                        <div className="text-xs text-muted-foreground">Packed</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm font-medium">{allocation.dispatched}</div>
+                        <div className="text-xs text-muted-foreground">Dispatched</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Low Stock Alerts */}
         {lowStockKits && lowStockKits.length > 0 && (
