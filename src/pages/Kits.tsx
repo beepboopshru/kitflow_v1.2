@@ -198,9 +198,8 @@ const getImageUrl = useQuery(
     }
 
     try {
-      // Auto-generate slug if not provided
-      const slug = newProgramData.slug.trim() || 
-        newProgramData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      // Auto-generate slug from name
+      const slug = newProgramData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
       // Parse categories from comma-separated string
       const categories = newProgramData.categories
@@ -526,18 +525,6 @@ const getImageUrl = useQuery(
                       placeholder="e.g., Electronics, Mechanics"
                       required
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="programSlug">Slug (optional)</Label>
-                    <Input
-                      id="programSlug"
-                      value={newProgramData.slug}
-                      onChange={(e) => setNewProgramData({ ...newProgramData, slug: e.target.value })}
-                      placeholder="Auto-generated from name"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Lowercase, alphanumeric with hyphens only
-                    </p>
                   </div>
                   <div>
                     <Label htmlFor="programDescription">Description (optional)</Label>

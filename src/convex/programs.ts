@@ -29,7 +29,7 @@ export const create = mutation({
 
     // Validate slug format (lowercase, alphanumeric + hyphens)
     if (!/^[a-z0-9-]+$/.test(args.slug)) {
-      throw new Error("Slug must be lowercase alphanumeric with hyphens only");
+      throw new Error("Invalid slug format");
     }
 
     // Check if slug already exists
@@ -39,7 +39,7 @@ export const create = mutation({
       .first();
 
     if (existing) {
-      throw new Error("A program with this slug already exists");
+      throw new Error("A program with this name already exists");
     }
 
     return await ctx.db.insert("programs", {
