@@ -20,11 +20,7 @@ import { format } from "date-fns";
 
 function ClientMonthwiseView({ client }: { client: any }) {
   const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const [dispatchDate, setDispatchDate] = useState<string>("");
   const [selectedGrade, setSelectedGrade] = useState<string>("all");
-  
-  const setDispatchDateForClientMonth = useMutation(api.assignments.setDispatchDateForClientMonth);
-  const clearDispatchDateForClientMonth = useMutation(api.assignments.clearDispatchDateForClientMonth);
   
   const clientAssignments = useQuery(
     api.assignments.getByClient,
@@ -68,92 +64,10 @@ function ClientMonthwiseView({ client }: { client: any }) {
     return monthAssignments.filter((a) => a.grade === gnum).length;
   };
 
-  const handleApplyDispatchDate = async () => {
-    if (!client || !selectedMonth || !dispatchDate) {
-      toast("Please choose month and date");
-      return;
-    }
-    const ts = new Date(dispatchDate).getTime();
-    if (Number.isNaN(ts)) {
-      toast("Invalid date");
-      return;
-    }
-    const affected = computeAffectedCount(selectedGrade);
-    if (affected === 0) {
-      toast("No assignments match the selected grade and month");
-      return;
-    }
-    if (!confirm(`This will set a dispatch date for ${affected} assignment(s). Continue?`)) {
-      return;
-    }
-
-    try {
-      const gradeArg =
-        selectedGrade === "all"
-          ? undefined
-          : selectedGrade === "unspecified"
-          ? ("unspecified" as const)
-          : parseInt(selectedGrade, 10);
-
-      await setDispatchDateForClientMonth({
-        clientId: client._id,
-        month: selectedMonth,
-        dispatchedAt: ts,
-        markDispatched: true,
-        ...(gradeArg !== undefined ? { grade: gradeArg as any } : {}),
-      } as any);
-      toast(
-        `Dispatch date set for ${new Date(`${selectedMonth}-01`).toLocaleDateString(undefined, {
-          month: "long",
-          year: "numeric",
-        })}${selectedGrade !== "all" ? ` • Grade ${selectedGrade}` : ""}`
-      );
-    } catch (err) {
-      toast("Failed to set dispatch date", { description: err instanceof Error ? err.message : "Unknown error" });
-    }
-  };
-
-  const handleClearDispatchDate = async () => {
-    if (!client || !selectedMonth) {
-      toast("Please choose a month");
-      return;
-    }
-    const affected = computeAffectedCount(selectedGrade);
-    if (affected === 0) {
-      toast("No assignments match the selected grade and month");
-      return;
-    }
-    if (!confirm(`This will clear the dispatch date for ${affected} assignment(s). Continue?`)) {
-      return;
-    }
-    try {
-      const gradeArg =
-        selectedGrade === "all"
-          ? undefined
-          : selectedGrade === "unspecified"
-          ? ("unspecified" as const)
-          : parseInt(selectedGrade, 10);
-
-      await clearDispatchDateForClientMonth({
-        clientId: client._id,
-        month: selectedMonth,
-        ...(gradeArg !== undefined ? { grade: gradeArg as any } : {}),
-      } as any);
-      toast(
-        `Dispatch date cleared for ${new Date(`${selectedMonth}-01`).toLocaleDateString(undefined, {
-          month: "long",
-          year: "numeric",
-        })}${selectedGrade !== "all" ? ` • Grade ${selectedGrade}` : ""}`
-      );
-    } catch (err) {
-      toast("Failed to clear dispatch date", { description: err instanceof Error ? err.message : "Unknown error" });
-    }
-  };
-
   return (
     <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
       {/* Controls row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
         {/* Month dropdown */}
         <div>
           <Label className="text-sm font-medium mb-2 block">Month</Label>
@@ -194,22 +108,6 @@ function ClientMonthwiseView({ client }: { client: any }) {
               <SelectItem value="unspecified">Unspecified</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        {/* Dispatch date picker */}
-        <div>
-          <Label htmlFor={`dispatchDate-${client._id}`} className="text-sm font-medium mb-2 block">Dispatch date</Label>
-          <Input
-            id={`dispatchDate-${client._id}`}
-            type="date"
-            value={dispatchDate}
-            onChange={(e) => setDispatchDate(e.target.value)}
-          />
-        </div>
-
-        <div className="flex gap-2 lg:col-span-2">
-          <Button onClick={handleApplyDispatchDate} className="flex-1 h-10">Set</Button>
-          <Button variant="outline" onClick={handleClearDispatchDate} className="flex-1 h-10">Clear</Button>
         </div>
       </div>
 
