@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { Package, Plus, Truck, CalendarIcon, Trash2 } from "lucide-react";
+import { Package, Plus, Truck, CalendarIcon, Trash2, Edit2, Check, X } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -30,6 +30,7 @@ export default function Assignments() {
   const programs = useQuery(api.programs.list);
   const createAssignment = useMutation(api.assignments.create);
   const updateStatus = useMutation(api.assignments.updateStatus);
+  const updateNotes = useMutation(api.assignments.updateNotes);
   const clearAllPending = useMutation(api.assignments.clearAllPendingAssignments);
   const deleteAssignment = useMutation(api.assignments.deleteAssignment);
   const clearAll = useMutation(api.assignments.clearAllAssignments);
@@ -49,6 +50,7 @@ export default function Assignments() {
   const [statusFilter, setStatusFilter] = useState<"all" | "assigned" | "packed" | "dispatched">("all");
   const [kitFilter, setKitFilter] = useState<string>("all");
   const [clientFilter, setClientFilter] = useState<string>("all");
+  const [editingNotes, setEditingNotes] = useState<{ id: string; value: string } | null>(null);
 
   // Filter assignments based on selected filters
   const filteredAssignments = (assignments ?? []).filter((assignment) => {
@@ -111,6 +113,25 @@ export default function Assignments() {
     } catch (error) {
       toast("Error updating status", { description: error instanceof Error ? error.message : "Unknown error" });
     }
+  };
+
+  const handleSaveNotes = async (assignmentId: string) => {
+    if (!editingNotes) return;
+    
+    try {
+      await updateNotes({
+        id: assignmentId as any,
+        notes: editingNotes.value || undefined,
+      });
+      toast("Notes updated successfully");
+      setEditingNotes(null);
+    } catch (error) {
+      toast("Error updating notes", { description: error instanceof Error ? error.message : "Unknown error" });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingNotes(null);
   };
 
   const handleClearAllAssignments = async () => {
@@ -488,8 +509,49 @@ export default function Assignments() {
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {new Date(assignment.assignedAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-sm max-w-[200px] truncate" title={assignment.notes || ""}>
-                      {assignment.notes || "-"}
+                    <td className="px-4 py-3 text-sm max-w-[200px]">
+                      {editingNotes?.id === assignment._id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            value={editingNotes.value}
+                            onChange={(e) => setEditingNotes({ id: assignment._id, value: e.target.value })}
+                            className="h-8 text-sm"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleSaveNotes(assignment._id);
+                              } else if (e.key === "Escape") {
+                                handleCancelEdit();
+                              }
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleSaveNotes(assignment._id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Check className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleCancelEdit}
+                            className="h-8 w-8 p-0"
+                          >
+                            <X className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div
+                          className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
+                          onClick={() => setEditingNotes({ id: assignment._id, value: assignment.notes || "" })}
+                          title="Click to edit notes"
+                        >
+                          <span className="truncate flex-1">{assignment.notes || "-"}</span>
+                          <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex space-x-1">

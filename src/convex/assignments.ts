@@ -474,3 +474,22 @@ export const clearAllAssignments = mutation({
     return { deletedCount: allAssignments.length, restoredByKit: qtyByKit };
   },
 });
+
+export const updateNotes = mutation({
+  args: {
+    id: v.id("assignments"),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) throw new Error("Unauthorized");
+
+    const assignment = await ctx.db.get(args.id);
+    if (!assignment) throw new Error("Assignment not found");
+
+    return await ctx.db.patch(args.id, {
+      notes: args.notes,
+      updatedAt: Date.now(),
+    });
+  },
+});
