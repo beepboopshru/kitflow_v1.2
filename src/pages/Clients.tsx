@@ -20,7 +20,6 @@ import { format } from "date-fns";
 
 function ClientMonthwiseView({ client }: { client: any }) {
   const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const [selectedGrade, setSelectedGrade] = useState<string>("all");
   
   const clientAssignments = useQuery(
     api.assignments.getByClient,
@@ -54,20 +53,10 @@ function ClientMonthwiseView({ client }: { client: any }) {
 
   const monthAssignments = selectedMonth ? byMonth[selectedMonth] ?? [] : [];
 
-  const computeAffectedCount = (gradeKey: string) => {
-    if (!selectedMonth) return 0;
-    if (gradeKey === "all") return monthAssignments.length;
-    if (gradeKey === "unspecified") {
-      return monthAssignments.filter((a) => typeof a.grade === "undefined").length;
-    }
-    const gnum = parseInt(gradeKey, 10);
-    return monthAssignments.filter((a) => a.grade === gnum).length;
-  };
-
   return (
     <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
       {/* Controls row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+      <div className="grid grid-cols-1 gap-4 items-end">
         {/* Month dropdown */}
         <div>
           <Label className="text-sm font-medium mb-2 block">Month</Label>
@@ -87,25 +76,6 @@ function ClientMonthwiseView({ client }: { client: any }) {
                   })}
                 </SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Grade dropdown */}
-        <div>
-          <Label className="text-sm font-medium mb-2 block">Grade</Label>
-          <Select value={selectedGrade} onValueChange={(v: string) => setSelectedGrade(v)}>
-            <SelectTrigger>
-              <SelectValue placeholder="All grades" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Grades</SelectItem>
-              {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map((g) => (
-                <SelectItem key={g} value={g}>
-                  Grade {g}
-                </SelectItem>
-              ))}
-              <SelectItem value="unspecified">Unspecified</SelectItem>
             </SelectContent>
           </Select>
         </div>
