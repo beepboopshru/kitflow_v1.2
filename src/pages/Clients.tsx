@@ -313,7 +313,7 @@ function ClientMonthwiseView({ client }: { client: any }) {
                                   </div>
                                   <div className="shrink-0">
                                     <Badge variant="default" className="text-xs">
-                                      Dispatched: {new Date(nums[0]).toLocaleDateString()}
+                                      Dispatch Data: {new Date(nums[0]).toLocaleDateString()}
                                     </Badge>
                                   </div>
                                 </div>
