@@ -225,6 +225,7 @@ export default function Clients() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     organization: "",
@@ -407,11 +408,30 @@ export default function Clients() {
           </Dialog>
         </div>
 
+        {/* Search Input */}
+        <div className="mb-4">
+          <Input
+            placeholder="Search clients by name, organization, phone, or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-md"
+          />
+        </div>
+
         {/* Clients Accordion */}
         <Card>
           <CardContent className="p-0">
             <Accordion type="single" collapsible className="w-full">
-              {clients?.map((client, index) => (
+              {clients?.filter((client) => {
+                if (!searchQuery) return true;
+                const query = searchQuery.toLowerCase();
+                return (
+                  client.name.toLowerCase().includes(query) ||
+                  client.organization.toLowerCase().includes(query) ||
+                  client.contact.toLowerCase().includes(query) ||
+                  (client.email && client.email.toLowerCase().includes(query))
+                );
+              }).map((client, index) => (
                 <AccordionItem key={client._id} value={client._id}>
                   <div className="px-4 hover:bg-muted/50 transition-colors">
                     <div className="flex items-start justify-between gap-4 py-4">
@@ -480,6 +500,23 @@ export default function Clients() {
             </Accordion>
           </CardContent>
         </Card>
+
+        {clients?.filter((client) => {
+          if (!searchQuery) return true;
+          const query = searchQuery.toLowerCase();
+          return (
+            client.name.toLowerCase().includes(query) ||
+            client.organization.toLowerCase().includes(query) ||
+            client.contact.toLowerCase().includes(query) ||
+            (client.email && client.email.toLowerCase().includes(query))
+          );
+        }).length === 0 && clients && clients.length > 0 && (
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium">No clients match your search</h3>
+            <p className="text-muted-foreground">Try adjusting your search terms.</p>
+          </div>
+        )}
 
         {clients?.length === 0 && (
           <div className="text-center py-12">
