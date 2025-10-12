@@ -6,8 +6,7 @@ import {
   Box, 
   LogOut, 
   Package, 
-  Users,
-  ShieldAlert
+  Users 
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { Boxes } from "lucide-react";
@@ -57,7 +56,6 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Clients", href: "/clients", icon: Users },
     { name: "Assignments", href: "/assignments", icon: Package },
     { name: "Inventory", href: "/inventory", icon: Boxes },
-    { name: "Admin Zone", href: "/admin", icon: ShieldAlert },
   ];
 
   return (
