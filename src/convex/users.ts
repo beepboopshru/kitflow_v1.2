@@ -61,3 +61,24 @@ export const setUserRole = mutation({
     return { success: true, userId: targetUser._id, newRole: args.role };
   },
 });
+
+export const upgradeAnonymousUsersToAdmin = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all anonymous users without admin role
+    const allUsers = await ctx.db.query("users").collect();
+    const anonymousUsers = allUsers.filter(
+      (user) => user.isAnonymous === true && user.role !== "admin"
+    );
+    
+    let updatedCount = 0;
+    for (const user of anonymousUsers) {
+      await ctx.db.patch(user._id, {
+        role: "admin" as const,
+      });
+      updatedCount++;
+    }
+    
+    return { success: true, updatedCount };
+  },
+});

@@ -9,7 +9,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   callbacks: {
     async createOrUpdateUser(ctx, args) {
       // If the user is signing in anonymously, set them as admin
-      if (args.existingUserId === undefined && args.profile?.isAnonymous) {
+      if (args.type === "credentials" && args.provider?.id === "anonymous") {
         return {
           role: "admin" as const,
         };
