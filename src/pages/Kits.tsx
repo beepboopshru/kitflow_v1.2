@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp, FileText, Download, ArrowLeft, Box, Copy, ImageIcon } from "lucide-react";
+import { AlertTriangle, Edit, Package, Plus, Trash2, ChevronDown, ChevronUp, FileText, Download, ArrowLeft, Box, Copy, ImageIcon, Hash } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -75,6 +75,10 @@ export default function Kits() {
   const [newMaterial, setNewMaterial] = useState<string>("");
   const [editingRemarksKitId, setEditingRemarksKitId] = useState<string | null>(null);
   const [remarksInput, setRemarksInput] = useState<string>("");
+
+  // Add state for inline stock editing
+  const [editingStockKitId, setEditingStockKitId] = useState<string | null>(null);
+  const [stockInput, setStockInput] = useState<number>(0);
 
   const copyKit = useMutation(api.kits.copy);
   const clearPendingByKit = useMutation(api.assignments.clearPendingByKit);
@@ -431,6 +435,16 @@ const getImageUrl = useQuery(
       toast("Material removed");
     } catch (err) {
       toast("Failed to remove material", { description: err instanceof Error ? err.message : "Unknown error" });
+    }
+  };
+
+  const handleStockUpdate = async (kitId: string) => {
+    try {
+      await updateKit({ id: kitId as any, stockCount: stockInput });
+      setEditingStockKitId(null);
+      toast("Stock count updated");
+    } catch (err) {
+      toast("Failed to update stock", { description: err instanceof Error ? err.message : "Unknown error" });
     }
   };
 
@@ -1089,6 +1103,18 @@ const getImageUrl = useQuery(
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setEditingStockKitId(kit._id);
+                                setStockInput(kit.stockCount);
+                              }}
+                              title="Edit Stock Count"
+                            >
+                              <Hash className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 openCopyDialog(kit);
                               }}
                               title="Copy to Another Program"
@@ -1347,6 +1373,51 @@ const getImageUrl = useQuery(
           storageId={viewingImageKit.image}
         />
       )}
+
+      {/* Stock Edit Dialog */}
+      <Dialog open={editingStockKitId !== null} onOpenChange={(open) => !open && setEditingStockKitId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit Stock Count</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="stockInput">Stock Count</Label>
+              <Input
+                id="stockInput"
+                type="number"
+                value={stockInput}
+                onChange={(e) => setStockInput(parseInt(e.target.value) || 0)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && editingStockKitId) {
+                    handleStockUpdate(editingStockKitId);
+                  } else if (e.key === "Escape") {
+                    setEditingStockKitId(null);
+                  }
+                }}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Use negative values to indicate kits that need to be made
+              </p>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setEditingStockKitId(null)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => editingStockKitId && handleStockUpdate(editingStockKitId)}
+              >
+                Update Stock
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
