@@ -69,7 +69,6 @@ export default function Landing() {
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
               <img src="https://harmless-tapir-303.convex.cloud/api/storage/1467edc0-3490-4b04-9260-93ea45159890" alt="Logo" className="h-12 w-auto" />
-              <span className="text-xl font-semibold tracking-tight">Science Utsav Management System</span>
             </div>
             
             <div className="flex items-center space-x-4">
