@@ -79,7 +79,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     }
   };
 
-  // Handler for Google OAuth sign-in
+  // Handler for Google OAuth sign-in with enhanced error handling
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
@@ -92,7 +92,38 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     } catch (error) {
       console.error("Google login error:", error);
       console.error("Error details:", JSON.stringify(error, null, 2));
-      setError(`Failed to sign in with Google: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Enhanced error handling for specific OAuth scenarios
+      let errorMessage = "Failed to sign in with Google. ";
+      
+      if (error instanceof Error) {
+        const errorText = error.message.toLowerCase();
+        
+        // Check for missing environment variables
+        if (errorText.includes("not configured") || errorText.includes("available providers")) {
+          errorMessage += "Google OAuth is not properly configured. Please ensure AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET environment variables are set in the Convex dashboard.";
+        }
+        // Check for popup blocked
+        else if (errorText.includes("popup") || errorText.includes("blocked")) {
+          errorMessage += "The sign-in popup was blocked. Please allow popups for this site and try again.";
+        }
+        // Check for network issues
+        else if (errorText.includes("network") || errorText.includes("fetch")) {
+          errorMessage += "Network error. Please check your internet connection and try again.";
+        }
+        // Check for user cancellation
+        else if (errorText.includes("cancel") || errorText.includes("closed")) {
+          errorMessage = "Sign-in was cancelled. Please try again if you'd like to continue.";
+        }
+        // Generic error with message
+        else {
+          errorMessage += error.message;
+        }
+      } else {
+        errorMessage += "An unknown error occurred. Please try again or use Guest login.";
+      }
+      
+      setError(errorMessage);
       setIsLoading(false);
     }
   };
