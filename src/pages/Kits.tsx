@@ -95,6 +95,9 @@ export default function Kits() {
   const [viewingImageKit, setViewingImageKit] = useState<any>(null);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
 
+  // Add search state
+  const [kitSearchQuery, setKitSearchQuery] = useState<string>("");
+
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
 const getImageUrl = useQuery(
   api.storage.getImageUrl,
@@ -177,7 +180,13 @@ const getImageUrl = useQuery(
       typeOk = k.cstemVariant === typeFilter;
     }
     
-    return statusOk && typeOk;
+    // Search filter by kit name
+    let searchOk = true;
+    if (kitSearchQuery.trim()) {
+      searchOk = k.name.toLowerCase().includes(kitSearchQuery.toLowerCase());
+    }
+    
+    return statusOk && typeOk && searchOk;
   });
 
   // Calculate stats for each program dynamically
@@ -748,6 +757,17 @@ const getImageUrl = useQuery(
                     </Select>
                   </div>
                 )}
+              </div>
+
+              {/* Search Input */}
+              <div className="mt-3">
+                <Label className="text-xs">Search Kits</Label>
+                <Input
+                  placeholder="Search by kit name..."
+                  value={kitSearchQuery}
+                  onChange={(e) => setKitSearchQuery(e.target.value)}
+                  className="h-9"
+                />
               </div>
             </div>
           </div>
