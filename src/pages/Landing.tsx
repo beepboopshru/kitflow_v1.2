@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
-import { BarChart3, Box, Package, Users, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -37,29 +37,6 @@ export default function Landing() {
       ]);
     }
   };
-
-  const features = [
-    {
-      icon: Box,
-      title: "Kit Management",
-      description: "Track CSTEM and Robotics kits with real-time stock monitoring and low stock alerts."
-    },
-    {
-      icon: Users,
-      title: "Client Database",
-      description: "Manage client information and categorize monthly vs one-time customers."
-    },
-    {
-      icon: Package,
-      title: "Assignment Tracking",
-      description: "Create packing plans and track status from assignment to dispatch."
-    },
-    {
-      icon: BarChart3,
-      title: "Basic Reporting",
-      description: "Generate inventory summaries and client allocation reports."
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -156,27 +133,6 @@ export default function Landing() {
               Built for simplicity and efficiency
             </p>
           </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
-              >
-                <Card className="h-full">
-                  <CardContent className="p-6">
-                    <feature.icon className="h-12 w-12 mb-4 text-primary" />
-                    <h3 className="font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {feature.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </section>
 
