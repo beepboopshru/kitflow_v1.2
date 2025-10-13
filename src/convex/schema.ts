@@ -44,7 +44,7 @@ const schema = defineSchema(
     // Kit Management
     kits: defineTable({
       name: v.string(),
-      type: v.string(), // Changed from union to string to accept any program slug
+      type: v.string(),
       category: v.optional(v.string()),
       cstemVariant: v.optional(v.union(v.literal("explorer"), v.literal("discoverer"))),
       description: v.optional(v.string()),
@@ -99,6 +99,17 @@ const schema = defineSchema(
       createdBy: v.id("users"),
     }).index("by_category", ["category"])
       .index("by_category_and_subCategory", ["category", "subCategory"]),
+
+    // Vendor Contacts
+    vendors: defineTable({
+      name: v.string(),
+      organization: v.string(),
+      contact: v.string(),
+      email: v.optional(v.string()),
+      address: v.optional(v.string()),
+      notes: v.optional(v.string()),
+      createdBy: v.id("users"),
+    }).index("by_name", ["name"]),
   },
   {
     schemaValidation: false,
