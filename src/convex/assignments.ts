@@ -332,6 +332,7 @@ export const clearAllPendingAssignments = mutation({
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
+    if (user.role !== "admin") throw new Error("Admin access required");
 
     // Fetch all assignments
     const allAssignments = await ctx.db.query("assignments").collect();
@@ -430,6 +431,7 @@ export const clearAllAssignments = mutation({
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Unauthorized");
+    if (user.role !== "admin") throw new Error("Admin access required");
 
     // Fetch all assignments
     const allAssignments = await ctx.db.query("assignments").collect();
