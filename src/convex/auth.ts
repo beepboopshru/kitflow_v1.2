@@ -11,7 +11,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       // If the user is signing in anonymously, set them as admin
       if (args.type === "credentials" && args.provider?.id === "anonymous") {
         return {
-          role: "admin" as const,
+          role: "admin",
         };
       }
       // For existing users or non-anonymous users, don't modify the role
