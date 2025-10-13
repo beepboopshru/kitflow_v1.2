@@ -55,15 +55,21 @@ export default function Inventory() {
   const kits = useQuery(api.kits.list, {});
   const assignments = useQuery(api.assignments.list, {});
   
-  // Load custom categories
-  const customRawCategories = useQuery(api.inventoryCategories.list, { categoryType: "raw_material" });
-  const customPreCategories = useQuery(api.inventoryCategories.list, { categoryType: "pre_processed" });
+  // Load custom categories - only when authenticated to prevent errors on auth page
+  const customRawCategories = useQuery(
+    (api as any).inventoryCategories?.list, 
+    isAuthenticated ? { categoryType: "raw_material" as const } : "skip"
+  );
+  const customPreCategories = useQuery(
+    (api as any).inventoryCategories?.list, 
+    isAuthenticated ? { categoryType: "pre_processed" as const } : "skip"
+  );
 
   const createItem = useMutation(api.inventory.create);
   const adjustStock = useMutation(api.inventory.adjustStock);
   const removeItem = useMutation(api.inventory.remove);
-  const createCategory = useMutation(api.inventoryCategories.create);
-  const removeCategory = useMutation(api.inventoryCategories.remove);
+  const createCategory = useMutation((api as any).inventoryCategories?.create);
+  const removeCategory = useMutation((api as any).inventoryCategories?.remove);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -144,12 +150,12 @@ export default function Inventory() {
 
   // Merge default and custom categories
   const allRawCategories = useMemo(() => {
-    const custom = (customRawCategories ?? []).map(c => ({ value: c.value, label: c.name }));
+    const custom = (customRawCategories ?? []).map((c: any) => ({ value: c.value, label: c.name }));
     return [...RAW_SUBCATEGORIES, ...custom];
   }, [customRawCategories]);
 
   const allPreCategories = useMemo(() => {
-    const custom = (customPreCategories ?? []).map(c => ({ value: c.value, label: c.name }));
+    const custom = (customPreCategories ?? []).map((c: any) => ({ value: c.value, label: c.name }));
     return [...PRE_SUBCATEGORIES, ...custom];
   }, [customPreCategories]);
 

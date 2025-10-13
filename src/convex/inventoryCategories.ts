@@ -7,10 +7,10 @@ export const list = query({
     categoryType: v.optional(v.union(v.literal("raw_material"), v.literal("pre_processed"))),
   },
   handler: async (ctx, args) => {
-    if (args.categoryType) {
+    if (args.categoryType !== undefined) {
       return await ctx.db
         .query("inventoryCategories")
-        .withIndex("by_categoryType", (q) => q.eq("categoryType", args.categoryType))
+        .withIndex("by_categoryType", (q) => q.eq("categoryType", args.categoryType as "raw_material" | "pre_processed"))
         .collect();
     }
     return await ctx.db.query("inventoryCategories").collect();
