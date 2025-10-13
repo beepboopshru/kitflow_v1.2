@@ -117,25 +117,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl font-bold tracking-tight mb-4">
-              Everything you need
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              Built for simplicity and efficiency
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
       {/* Chatbot Widget */}
       <div className="fixed bottom-4 right-4 z-50">
         {chatOpen ? (
