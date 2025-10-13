@@ -23,10 +23,11 @@ export default function VendorContacts() {
     if (!isLoading && !isAuthenticated) navigate("/auth");
   }, [isLoading, isAuthenticated, navigate]);
 
-  const vendors = useQuery(api.vendors.list as any);
-  const createVendor = useMutation(api.vendors.create as any);
-  const updateVendor = useMutation(api.vendors.update as any);
-  const removeVendor = useMutation(api.vendors.remove as any);
+  // Cast api to any to avoid typegen lag errors until Convex syncs functions
+  const vendors = useQuery(((api as any).vendors.list) as any);
+  const createVendor = useMutation(((api as any).vendors.create) as any);
+  const updateVendor = useMutation(((api as any).vendors.update) as any);
+  const removeVendor = useMutation(((api as any).vendors.remove) as any);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);

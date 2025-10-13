@@ -45,7 +45,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
-              <img src="https://harmless-tapir-303.convex.cloud/api/storage/1467edc0-3490-4b04-9260-93ea45159890" alt="Logo" className="h-12 w-auto" />
+              <img src="https://honorable-mammoth-993.convex.cloud/api/storage/1467edc0-3490-4b04-9260-93ea45159890" alt="Logo" className="h-12 w-auto" />
             </div>
             
             <div className="flex items-center space-x-4">
