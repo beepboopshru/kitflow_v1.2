@@ -6,7 +6,7 @@ import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router";
+import { createBrowserRouter, RouterProvider, useLocation } from "react-router";
 import "./index.css";
 import Landing from "./pages/Landing.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -15,11 +15,49 @@ import Kits from "@/pages/Kits.tsx";
 import Clients from "@/pages/Clients.tsx";
 import Assignments from "@/pages/Assignments.tsx";
 import Inventory from "@/pages/Inventory.tsx";
+import AdminZone from "./pages/AdminZone.tsx";
 import "./types/global.d.ts";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
-
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Landing />,
+  },
+  {
+    path: "/auth",
+    element: <AuthPage />,
+  },
+  {
+    path: "/dashboard",
+    element: <Dashboard />,
+  },
+  {
+    path: "/kits",
+    element: <Kits />,
+  },
+  {
+    path: "/clients",
+    element: <Clients />,
+  },
+  {
+    path: "/assignments",
+    element: <Assignments />,
+  },
+  {
+    path: "/inventory",
+    element: <Inventory />,
+  },
+  {
+    path: "/admin",
+    element: <AdminZone />,
+  },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
+]);
 
 function RouteSyncer() {
   const location = useLocation();
@@ -50,19 +88,7 @@ createRoot(document.getElementById("root")!).render(
     <VlyToolbar />
     <InstrumentationProvider>
       <ConvexAuthProvider client={convex}>
-        <BrowserRouter>
-          <RouteSyncer />
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/auth" element={<AuthPage redirectAfterAuth="/dashboard" />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/kits" element={<Kits />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/assignments" element={<Assignments />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <RouterProvider router={router} />
         <Toaster />
       </ConvexAuthProvider>
     </InstrumentationProvider>

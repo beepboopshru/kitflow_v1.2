@@ -31,9 +31,7 @@ export default function Assignments() {
   const createAssignment = useMutation(api.assignments.create);
   const updateStatus = useMutation(api.assignments.updateStatus);
   const updateNotes = useMutation(api.assignments.updateNotes);
-  const clearAllPending = useMutation(api.assignments.clearAllPendingAssignments);
   const deleteAssignment = useMutation(api.assignments.deleteAssignment);
-  const clearAll = useMutation(api.assignments.clearAllAssignments);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -132,60 +130,6 @@ export default function Assignments() {
 
   const handleCancelEdit = () => {
     setEditingNotes(null);
-  };
-
-  const handleClearAllAssignments = async () => {
-    const pendingCount = (assignments ?? []).filter(
-      (a) => a.status !== "dispatched" && typeof a.dispatchedAt !== "number"
-    ).length;
-
-    if (pendingCount === 0) {
-      toast("No pending assignments to clear");
-      return;
-    }
-
-    const first = confirm(
-      `This will delete ${pendingCount} pending assignment(s) and restore stock to all affected kits. Continue?`
-    );
-    if (!first) return;
-
-    const second = confirm("Are you absolutely sure? This cannot be undone.");
-    if (!second) return;
-
-    try {
-      const result = await clearAllPending();
-      toast(`Cleared ${result.deletedCount} assignment(s) successfully`);
-    } catch (error) {
-      toast("Error clearing assignments", {
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  };
-
-  const handleClearAllAssignmentsIncludingDispatched = async () => {
-    const totalCount = assignments?.length ?? 0;
-
-    if (totalCount === 0) {
-      toast("No assignments to clear");
-      return;
-    }
-
-    const first = confirm(
-      `This will delete ALL ${totalCount} assignment(s) including dispatched ones. Stock will be restored for pending assignments only. Continue?`
-    );
-    if (!first) return;
-
-    const second = confirm("Are you absolutely sure? This action is IRREVERSIBLE and will delete ALL assignment history.");
-    if (!second) return;
-
-    try {
-      const result = await clearAll();
-      toast(`Cleared ${result.deletedCount} assignment(s) successfully`);
-    } catch (error) {
-      toast("Error clearing all assignments", {
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
   };
 
   const handleDeleteAssignment = async (assignmentId: string, assignmentStatus: string) => {
@@ -601,30 +545,6 @@ export default function Assignments() {
             <p className="text-muted-foreground">Create your first kit assignment to get started.</p>
           </div>
         )}
-
-        {/* Danger Zone - Clear Actions */}
-        <div className="border-t pt-8 mt-8">
-          <div className="flex flex-col items-center gap-4">
-            <div className="text-sm text-muted-foreground">Danger Zone</div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleClearAllAssignments}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Clear All Pending
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleClearAllAssignmentsIncludingDispatched}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Clear All
-              </Button>
-            </div>
-          </div>
-        </div>
       </div>
     </Layout>
   );
