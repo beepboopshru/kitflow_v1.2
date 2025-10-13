@@ -49,7 +49,6 @@ export default function Assignments() {
   const [kitFilter, setKitFilter] = useState<string>("all");
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [monthFilter, setMonthFilter] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [editingNotes, setEditingNotes] = useState<{ id: string; value: string } | null>(null);
 
   // Get unique months from assignments for the filter dropdown
@@ -76,22 +75,7 @@ export default function Assignments() {
       monthOk = assignmentMonth === monthFilter;
     }
     
-    // Search filter
-    let searchOk = true;
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const kitName = assignment.kit?.name?.toLowerCase() || "";
-      const clientName = assignment.client?.name?.toLowerCase() || "";
-      const clientOrg = assignment.client?.organization?.toLowerCase() || "";
-      const notes = assignment.notes?.toLowerCase() || "";
-      
-      searchOk = kitName.includes(query) || 
-                 clientName.includes(query) || 
-                 clientOrg.includes(query) || 
-                 notes.includes(query);
-    }
-    
-    return statusOk && kitOk && clientOk && monthOk && searchOk;
+    return statusOk && kitOk && clientOk && monthOk;
   });
 
   useEffect(() => {
@@ -378,17 +362,7 @@ export default function Assignments() {
 
         {/* Filter Section */}
         <Card className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-            <div>
-              <Label className="text-xs mb-2">Search</Label>
-              <Input
-                placeholder="Search assignments..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9"
-              />
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <Label className="text-xs mb-2">Month</Label>
               <Select
@@ -473,8 +447,8 @@ export default function Assignments() {
 
             <div className="flex items-end sm:col-span-2 lg:col-span-1">
               <div className="text-sm text-muted-foreground">
-                {assignments && assignments.length > 0 && (
-                  <>Showing {filteredAssignments.length} of {assignments.length} assignments</>
+                {filteredAssignments.length > 0 && (
+                  <>Showing {filteredAssignments.length} of {assignments?.length || 0} assignments</>
                 )}
               </div>
             </div>

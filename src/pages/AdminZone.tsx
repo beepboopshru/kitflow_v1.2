@@ -11,7 +11,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 export default function AdminZone() {
-  const { isLoading, isAuthenticated, user } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
   const assignments = useQuery(api.assignments.list);
@@ -22,12 +22,7 @@ export default function AdminZone() {
     if (!isLoading && !isAuthenticated) {
       navigate("/auth");
     }
-    // Redirect non-admin users to dashboard (but allow anonymous users as temporary workaround)
-    if (!isLoading && isAuthenticated && user && user.role !== "admin" && !user.isAnonymous) {
-      toast("Access denied", { description: "You don't have permission to access the Admin Zone" });
-      navigate("/dashboard");
-    }
-  }, [isLoading, isAuthenticated, user, navigate]);
+  }, [isLoading, isAuthenticated, navigate]);
 
   const handleClearAllPendingAssignments = async () => {
     const pendingCount = (assignments ?? []).filter(
@@ -83,12 +78,7 @@ export default function AdminZone() {
     }
   };
 
-  if (isLoading || !isAuthenticated || !user) {
-    return null;
-  }
-
-  // Additional check for admin role or anonymous user (temporary workaround)
-  if (user.role !== "admin" && !user.isAnonymous) {
+  if (isLoading || !isAuthenticated) {
     return null;
   }
 
