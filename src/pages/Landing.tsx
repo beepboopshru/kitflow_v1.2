@@ -106,9 +106,7 @@ export default function Landing() {
             className="text-center"
           >
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              Inventory and Client
-              <br />
-              <span className="text-muted-foreground">Management System</span>
+              Science Utsav Management System
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Streamline your kit management with real-time tracking, client database, 
