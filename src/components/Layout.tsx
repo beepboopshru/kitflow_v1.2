@@ -7,7 +7,8 @@ import {
   LogOut, 
   Package, 
   Users,
-  AlertTriangle
+  AlertTriangle,
+  Building2
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { Boxes } from "lucide-react";
@@ -55,6 +56,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
     { name: "Kits", href: "/kits", icon: Box },
     { name: "Clients", href: "/clients", icon: Users },
+    { name: "Vendors", href: "/vendors", icon: Building2 },
     { name: "Assignments", href: "/assignments", icon: Package },
     { name: "Inventory", href: "/inventory", icon: Boxes },
     { name: "Admin Zone", href: "/admin", icon: AlertTriangle },

@@ -84,6 +84,17 @@ const schema = defineSchema(
       dispatchedAt: v.optional(v.number()),
     }).index("by_kit", ["kitId"]).index("by_client", ["clientId"]).index("by_status", ["status"]),
 
+    // Vendor Management
+    vendors: defineTable({
+      name: v.string(),
+      organization: v.string(),
+      contact: v.string(),
+      email: v.optional(v.string()),
+      address: v.optional(v.string()),
+      notes: v.optional(v.string()),
+      createdBy: v.id("users"),
+    }).index("by_name", ["name"]),
+
     // Inventory Management
     inventory: defineTable({
       name: v.string(),
