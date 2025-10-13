@@ -422,7 +422,7 @@ export default function Assignments() {
                   <th className="px-4 py-3 text-left text-sm font-medium">Qty</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Grade</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Assigned</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Dispatch Date</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Notes</th>
                   <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
                 </tr>
@@ -451,7 +451,9 @@ export default function Assignments() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {new Date(assignment.assignedAt).toLocaleDateString()}
+                      {assignment.dispatchedAt 
+                        ? new Date(assignment.dispatchedAt).toLocaleDateString()
+                        : "-"}
                     </td>
                     <td className="px-4 py-3 text-sm max-w-[200px]">
                       {editingNotes?.id === assignment._id ? (
