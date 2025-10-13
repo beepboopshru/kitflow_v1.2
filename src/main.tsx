@@ -16,7 +16,6 @@ import Clients from "@/pages/Clients.tsx";
 import Assignments from "@/pages/Assignments.tsx";
 import Inventory from "@/pages/Inventory.tsx";
 import AdminZone from "./pages/AdminZone.tsx";
-import VendorContacts from "@/pages/VendorContacts.tsx";
 import "./types/global.d.ts";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -49,10 +48,6 @@ const router = createBrowserRouter([
   {
     path: "/inventory",
     element: <Inventory />,
-  },
-  {
-    path: "/vendors",
-    element: <VendorContacts />,
   },
   {
     path: "/admin",
