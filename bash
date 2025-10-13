@@ -1,1 +1,2 @@
-npx convex run seed_programs:seedInitialPrograms
+   npx convex dev
+   
