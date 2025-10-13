@@ -1,14 +1,13 @@
-{kit.image && (
-  <Button
-    variant="ghost"
-    size="sm"
-    onClick={(e) => {
-      e.stopPropagation();
-      setViewingImageKit(kit);
-      setIsImageViewerOpen(true);
-    }}
-    title="View Kit Image"
-  >
-    <ImageIcon className="h-4 w-4" />
-  </Button>
-)}
+<td className="px-4 py-3 text-sm">
+  {kit.stockCount >= 0 ? (
+    <div>
+      <div className="font-medium">{kit.stockCount}</div>
+      <div className="text-xs text-muted-foreground">Available</div>
+    </div>
+  ) : (
+    <div>
+      <div className="font-medium text-red-600">{Math.abs(kit.stockCount)}</div>
+      <div className="text-xs text-red-600">To be Made</div>
+    </div>
+  )}
+</td>
