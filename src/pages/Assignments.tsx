@@ -48,14 +48,34 @@ export default function Assignments() {
   const [statusFilter, setStatusFilter] = useState<"all" | "assigned" | "packed" | "dispatched">("all");
   const [kitFilter, setKitFilter] = useState<string>("all");
   const [clientFilter, setClientFilter] = useState<string>("all");
+  const [monthFilter, setMonthFilter] = useState<string>("all");
   const [editingNotes, setEditingNotes] = useState<{ id: string; value: string } | null>(null);
+
+  // Get unique months from assignments for the filter dropdown
+  const availableMonths = Array.from(
+    new Set(
+      (assignments ?? []).map((a) => {
+        const date = new Date(a.dispatchedAt || a.assignedAt);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      })
+    )
+  ).sort().reverse();
 
   // Filter assignments based on selected filters
   const filteredAssignments = (assignments ?? []).filter((assignment) => {
     const statusOk = statusFilter === "all" ? true : assignment.status === statusFilter;
     const kitOk = kitFilter === "all" ? true : assignment.kitId === kitFilter;
     const clientOk = clientFilter === "all" ? true : assignment.clientId === clientFilter;
-    return statusOk && kitOk && clientOk;
+    
+    // Month filter based on dispatch date or assigned date
+    let monthOk = true;
+    if (monthFilter !== "all") {
+      const date = new Date(assignment.dispatchedAt || assignment.assignedAt);
+      const assignmentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      monthOk = assignmentMonth === monthFilter;
+    }
+    
+    return statusOk && kitOk && clientOk && monthOk;
   });
 
   useEffect(() => {
@@ -342,7 +362,31 @@ export default function Assignments() {
 
         {/* Filter Section */}
         <Card className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+              <Label className="text-xs mb-2">Month</Label>
+              <Select
+                value={monthFilter}
+                onValueChange={(v: string) => setMonthFilter(v)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="All Months" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Months</SelectItem>
+                  {availableMonths.map((month) => {
+                    const [year, monthNum] = month.split("-");
+                    const monthName = new Date(parseInt(year), parseInt(monthNum) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+                    return (
+                      <SelectItem key={month} value={month}>
+                        {monthName}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div>
               <Label className="text-xs mb-2">Status</Label>
               <Select
@@ -401,13 +445,13 @@ export default function Assignments() {
               </Select>
             </div>
 
-            {filteredAssignments.length > 0 && (
-              <div className="flex items-end">
-                <div className="text-sm text-muted-foreground">
-                  Showing {filteredAssignments.length} of {assignments?.length || 0} assignments
-                </div>
+            <div className="flex items-end sm:col-span-2 lg:col-span-1">
+              <div className="text-sm text-muted-foreground">
+                {filteredAssignments.length > 0 && (
+                  <>Showing {filteredAssignments.length} of {assignments?.length || 0} assignments</>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </Card>
 
