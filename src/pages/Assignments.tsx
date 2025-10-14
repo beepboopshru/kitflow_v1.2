@@ -50,13 +50,14 @@ export default function Assignments() {
     quantity: number;
   } | null>(null);
   const [showShortageDialog, setShowShortageDialog] = useState(false);
+  const [viewingShortageFor, setViewingShortageFor] = useState<{ kitId: string; quantity: number } | null>(null);
 
-  // Query material shortages for the last created assignment
+  // Query material shortages for the last created assignment OR manually viewed assignment
   const materialShortages = useQuery(
     api.assignments.calculateMaterialShortage,
-    lastCreatedAssignment ? {
-      kitId: lastCreatedAssignment.kitId as any,
-      quantity: lastCreatedAssignment.quantity,
+    (lastCreatedAssignment || viewingShortageFor) ? {
+      kitId: (lastCreatedAssignment?.kitId || viewingShortageFor?.kitId) as any,
+      quantity: lastCreatedAssignment?.quantity || viewingShortageFor?.quantity || 0,
     } : "skip"
   );
 
@@ -207,10 +208,10 @@ export default function Assignments() {
 
   // Show shortage dialog when shortages are detected
   useEffect(() => {
-    if (materialShortages && materialShortages.length > 0 && lastCreatedAssignment) {
+    if (materialShortages && materialShortages.length > 0 && (lastCreatedAssignment || viewingShortageFor)) {
       setShowShortageDialog(true);
     }
-  }, [materialShortages, lastCreatedAssignment]);
+  }, [materialShortages, lastCreatedAssignment, viewingShortageFor]);
 
   if (isLoading || !isAuthenticated) {
     return null;
@@ -601,6 +602,22 @@ export default function Assignments() {
                             Dispatch
                           </Button>
                         )}
+                        {assignment.kit?.isStructured && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setViewingShortageFor({
+                                kitId: assignment.kitId,
+                                quantity: assignment.quantity,
+                              });
+                            }}
+                            className="h-8 px-2"
+                            title="View material shortage report"
+                          >
+                            <AlertCircle className="h-3 w-3" />
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="ghost"
@@ -688,6 +705,7 @@ export default function Assignments() {
           setShowShortageDialog(open);
           if (!open) {
             setLastCreatedAssignment(null);
+            setViewingShortageFor(null);
           }
         }}>
           <DialogContent className="max-w-2xl">
@@ -741,8 +759,9 @@ export default function Assignments() {
               <Button onClick={() => {
                 setShowShortageDialog(false);
                 setLastCreatedAssignment(null);
+                setViewingShortageFor(null);
               }}>
-                Acknowledge
+                {viewingShortageFor ? "Close" : "Acknowledge"}
               </Button>
             </div>
           </DialogContent>
