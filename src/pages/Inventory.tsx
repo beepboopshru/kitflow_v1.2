@@ -14,26 +14,29 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Plus, Minus, PlusCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Minus, PlusCircle, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 
 type Category = "raw_material" | "pre_processed" | "finished_good";
 
+// Add: unified type for category options including optional id for custom categories
+type CategoryOption = { value: string; label: string; isDefault: boolean; id?: string };
+
 // Add subcategories for raw materials
-const RAW_SUBCATEGORIES: Array<{ value: string; label: string }> = [
-  { value: "electronics", label: "Electronics" },
-  { value: "foam", label: "Foam" },
-  { value: "mdf", label: "MDF" },
-  { value: "fasteners", label: "Fasteners" },
-  { value: "stationery", label: "Stationery" },
-  { value: "tubes", label: "Tubes" },
-  { value: "printable", label: "Printable" },
-  { value: "corrugated_sheets", label: "Corrugated Sheets" },
+const RAW_SUBCATEGORIES: Array<CategoryOption> = [
+  { value: "electronics", label: "Electronics", isDefault: true },
+  { value: "foam", label: "Foam", isDefault: true },
+  { value: "mdf", label: "MDF", isDefault: true },
+  { value: "fasteners", label: "Fasteners", isDefault: true },
+  { value: "stationery", label: "Stationery", isDefault: true },
+  { value: "tubes", label: "Tubes", isDefault: true },
+  { value: "printable", label: "Printable", isDefault: true },
+  { value: "corrugated_sheets", label: "Corrugated Sheets", isDefault: true },
 ];
 
-const PRE_SUBCATEGORIES: Array<{ value: string; label: string }> = [
-  { value: "laser_cut", label: "Laser Cut" },
-  { value: "painted", label: "Painted" },
-  { value: "assembled", label: "Assembled" },
+const PRE_SUBCATEGORIES: Array<CategoryOption> = [
+  { value: "laser_cut", label: "Laser Cut", isDefault: true },
+  { value: "painted", label: "Painted", isDefault: true },
+  { value: "assembled", label: "Assembled", isDefault: true },
 ];
 
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -53,14 +56,20 @@ export default function Inventory() {
   const raw = useQuery(api.inventory.listByCategory, { category: "raw_material" });
   const pre = useQuery(api.inventory.listByCategory, { category: "pre_processed" });
   const kits = useQuery(api.kits.list, {});
-  // Load all assignments to compute pending per kit
   const assignments = useQuery(api.assignments.list, {});
+  
+  // Load custom categories
+  const customRawCategories = useQuery(api.inventoryCategories.list, { categoryType: "raw_material" });
+  const customPreCategories = useQuery(api.inventoryCategories.list, { categoryType: "pre_processed" });
 
   const createItem = useMutation(api.inventory.create);
   const adjustStock = useMutation(api.inventory.adjustStock);
   const removeItem = useMutation(api.inventory.remove);
+  const createCategory = useMutation(api.inventoryCategories.create);
+  const removeCategory = useMutation(api.inventoryCategories.remove);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: "",
     category: "raw_material" as Category,
@@ -68,6 +77,12 @@ export default function Inventory() {
     unit: "",
     quantity: 0,
     notes: "",
+  });
+
+  const [categoryForm, setCategoryForm] = useState({
+    name: "",
+    value: "",
+    categoryType: "raw_material" as "raw_material" | "pre_processed",
   });
 
   // Add: overall section collapse state
@@ -107,6 +122,27 @@ export default function Inventory() {
   const [preOpen, setPreOpen] = useState<Record<string, boolean>>({});
   const [rawUncatOpen, setRawUncatOpen] = useState<boolean>(false);
   const [preUncatOpen, setPreUncatOpen] = useState<boolean>(false);
+
+  // Merge default and custom categories
+  const allRawCategories = useMemo(() => {
+    const custom = (customRawCategories ?? []).map((c) => ({
+      value: c.value,
+      label: c.name,
+      isDefault: false,
+      id: c._id,
+    }));
+    return [...RAW_SUBCATEGORIES, ...custom].sort((a, b) => a.label.localeCompare(b.label));
+  }, [customRawCategories]);
+
+  const allPreCategories = useMemo(() => {
+    const custom = (customPreCategories ?? []).map((c) => ({
+      value: c.value,
+      label: c.name,
+      isDefault: false,
+      id: c._id,
+    }));
+    return [...PRE_SUBCATEGORIES, ...custom].sort((a, b) => a.label.localeCompare(b.label));
+  }, [customPreCategories]);
 
   const totals = useMemo(() => {
     return {
@@ -152,6 +188,32 @@ export default function Inventory() {
       setCreateForm({ name: "", category: "raw_material", subCategory: "none", unit: "", quantity: 0, notes: "" });
     } catch (err) {
       toast("Failed to create item", { description: err instanceof Error ? err.message : "Unknown error" });
+    }
+  };
+
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createCategory({
+        name: categoryForm.name,
+        value: categoryForm.value.toLowerCase().replace(/\s+/g, "_"),
+        categoryType: categoryForm.categoryType,
+      });
+      toast("Category created");
+      setIsCategoryOpen(false);
+      setCategoryForm({ name: "", value: "", categoryType: "raw_material" });
+    } catch (err) {
+      toast("Failed to create category", { description: err instanceof Error ? err.message : "Unknown error" });
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm("Delete this category?")) return;
+    try {
+      await removeCategory({ id: id as any });
+      toast("Category deleted");
+    } catch (err) {
+      toast("Failed to delete category", { description: err instanceof Error ? err.message : "Unknown error" });
     }
   };
 
@@ -298,134 +360,196 @@ export default function Inventory() {
             </p>
           </div>
 
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                New Item
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create Inventory Item</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreate} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={createForm.name}
-                    onChange={(e) => setCreateForm((s) => ({ ...s, name: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    value={createForm.category}
-                    onValueChange={(v: Category) => setCreateForm((s) => ({ ...s, category: v }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="raw_material">{CATEGORY_LABELS.raw_material}</SelectItem>
-                      <SelectItem value="pre_processed">{CATEGORY_LABELS.pre_processed}</SelectItem>
-                      <SelectItem value="finished_good">{CATEGORY_LABELS.finished_good}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Show subcategory select only when Raw Material is selected */}
-                {createForm.category === "raw_material" && (
+          <div className="flex gap-2">
+            <Dialog open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  New Category
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create Inventory Category</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreateCategory} className="space-y-4">
                   <div>
-                    <Label htmlFor="subCategory">Raw Material Subcategory</Label>
-                    <Select
-                      value={createForm.subCategory}
-                      onValueChange={(v: string) => setCreateForm((s) => ({ ...s, subCategory: v }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select subcategory" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {RAW_SUBCATEGORIES.map((sc) => (
-                          <SelectItem key={sc.value} value={sc.value}>
-                            {sc.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Show subcategory select when Pre-Processed is selected */}
-                {createForm.category === "pre_processed" && (
-                  <div>
-                    <Label htmlFor="subCategory">Pre-Processed Subcategory</Label>
-                    <Select
-                      value={createForm.subCategory}
-                      onValueChange={(v: string) => setCreateForm((s) => ({ ...s, subCategory: v }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select subcategory" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {PRE_SUBCATEGORIES.map((sc) => (
-                          <SelectItem key={sc.value} value={sc.value}>
-                            {sc.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="quantity">Quantity</Label>
+                    <Label htmlFor="cat-name">Category Name</Label>
                     <Input
-                      id="quantity"
-                      type="number"
-                      value={createForm.quantity}
-                      onChange={(e) =>
-                        setCreateForm((s) => ({ ...s, quantity: Number.isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value) }))
-                      }
+                      id="cat-name"
+                      value={categoryForm.name}
+                      onChange={(e) => setCategoryForm((s) => ({ ...s, name: e.target.value }))}
+                      placeholder="e.g., 3D Printed"
                       required
                     />
                   </div>
+
                   <div>
-                    <Label htmlFor="unit">Unit (optional)</Label>
+                    <Label htmlFor="cat-value">Category Value (slug)</Label>
                     <Input
-                      id="unit"
-                      value={createForm.unit}
-                      onChange={(e) => setCreateForm((s) => ({ ...s, unit: e.target.value }))}
-                      placeholder="kg, pcs, sheets"
+                      id="cat-value"
+                      value={categoryForm.value}
+                      onChange={(e) => setCategoryForm((s) => ({ ...s, value: e.target.value }))}
+                      placeholder="e.g., 3d_printed"
+                      required
                     />
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    rows={3}
-                    value={createForm.notes}
-                    onChange={(e) => setCreateForm((s) => ({ ...s, notes: e.target.value }))}
-                  />
-                </div>
+                  <div>
+                    <Label htmlFor="cat-type">Category Type</Label>
+                    <Select
+                      value={categoryForm.categoryType}
+                      onValueChange={(v: "raw_material" | "pre_processed") =>
+                        setCategoryForm((s) => ({ ...s, categoryType: v }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="raw_material">Raw Material</SelectItem>
+                        <SelectItem value="pre_processed">Pre-Processed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">Create</Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setIsCategoryOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">Create</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  New Item
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create Inventory Item</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreate} className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      value={createForm.name}
+                      onChange={(e) => setCreateForm((s) => ({ ...s, name: e.target.value }))}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <Select
+                      value={createForm.category}
+                      onValueChange={(v: Category) => setCreateForm((s) => ({ ...s, category: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="raw_material">{CATEGORY_LABELS.raw_material}</SelectItem>
+                        <SelectItem value="pre_processed">{CATEGORY_LABELS.pre_processed}</SelectItem>
+                        <SelectItem value="finished_good">{CATEGORY_LABELS.finished_good}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {createForm.category === "raw_material" && (
+                    <div>
+                      <Label htmlFor="subCategory">Raw Material Subcategory</Label>
+                      <Select
+                        value={createForm.subCategory}
+                        onValueChange={(v: string) => setCreateForm((s) => ({ ...s, subCategory: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select subcategory" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {allRawCategories.map((sc) => (
+                            <SelectItem key={sc.value} value={sc.value}>
+                              {sc.label} {!sc.isDefault && <span className="text-xs text-muted-foreground">(Custom)</span>}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {createForm.category === "pre_processed" && (
+                    <div>
+                      <Label htmlFor="subCategory">Pre-Processed Subcategory</Label>
+                      <Select
+                        value={createForm.subCategory}
+                        onValueChange={(v: string) => setCreateForm((s) => ({ ...s, subCategory: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select subcategory" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {allPreCategories.map((sc) => (
+                            <SelectItem key={sc.value} value={sc.value}>
+                              {sc.label} {!sc.isDefault && <span className="text-xs text-muted-foreground">(Custom)</span>}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="quantity">Quantity</Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        value={createForm.quantity}
+                        onChange={(e) =>
+                          setCreateForm((s) => ({ ...s, quantity: Number.isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value) }))
+                        }
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="unit">Unit (optional)</Label>
+                      <Input
+                        id="unit"
+                        value={createForm.unit}
+                        onChange={(e) => setCreateForm((s) => ({ ...s, unit: e.target.value }))}
+                        placeholder="kg, pcs, sheets"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      rows={3}
+                      value={createForm.notes}
+                      onChange={(e) => setCreateForm((s) => ({ ...s, notes: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">Create</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
 
           <Dialog open={adjustDialog.open} onOpenChange={(o) => setAdjustDialog((s) => ({ ...s, open: o }))}>
             <DialogContent className="max-w-sm">
@@ -497,7 +621,7 @@ export default function Inventory() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
-                          {RAW_SUBCATEGORIES.map((sc) => (
+                          {allRawCategories.map((sc) => (
                             <SelectItem key={sc.value} value={sc.value}>
                               {sc.label}
                             </SelectItem>
@@ -541,7 +665,7 @@ export default function Inventory() {
                   {/* Existing Raw grouped by subcategory and Uncategorized */}
                   <CardContent className="space-y-4">
                     {/* Subcategory sections */}
-                    {RAW_SUBCATEGORIES.map((sc) => {
+                    {allRawCategories.map((sc) => {
                       const group = (raw ?? []).filter((it) => it.subCategory === sc.value);
                       const open = rawOpen[sc.value] ?? false;
                       return (
@@ -561,10 +685,26 @@ export default function Inventory() {
                                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
                               )}
                               <span className="font-medium">{sc.label}</span>
+                              {!sc.isDefault && <Badge variant="outline" className="text-xs">Custom</Badge>}
                             </div>
-                            <Badge variant="outline">
-                              Total: {group.reduce((s, i) => s + i.quantity, 0)}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">
+                                Total: {group.reduce((s, i) => s + i.quantity, 0)}
+                              </Badge>
+                              {!sc.isDefault && sc.id && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteCategory(sc.id!);
+                                  }}
+                                  title="Delete category"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
                           </button>
 
                           {open ? (
@@ -727,7 +867,7 @@ export default function Inventory() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
-                          {PRE_SUBCATEGORIES.map((sc) => (
+                          {allPreCategories.map((sc) => (
                             <SelectItem key={sc.value} value={sc.value}>
                               {sc.label}
                             </SelectItem>
@@ -770,7 +910,7 @@ export default function Inventory() {
 
                   {/* Existing Pre grouped sections */}
                   <CardContent className="space-y-4">
-                    {PRE_SUBCATEGORIES.map((sc) => {
+                    {allPreCategories.map((sc) => {
                       const group = (pre ?? []).filter((it) => it.subCategory === sc.value);
                       const open = preOpen[sc.value] ?? false;
                       return (
@@ -790,10 +930,26 @@ export default function Inventory() {
                                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
                               )}
                               <span className="font-medium">{sc.label}</span>
+                              {!sc.isDefault && <Badge variant="outline" className="text-xs">Custom</Badge>}
                             </div>
-                            <Badge variant="outline">
-                              Total: {group.reduce((s, i) => s + i.quantity, 0)}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">
+                                Total: {group.reduce((s, i) => s + i.quantity, 0)}
+                              </Badge>
+                              {!sc.isDefault && sc.id && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteCategory(sc.id!);
+                                  }}
+                                  title="Delete category"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
                           </button>
 
                           {open ? (
@@ -937,7 +1093,6 @@ export default function Inventory() {
 
               {finSectionOpen ? (
                 <>
-                  {/* Finished goods are Kits -> provide manage CTA instead of inline inventory form */}
                   <CardContent className="pt-4">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                       <p className="text-sm text-muted-foreground">
@@ -947,7 +1102,6 @@ export default function Inventory() {
                     </div>
                   </CardContent>
 
-                  {/* Kits list */}
                   <CardContent className="space-y-3">
                     {(kits ?? []).map((k: any) => {
                       const pending = pendingByKit[String(k._id)] ?? 0;

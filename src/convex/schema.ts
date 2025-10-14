@@ -100,6 +100,16 @@ const schema = defineSchema(
     }).index("by_category", ["category"])
       .index("by_category_and_subCategory", ["category", "subCategory"]),
 
+    // Add: Inventory Categories (custom subcategories for raw & pre-processed)
+    inventoryCategories: defineTable({
+      name: v.string(),
+      value: v.string(),
+      categoryType: v.union(v.literal("raw_material"), v.literal("pre_processed")),
+      createdBy: v.id("users"),
+    })
+      .index("by_categoryType", ["categoryType"])
+      .index("by_value", ["value"]),
+
     // Vendor Contacts
   vendors: defineTable({
     name: v.string(),
