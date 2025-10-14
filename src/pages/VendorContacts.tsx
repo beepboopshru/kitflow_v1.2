@@ -437,7 +437,8 @@ export default function VendorContacts() {
 
                   {vendor.notes && (
                     <div className="mt-3 pt-3 border-t">
-                      <p className="text-xs text-muted-foreground">{vendor.notes}</p>
+                      <div className="text-xs font-medium text-foreground mb-1">Items & Pricing:</div>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{vendor.notes}</p>
                     </div>
                   )}
                 </CardContent>
