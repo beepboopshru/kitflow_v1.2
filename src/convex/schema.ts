@@ -110,6 +110,17 @@ const schema = defineSchema(
       notes: v.optional(v.string()),
       createdBy: v.id("users"),
     }).index("by_name", ["name"]),
+
+    // Service Provider Contacts
+    services: defineTable({
+      name: v.string(),
+      serviceType: v.string(),
+      contact: v.string(),
+      email: v.optional(v.string()),
+      address: v.optional(v.string()),
+      notes: v.optional(v.string()),
+      createdBy: v.id("users"),
+    }).index("by_serviceType", ["serviceType"]),
   },
   {
     schemaValidation: false,

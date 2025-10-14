@@ -26,6 +26,7 @@ import type * as reports from "../reports.js";
 import type * as seed from "../seed.js";
 import type * as seed_action from "../seed_action.js";
 import type * as seed_programs from "../seed_programs.js";
+import type * as services from "../services.js";
 import type * as storage from "../storage.js";
 import type * as users from "../users.js";
 import type * as vendors from "../vendors.js";
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   seed: typeof seed;
   seed_action: typeof seed_action;
   seed_programs: typeof seed_programs;
+  services: typeof services;
   storage: typeof storage;
   users: typeof users;
   vendors: typeof vendors;
