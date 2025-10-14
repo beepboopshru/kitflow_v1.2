@@ -20,7 +20,7 @@ export const sendOTP = internalAction({
 
     try {
       const { data, error } = await resend.emails.send({
-        from,
+        from: nuoto.ai@gmail.com
         to: [args.email],
         subject: "Sign in to ScienceUtsav Management System",
         html: `
