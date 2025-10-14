@@ -44,9 +44,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     try {
       const formData = new FormData(event.currentTarget);
-      // Required by Password provider email verification flow
-      formData.append("flow", "email-verification");
-      await signIn("password", formData);
+      await signIn("email-otp", formData);
       setStep({ email: formData.get("email") as string });
       setIsLoading(false);
     } catch (error) {
@@ -66,9 +64,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     try {
       const formData = new FormData(event.currentTarget);
-      // Required by Password provider email verification flow
-      formData.append("flow", "email-verification");
-      await signIn("password", formData);
+      await signIn("email-otp", formData);
 
       console.log("signed in");
 
@@ -206,7 +202,6 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       disabled={isLoading}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && otp.length === 6 && !isLoading) {
-                          // Find the closest form and submit it
                           const form = (e.target as HTMLElement).closest("form");
                           if (form) {
                             form.requestSubmit();

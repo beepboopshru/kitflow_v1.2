@@ -2,33 +2,27 @@
 
 import { convexAuth } from "@convex-dev/auth/server";
 import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
-import { Password } from "@convex-dev/auth/providers/Password";
+import { Email } from "@convex-dev/auth/providers/Email";
 import { internal } from "./_generated/api";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Anonymous,
-    // Ensure Password provider is configured and typings don't block deploy across versions
-    Password({
-      profile(params: any) {
-        return {
-          email: params.email as string,
-          name: params.email as string,
-        };
+    Email({
+      id: "email-otp",
+      apiKey: process.env.RESEND_API_KEY,
+      maxAge: 60 * 15, // 15 minutes
+      async generateVerificationToken() {
+        // Generate a 6-digit numeric OTP
+        return Math.floor(100000 + Math.random() * 900000).toString();
       },
-      // Inline email verification flow using Resend via internal action
-      verify: {
-        id: "email",
-        type: "email",
-        name: "Email",
-        sendVerificationRequest: async (params: any, ctx: any) => {
-          const { identifier, token } = params;
-          await ctx.scheduler.runAfter(0, internal.email.sendOTP, {
-            email: identifier,
-            code: token,
-          });
-        },
-      } as any,
+      async sendVerificationRequest({ identifier, token }: any) {
+        // Use the internal Resend action to send the OTP
+        await this.scheduler.runAfter(0, internal.email.sendOTP, {
+          email: identifier,
+          code: token,
+        });
+      },
     } as any),
   ],
 });
