@@ -493,3 +493,79 @@ export const updateNotes = mutation({
     });
   },
 });
+
+export const calculateMaterialShortage = query({
+  args: {
+    kitId: v.id("kits"),
+    quantity: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const kit = await ctx.db.get(args.kitId);
+    if (!kit) {
+      throw new Error("Kit not found");
+    }
+
+    // Only process if kit has structured packing requirements
+    if (!kit.isStructured || !kit.packingRequirements) {
+      return [];
+    }
+
+    try {
+      const pouches = JSON.parse(kit.packingRequirements);
+      
+      // Collect all materials across all pouches
+      const materialRequirements: Array<{ name: string; required: number }> = [];
+      for (const pouch of pouches) {
+        if (pouch.materials && Array.isArray(pouch.materials)) {
+          for (const material of pouch.materials) {
+            const existingMaterial = materialRequirements.find(
+              (m) => m.name.toLowerCase() === material.name.toLowerCase()
+            );
+            if (existingMaterial) {
+              existingMaterial.required += material.quantity * args.quantity;
+            } else {
+              materialRequirements.push({
+                name: material.name,
+                required: material.quantity * args.quantity,
+              });
+            }
+          }
+        }
+      }
+
+      // Check inventory for each material
+      const allInventory = await ctx.db.query("inventory").collect();
+      const shortages: Array<{
+        name: string;
+        required: number;
+        available: number;
+        shortage: number;
+        unit?: string;
+      }> = [];
+
+      for (const material of materialRequirements) {
+        const inventoryItem = allInventory.find(
+          (item) => item.name.toLowerCase() === material.name.toLowerCase()
+        );
+
+        const available = inventoryItem?.quantity ?? 0;
+        const shortage = material.required - available;
+
+        if (shortage > 0) {
+          shortages.push({
+            name: material.name,
+            required: material.required,
+            available: available,
+            shortage: shortage,
+            unit: inventoryItem?.unit,
+          });
+        }
+      }
+
+      return shortages;
+    } catch (e) {
+      console.error("Error calculating material shortage:", e);
+      return [];
+    }
+  },
+});
