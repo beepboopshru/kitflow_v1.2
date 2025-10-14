@@ -2,23 +2,60 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Trash2 } from "lucide-react";
 import { Link } from "react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
+const CHAT_STORAGE_KEY = "science_utsav_chat_history_landing";
+const CHAT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
+
+  // Load chat history from localStorage
+  const loadChatHistory = () => {
+    try {
+      const stored = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (!stored) return [{ role: "assistant" as const, content: "Hi! I'm Science Utsav AI Manager. Ask me about kits, inventory, or stock status." }];
+      
+      const { messages, timestamp } = JSON.parse(stored);
+      const now = Date.now();
+      
+      // Check if history has expired (older than 1 day)
+      if (now - timestamp > CHAT_EXPIRY_MS) {
+        localStorage.removeItem(CHAT_STORAGE_KEY);
+        return [{ role: "assistant" as const, content: "Hi! I'm Science Utsav AI Manager. Ask me about kits, inventory, or stock status." }];
+      }
+      
+      return messages;
+    } catch {
+      return [{ role: "assistant" as const, content: "Hi! I'm Science Utsav AI Manager. Ask me about kits, inventory, or stock status." }];
+    }
+  };
 
   // AI Chatbot state
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([
-    { role: "assistant", content: "Hi! I'm KitFlow Assistant. Ask me about kits, inventory, or stock status." },
-  ]);
+  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>(loadChatHistory);
   const sendChat = useAction(api.ai.chat);
+
+  // Save chat history to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 1) { // Only save if there's more than just the initial greeting
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({
+        messages,
+        timestamp: Date.now()
+      }));
+    }
+  }, [messages]);
+
+  const handleClearChat = () => {
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+    setMessages([{ role: "assistant", content: "Hi! I'm Science Utsav AI Manager. Ask me about kits, inventory, or stock status." }]);
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,9 +161,19 @@ export default function Landing() {
             <CardContent className="p-0 flex flex-col h-96">
               <div className="flex items-center justify-between px-4 py-3 border-b">
                 <div className="font-medium">Science Utsav AI Manager</div>
-                <Button variant="ghost" size="sm" onClick={() => setChatOpen(false)}>
-                  Close
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleClearChat}
+                    title="Clear conversation"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setChatOpen(false)}>
+                    Close
+                  </Button>
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
                 {messages.map((m, idx) => (
