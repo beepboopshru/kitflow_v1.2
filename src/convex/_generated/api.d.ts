@@ -25,6 +25,7 @@ import type * as kitPdf from "../kitPdf.js";
 import type * as kits from "../kits.js";
 import type * as programs from "../programs.js";
 import type * as reports from "../reports.js";
+import type * as roles from "../roles.js";
 import type * as seed from "../seed.js";
 import type * as seed_action from "../seed_action.js";
 import type * as seed_programs from "../seed_programs.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   kits: typeof kits;
   programs: typeof programs;
   reports: typeof reports;
+  roles: typeof roles;
   seed: typeof seed;
   seed_action: typeof seed_action;
   seed_programs: typeof seed_programs;
