@@ -13,23 +13,63 @@ export const chat = action({
     // @ts-ignore - suppress deep type instantiation from generated API types
     const mod: any = await import("./_generated/api");
     const api = mod.api as any;
-    const [summary, kits] = (await Promise.all([
+    const [summary, kits, clients, assignments, vendors, inventory] = (await Promise.all([
       ctx.runQuery(api.reports.getInventorySummary, {}),
       ctx.runQuery(api.kits.list, {}),
-    ])) as [any, any[]];
+      ctx.runQuery(api.clients.list, {}),
+      ctx.runQuery(api.assignments.list, {}),
+      ctx.runQuery(api.vendors.list, {}),
+      ctx.runQuery(api.inventory.listByCategory, { category: "raw_material" }),
+    ])) as [any, any[], any[], any[], any[], any[]];
 
     const kitsBrief = (kits ?? []).slice(0, 50).map((k: any) => ({
       name: k.name,
       type: k.type,
       stock: k.stockCount,
       status: k.status,
+      remarks: k.remarks,
+      serialNumber: k.serialNumber,
+    }));
+
+    const clientsBrief = (clients ?? []).slice(0, 30).map((c: any) => ({
+      name: c.name,
+      organization: c.organization,
+      type: c.type,
+      notes: c.notes,
+    }));
+
+    const assignmentsBrief = (assignments ?? []).slice(0, 30).map((a: any) => ({
+      kitName: a.kit?.name,
+      clientName: a.client?.name,
+      quantity: a.quantity,
+      status: a.status,
+      notes: a.notes,
+    }));
+
+    const vendorsBrief = (vendors ?? []).slice(0, 30).map((v: any) => ({
+      name: v.name,
+      organization: v.organization,
+      materialType: v.materialType,
+      notes: v.notes,
+    }));
+
+    const inventoryBrief = (inventory ?? []).slice(0, 30).map((i: any) => ({
+      name: i.name,
+      category: i.category,
+      subCategory: i.subCategory,
+      quantity: i.quantity,
+      notes: i.notes,
     }));
 
     const systemPrompt: string =
       `You are KitFlow Assistant for a minimalist inventory system.\n` +
       `Answer concisely and helpfully. Use the provided database context to inform your answers.\n\n` +
       `Database Summary:\n${JSON.stringify(summary, null, 2)}\n\n` +
-      `Kits (first 50):\n${JSON.stringify(kitsBrief, null, 2)}\n\n` +
+      `Kits (first 50, includes remarks and serial numbers):\n${JSON.stringify(kitsBrief, null, 2)}\n\n` +
+      `Clients (first 30, includes notes):\n${JSON.stringify(clientsBrief, null, 2)}\n\n` +
+      `Assignments (first 30, includes notes):\n${JSON.stringify(assignmentsBrief, null, 2)}\n\n` +
+      `Vendors (first 30, includes notes and material types):\n${JSON.stringify(vendorsBrief, null, 2)}\n\n` +
+      `Inventory Items (first 30, includes notes):\n${JSON.stringify(inventoryBrief, null, 2)}\n\n` +
       `If asked for unavailable details, say you don't have that info yet.`;
 
     try {
