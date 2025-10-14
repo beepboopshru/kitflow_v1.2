@@ -22,9 +22,14 @@ export default function UserManagement() {
   const { isLoading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   
-  const users = useQuery(api.roles.listUsersWithRoles);
-  const updateRole = useMutation(api.roles.updateUserRole);
   const currentUserRole = useQuery(api.roles.getCurrentUserRole);
+  
+  // Only fetch users list if current user is admin
+  const users = useQuery(
+    api.roles.listUsersWithRoles,
+    currentUserRole === "admin" ? {} : "skip"
+  );
+  const updateRole = useMutation(api.roles.updateUserRole);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
