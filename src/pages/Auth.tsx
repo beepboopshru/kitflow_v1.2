@@ -45,13 +45,21 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       navigate(redirect);
     } catch (error) {
       console.error("Password sign-in error:", error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : step === "signIn" 
-            ? "Invalid username or password. Please try again."
-            : "Failed to create account. Username may already exist.",
-      );
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      if (step === "signIn") {
+        if (errorMessage.includes("InvalidAccountId") || errorMessage.includes("Account not found")) {
+          setError("Account not found. Please create a new account first.");
+        } else {
+          setError("Invalid username or password. Please try again.");
+        }
+      } else {
+        if (errorMessage.includes("already exists")) {
+          setError("Username already exists. Please choose a different username.");
+        } else {
+          setError("Failed to create account. Please try again.");
+        }
+      }
       setIsLoading(false);
     }
   };
@@ -117,6 +125,9 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       autoComplete="username"
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {step === "signUp" ? "Choose a unique username" : "Enter your username"}
+                  </p>
                 </div>
                 
                 <div>
