@@ -8,6 +8,7 @@ import { internal } from "./_generated/api";
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Anonymous,
+    // Cast to any to satisfy TS in current package version while keeping Email OTP via Resend
     Password({
       id: "email-otp",
       email: () => ({
@@ -18,6 +19,6 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
           await ctx.runAction(internal.email.sendOTP, { email: args.email, code: args.code });
         },
       }),
-    }),
+    } as any),
   ],
 });
