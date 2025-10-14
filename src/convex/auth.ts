@@ -9,7 +9,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Anonymous,
     // Ensure Password provider is configured and typings don't block deploy across versions
-    Password(({
+    Password({
       profile(params: any) {
         return {
           email: params.email as string,
@@ -17,7 +17,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         };
       },
       // Inline email verification flow using Resend via internal action
-      email: {
+      verify: {
         id: "email",
         type: "email",
         name: "Email",
@@ -28,7 +28,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
             code: token,
           });
         },
-      },
-    }) as any),
+      } as any,
+    } as any),
   ],
 });
