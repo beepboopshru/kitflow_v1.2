@@ -44,13 +44,8 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     try {
       const formData = new FormData(event.currentTarget);
-      const email = formData.get("email") as string;
-      
-      // Add flow parameter for email verification
-      formData.append("flow", "email-verification");
-      
-      await signIn("password", formData);
-      setStep({ email });
+      await signIn("email-otp", formData);
+      setStep({ email: formData.get("email") as string });
       setIsLoading(false);
     } catch (error) {
       console.error("Email sign-in error:", error);
@@ -69,11 +64,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     try {
       const formData = new FormData(event.currentTarget);
-      
-      // Add flow parameter for email verification
-      formData.append("flow", "email-verification");
-      
-      await signIn("password", formData);
+      await signIn("email-otp", formData);
 
       console.log("signed in");
 
