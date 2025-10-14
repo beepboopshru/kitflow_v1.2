@@ -179,6 +179,9 @@ importers:
       recharts:
         specifier: ^2.15.4
         version: 2.15.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      resend:
+        specifier: 6.2.0-canary.3
+        version: 6.2.0-canary.3
       sonner:
         specifier: ^2.0.4
         version: 2.0.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -2997,6 +3000,15 @@ packages:
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
+
+  resend@6.2.0-canary.3:
+    resolution: {integrity: sha512-6Tm7amB7UyQW7VnhBpaabNlaNeshw0zX/0NbiqRIlz09MUeKXttZ1gHOOiqdtqjcJNlxf50IdIP7qzom0GXY3Q==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@react-email/render': '*'
+    peerDependenciesMeta:
+      '@react-email/render':
+        optional: true
 
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -5868,6 +5880,8 @@ snapshots:
       victory-vendor: 36.9.2
 
   require-from-string@2.0.2: {}
+
+  resend@6.2.0-canary.3: {}
 
   resolve-from@4.0.0: {}
 
