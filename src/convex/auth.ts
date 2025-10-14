@@ -2,7 +2,41 @@
 
 import { convexAuth } from "@convex-dev/auth/server";
 import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
+import { Email } from "@convex-dev/auth/providers/Email";
+import { Resend } from "resend";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
-  providers: [Anonymous],
+  providers: [
+    Anonymous,
+    Email({
+      id: "email-otp",
+      apiKey: process.env.RESEND_API_KEY!,
+      maxAge: 60 * 10, // 10 minutes
+      async generateVerificationToken() {
+        return Math.random().toString(36).substring(2, 8).toUpperCase();
+      },
+      async sendVerificationRequest({ identifier: email, provider, token }) {
+        const apiKey = (await (provider as any).apiKey) ?? process.env.RESEND_API_KEY!;
+        const resend = new Resend(apiKey);
+        const code = token;
+
+        await resend.emails.send({
+          from: "ScienceUtsav <onboarding@resend.dev>",
+          to: [email],
+          subject: "Your verification code",
+          html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Your verification code</h2>
+            <p>Enter this code to complete your sign-in:</p>
+            <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0;">
+              ${code}
+            </div>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you didn't request this code, you can safely ignore this email.</p>
+          </div>
+          `,
+        });
+      },
+    }),
+  ],
 });
