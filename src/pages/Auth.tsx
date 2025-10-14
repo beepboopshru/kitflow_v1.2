@@ -44,8 +44,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     try {
       const formData = new FormData(event.currentTarget);
-      formData.append("flow", "email-verification");
-      await signIn("password", formData);
+      await signIn("email-otp", formData);
       setStep({ email: formData.get("email") as string });
       setIsLoading(false);
     } catch (error) {
@@ -65,8 +64,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     try {
       const formData = new FormData(event.currentTarget);
-      formData.append("flow", "email-verification");
-      await signIn("password", formData);
+      await signIn("email-otp", formData);
 
       console.log("signed in");
 
