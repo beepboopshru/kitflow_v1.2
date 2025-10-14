@@ -19,6 +19,7 @@ import type * as auth from "../auth.js";
 import type * as clients from "../clients.js";
 import type * as http from "../http.js";
 import type * as inventory from "../inventory.js";
+import type * as inventoryCategories from "../inventoryCategories.js";
 import type * as kitPdf from "../kitPdf.js";
 import type * as kits from "../kits.js";
 import type * as programs from "../programs.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   clients: typeof clients;
   http: typeof http;
   inventory: typeof inventory;
+  inventoryCategories: typeof inventoryCategories;
   kitPdf: typeof kitPdf;
   kits: typeof kits;
   programs: typeof programs;
