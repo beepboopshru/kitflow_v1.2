@@ -3,6 +3,7 @@
 import { convexAuth } from "@convex-dev/auth/server";
 import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
 import { Email } from "@convex-dev/auth/providers/Email";
+import { Password } from "@convex-dev/auth/providers/Password";
 import { internal } from "./_generated/api";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
@@ -24,5 +25,6 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         });
       },
     } as any),
+    Password,
   ],
 });
