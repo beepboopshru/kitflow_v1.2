@@ -30,7 +30,7 @@ export default function Layout({ children }: LayoutProps) {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([
-    { role: "assistant", content: "Hi! I'm KitFlow Assistant. Ask me about kits, inventory, or stock status." },
+    { role: "assistant", content: "Hi! I'm Science Utsav's AI Manager. Ask me about kits, inventory, or stock status." },
   ]);
   const sendChat = useAction(api.ai.chat);
 
