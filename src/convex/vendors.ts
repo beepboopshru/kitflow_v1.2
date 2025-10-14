@@ -24,6 +24,7 @@ export const create = mutation({
     email: v.optional(v.string()),
     address: v.optional(v.string()),
     notes: v.optional(v.string()),
+    materialType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -36,6 +37,7 @@ export const create = mutation({
       email: args.email,
       address: args.address,
       notes: args.notes,
+      materialType: args.materialType,
       createdBy: user._id,
     });
   },
@@ -50,6 +52,7 @@ export const update = mutation({
     email: v.optional(v.string()),
     address: v.optional(v.string()),
     notes: v.optional(v.string()),
+    materialType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);

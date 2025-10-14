@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
@@ -32,6 +33,7 @@ export default function VendorContacts() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [materialTypeFilter, setMaterialTypeFilter] = useState("all");
   const [editingVendor, setEditingVendor] = useState<any>(null);
 
   const [createForm, setCreateForm] = useState({
@@ -41,6 +43,7 @@ export default function VendorContacts() {
     email: "",
     address: "",
     notes: "",
+    materialType: "",
   });
 
   const [editForm, setEditForm] = useState({
@@ -50,7 +53,21 @@ export default function VendorContacts() {
     email: "",
     address: "",
     notes: "",
+    materialType: "",
   });
+
+  // Material types from inventory subcategories
+  const MATERIAL_TYPES = [
+    { value: "electronics", label: "Electronics" },
+    { value: "foam", label: "Foam" },
+    { value: "mdf", label: "MDF" },
+    { value: "fasteners", label: "Fasteners" },
+    { value: "stationery", label: "Stationery" },
+    { value: "tubes", label: "Tubes" },
+    { value: "printable", label: "Printable" },
+    { value: "corrugated_sheets", label: "Corrugated Sheets" },
+    { value: "other", label: "Other" },
+  ];
 
   if (isLoading || !isAuthenticated) return null;
 
@@ -64,10 +81,11 @@ export default function VendorContacts() {
         email: createForm.email || undefined,
         address: createForm.address || undefined,
         notes: createForm.notes || undefined,
+        materialType: createForm.materialType || undefined,
       });
       toast("Vendor created successfully");
       setIsCreateOpen(false);
-      setCreateForm({ name: "", organization: "", contact: "", email: "", address: "", notes: "" });
+      setCreateForm({ name: "", organization: "", contact: "", email: "", address: "", notes: "", materialType: "" });
     } catch (err) {
       toast("Failed to create vendor", { description: err instanceof Error ? err.message : "Unknown error" });
     }
@@ -82,6 +100,7 @@ export default function VendorContacts() {
       email: vendor.email || "",
       address: vendor.address || "",
       notes: vendor.notes || "",
+      materialType: vendor.materialType || "",
     });
     setIsEditOpen(true);
   };
@@ -98,6 +117,7 @@ export default function VendorContacts() {
         email: editForm.email || undefined,
         address: editForm.address || undefined,
         notes: editForm.notes || undefined,
+        materialType: editForm.materialType || undefined,
       });
       toast("Vendor updated successfully");
       setIsEditOpen(false);
@@ -117,12 +137,19 @@ export default function VendorContacts() {
     }
   };
 
-  const filteredVendors = (vendors ?? []).filter((v: any) =>
-    v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.organization.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.contact.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (v.email && v.email.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredVendors = (vendors ?? []).filter((v: any) => {
+    const matchesSearch = 
+      v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      v.organization.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      v.contact.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (v.email && v.email.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesMaterialType = 
+      materialTypeFilter === "all" || 
+      v.materialType === materialTypeFilter;
+    
+    return matchesSearch && matchesMaterialType;
+  });
 
   return (
     <Layout>
@@ -195,6 +222,26 @@ export default function VendorContacts() {
                     value={createForm.address}
                     onChange={(e) => setCreateForm((s) => ({ ...s, address: e.target.value }))}
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="materialType">Material Type</Label>
+                  <Select
+                    value={createForm.materialType}
+                    onValueChange={(v) => setCreateForm((s) => ({ ...s, materialType: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select material type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {MATERIAL_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -274,6 +321,26 @@ export default function VendorContacts() {
                 </div>
 
                 <div>
+                  <Label htmlFor="edit-materialType">Material Type</Label>
+                  <Select
+                    value={editForm.materialType}
+                    onValueChange={(v) => setEditForm((s) => ({ ...s, materialType: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select material type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {MATERIAL_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
                   <Label htmlFor="edit-notes">Notes</Label>
                   <Textarea
                     id="edit-notes"
@@ -301,6 +368,19 @@ export default function VendorContacts() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="max-w-md"
           />
+          <Select value={materialTypeFilter} onValueChange={setMaterialTypeFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by material" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Materials</SelectItem>
+              {MATERIAL_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Badge variant="secondary">{filteredVendors.length} vendors</Badge>
         </div>
 
@@ -329,6 +409,12 @@ export default function VendorContacts() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="text-sm font-medium text-muted-foreground">{vendor.organization}</div>
+                  
+                  {vendor.materialType && (
+                    <Badge variant="outline" className="text-xs">
+                      {MATERIAL_TYPES.find(t => t.value === vendor.materialType)?.label || vendor.materialType}
+                    </Badge>
+                  )}
                   
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4 text-muted-foreground" />

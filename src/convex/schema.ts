@@ -101,15 +101,18 @@ const schema = defineSchema(
       .index("by_category_and_subCategory", ["category", "subCategory"]),
 
     // Vendor Contacts
-    vendors: defineTable({
-      name: v.string(),
-      organization: v.string(),
-      contact: v.string(),
-      email: v.optional(v.string()),
-      address: v.optional(v.string()),
-      notes: v.optional(v.string()),
-      createdBy: v.id("users"),
-    }).index("by_name", ["name"]),
+  vendors: defineTable({
+    name: v.string(),
+    organization: v.string(),
+    contact: v.string(),
+    email: v.optional(v.string()),
+    address: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    materialType: v.optional(v.string()),
+    createdBy: v.id("users"),
+  })
+    .index("by_name", ["name"])
+    .index("by_materialType", ["materialType"]),
 
     // Service Provider Contacts
     services: defineTable({
