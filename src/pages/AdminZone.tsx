@@ -4,14 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { Trash2, AlertTriangle, UserPlus } from "lucide-react";
+import { Trash2, AlertTriangle } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function AdminZone() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -20,13 +17,6 @@ export default function AdminZone() {
   const assignments = useQuery(api.assignments.list);
   const clearAllPending = useMutation(api.assignments.clearAllPendingAssignments);
   const clearAll = useMutation(api.assignments.clearAllAssignments);
-  const createAccount = useMutation(api.users.createUserAccount);
-
-  const [newAccountForm, setNewAccountForm] = useState({
-    username: "",
-    password: "",
-    role: "user" as "admin" | "user" | "member",
-  });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -88,36 +78,6 @@ export default function AdminZone() {
     }
   };
 
-  const handleCreateAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!newAccountForm.username || !newAccountForm.password) {
-      toast("Error", { description: "Username and password are required" });
-      return;
-    }
-
-    if (newAccountForm.password.length < 4) {
-      toast("Error", { description: "Password must be at least 4 characters" });
-      return;
-    }
-
-    try {
-      await createAccount({
-        username: newAccountForm.username,
-        password: newAccountForm.password,
-        role: newAccountForm.role,
-      });
-      toast("Account created successfully", {
-        description: `User "${newAccountForm.username}" has been created with role: ${newAccountForm.role}`,
-      });
-      setNewAccountForm({ username: "", password: "", role: "user" });
-    } catch (error) {
-      toast("Error creating account", {
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  };
-
   if (isLoading || !isAuthenticated) {
     return null;
   }
@@ -151,75 +111,6 @@ export default function AdminZone() {
               These actions are irreversible. Please proceed with caution.
             </p>
           </div>
-        </div>
-
-        {/* Account Creation Section */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">User Account Management</h2>
-          
-          <Card className="border-blue-200 hover:border-blue-300 transition-colors">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-600">
-                <UserPlus className="h-5 w-5" />
-                Create New User Account
-              </CardTitle>
-              <CardDescription>
-                Create a new user account with username and password
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateAccount} className="space-y-4">
-                <div>
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="Enter username"
-                    value={newAccountForm.username}
-                    onChange={(e) => setNewAccountForm({ ...newAccountForm, username: e.target.value })}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter password (min 4 characters)"
-                    value={newAccountForm.password}
-                    onChange={(e) => setNewAccountForm({ ...newAccountForm, password: e.target.value })}
-                    required
-                    minLength={4}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Select
-                    value={newAccountForm.role}
-                    onValueChange={(value: "admin" | "user" | "member") =>
-                      setNewAccountForm({ ...newAccountForm, role: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="member">Member</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button type="submit" className="w-full">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Create Account
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Assignment Management Section */}
