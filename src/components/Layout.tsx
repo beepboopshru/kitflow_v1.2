@@ -149,7 +149,7 @@ export default function Layout({ children }: LayoutProps) {
             className="ml-auto relative w-full sm:w-96 bg-card border-l border-border flex flex-col shadow-2xl"
           >
             <div className="flex items-center justify-between px-6 py-4 border-b">
-              <div className="font-semibold text-lg">KitFlow Assistant</div>
+              <div className="font-semibold text-lg">Science Utsav AI Manager</div>
               <Button variant="ghost" size="sm" onClick={() => setChatOpen(false)}>
                 Close
               </Button>

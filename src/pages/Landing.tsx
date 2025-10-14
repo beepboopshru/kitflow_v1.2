@@ -123,7 +123,7 @@ export default function Landing() {
           <Card className="w-80 shadow-lg">
             <CardContent className="p-0 flex flex-col h-96">
               <div className="flex items-center justify-between px-4 py-3 border-b">
-                <div className="font-medium">KitFlow Assistant</div>
+                <div className="font-medium">Science Utsav AI Manager</div>
                 <Button variant="ghost" size="sm" onClick={() => setChatOpen(false)}>
                   Close
                 </Button>
