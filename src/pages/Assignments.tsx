@@ -9,15 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+/* removed duplicate AlertCircle import */
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { Package, Plus, Truck, CalendarIcon, Trash2, Edit2, Check, X } from "lucide-react";
+import { Package, Plus, Truck, CalendarIcon, Trash2, Edit2, Check, X, AlertCircle } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { format } from "date-fns";
 
 export default function Assignments() {
@@ -43,6 +45,20 @@ export default function Assignments() {
     grade: null as number | null,
     dispatchDate: undefined as Date | undefined,
   });
+  const [lastCreatedAssignment, setLastCreatedAssignment] = useState<{
+    kitId: string;
+    quantity: number;
+  } | null>(null);
+  const [showShortageDialog, setShowShortageDialog] = useState(false);
+
+  // Query material shortages for the last created assignment
+  const materialShortages = useQuery(
+    api.assignments.calculateMaterialShortage,
+    lastCreatedAssignment ? {
+      kitId: lastCreatedAssignment.kitId as any,
+      quantity: lastCreatedAssignment.quantity,
+    } : "skip"
+  );
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState<"all" | "assigned" | "packed" | "dispatched">("all");
@@ -50,6 +66,7 @@ export default function Assignments() {
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [monthFilter, setMonthFilter] = useState<string>("all");
   const [editingNotes, setEditingNotes] = useState<{ id: string; value: string } | null>(null);
+  // removed duplicate materialShortages and showShortageDialog state (using reactive query instead)
 
   // Get unique months from assignments for the filter dropdown
   const availableMonths = Array.from(
@@ -115,6 +132,16 @@ export default function Assignments() {
       });
       toast("Assignment created successfully");
       setIsCreateOpen(false);
+      
+      // Check for material shortages using reactive query
+      const selectedKit = kits?.find(k => k._id === formData.kitId);
+      if (selectedKit?.isStructured) {
+        setLastCreatedAssignment({
+          kitId: formData.kitId,
+          quantity: formData.quantity as number,
+        });
+      }
+      
       resetForm();
     } catch (error) {
       toast("Error creating assignment", { description: error instanceof Error ? error.message : "Unknown error" });
@@ -177,6 +204,13 @@ export default function Assignments() {
       default: return "secondary";
     }
   };
+
+  // Show shortage dialog when shortages are detected
+  useEffect(() => {
+    if (materialShortages && materialShortages.length > 0 && lastCreatedAssignment) {
+      setShowShortageDialog(true);
+    }
+  }, [materialShortages, lastCreatedAssignment]);
 
   if (isLoading || !isAuthenticated) {
     return null;
@@ -584,6 +618,63 @@ export default function Assignments() {
           </div>
         </div>
 
+        {/* Material Shortage Dialog */}
+        <Dialog open={showShortageDialog} onOpenChange={setShowShortageDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-orange-600">
+                <AlertCircle className="h-5 w-5" />
+                Material Shortage Alert
+              </DialogTitle>
+            </DialogHeader>
+            
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Insufficient Materials</AlertTitle>
+              <AlertDescription>
+                The following materials are insufficient in inventory and need to be purchased or added:
+              </AlertDescription>
+            </Alert>
+
+            <div className="rounded-md border">
+              <table className="w-full">
+                <thead className="border-b bg-muted/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Material</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium">Required</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium">Available</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium">Shortage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {materialShortages?.map((shortage, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="px-4 py-3 text-sm font-medium">{shortage.name}</td>
+                      <td className="px-4 py-3 text-sm text-right">
+                        {shortage.required} {shortage.unit || ""}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right">
+                        {shortage.available} {shortage.unit || ""}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right">
+                        <Badge variant="destructive">
+                          {shortage.shortage} {shortage.unit || ""}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button onClick={() => setShowShortageDialog(false)}>
+                Acknowledge
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {filteredAssignments.length === 0 && (
           <div className="text-center py-12">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -591,6 +682,71 @@ export default function Assignments() {
             <p className="text-muted-foreground">Create your first kit assignment to get started.</p>
           </div>
         )}
+
+        {/* Material Shortage Dialog */}
+        <Dialog open={showShortageDialog} onOpenChange={(open) => {
+          setShowShortageDialog(open);
+          if (!open) {
+            setLastCreatedAssignment(null);
+          }
+        }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-orange-600">
+                <AlertCircle className="h-5 w-5" />
+                Material Shortage Alert
+              </DialogTitle>
+            </DialogHeader>
+            
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Insufficient Materials</AlertTitle>
+              <AlertDescription>
+                The following materials are insufficient in inventory and need to be purchased or added:
+              </AlertDescription>
+            </Alert>
+
+            <div className="rounded-md border">
+              <table className="w-full">
+                <thead className="border-b bg-muted/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Material</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium">Required</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium">Available</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium">Shortage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {materialShortages?.map((shortage, index) => (
+                    <tr key={index} className="border-b last:border-0">
+                      <td className="px-4 py-3 text-sm font-medium">{shortage.name}</td>
+                      <td className="px-4 py-3 text-sm text-right">
+                        {shortage.required} {shortage.unit || ""}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right">
+                        {shortage.available} {shortage.unit || ""}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right">
+                        <Badge variant="destructive">
+                          {shortage.shortage} {shortage.unit || ""}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button onClick={() => {
+                setShowShortageDialog(false);
+                setLastCreatedAssignment(null);
+              }}>
+                Acknowledge
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
