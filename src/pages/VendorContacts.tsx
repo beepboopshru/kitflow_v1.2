@@ -169,7 +169,7 @@ export default function VendorContacts() {
                 New Vendor
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create Vendor</DialogTitle>
               </DialogHeader>
@@ -265,7 +265,7 @@ export default function VendorContacts() {
           </Dialog>
 
           <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Edit Vendor</DialogTitle>
               </DialogHeader>
