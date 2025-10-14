@@ -17,6 +17,7 @@ import type * as ai from "../ai.js";
 import type * as assignments from "../assignments.js";
 import type * as auth from "../auth.js";
 import type * as clients from "../clients.js";
+import type * as email from "../email.js";
 import type * as http from "../http.js";
 import type * as inventory from "../inventory.js";
 import type * as kitPdf from "../kitPdf.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   assignments: typeof assignments;
   auth: typeof auth;
   clients: typeof clients;
+  email: typeof email;
   http: typeof http;
   inventory: typeof inventory;
   kitPdf: typeof kitPdf;

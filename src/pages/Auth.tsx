@@ -44,6 +44,8 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     try {
       const formData = new FormData(event.currentTarget);
+      // Required by Password provider email verification flow
+      formData.append("flow", "email-verification");
       await signIn("password", formData);
       setStep({ email: formData.get("email") as string });
       setIsLoading(false);
@@ -64,6 +66,8 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     try {
       const formData = new FormData(event.currentTarget);
+      // Required by Password provider email verification flow
+      formData.append("flow", "email-verification");
       await signIn("password", formData);
 
       console.log("signed in");
