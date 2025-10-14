@@ -13,7 +13,9 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       apiKey: process.env.RESEND_API_KEY!,
       maxAge: 60 * 10, // 10 minutes
       async generateVerificationToken() {
-        return Math.random().toString(36).substring(2, 8).toUpperCase();
+        // Generate a more secure 6-digit code
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        return code;
       },
       async sendVerificationRequest({ identifier: email, provider, token }) {
         const apiKey = (await (provider as any).apiKey) ?? process.env.RESEND_API_KEY!;
@@ -33,6 +35,9 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
             </div>
             <p>This code will expire in 10 minutes.</p>
             <p>If you didn't request this code, you can safely ignore this email.</p>
+            <p style="color: #666; font-size: 12px; margin-top: 30px;">
+              For security reasons, never share this code with anyone.
+            </p>
           </div>
           `,
         });
