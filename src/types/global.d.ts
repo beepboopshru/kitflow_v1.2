@@ -8,6 +8,4 @@ declare global {
   }
 }
 
-declare module "resend";
-
 export {};
