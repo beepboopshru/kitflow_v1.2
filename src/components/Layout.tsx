@@ -21,7 +21,6 @@ import { Input } from "@/components/ui/input";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -277,24 +276,13 @@ export default function Layout({ children }: LayoutProps) {
                     className={`flex ${m.role === "assistant" ? "justify-start" : "justify-end"}`}
                   >
                     <div
-                      className={`rounded-lg px-4 py-2 max-w-[85%] ${
+                      className={`rounded-lg px-4 py-2 max-w-[85%] text-sm ${
                         m.role === "assistant" 
                           ? "bg-muted text-foreground" 
                           : "bg-primary text-primary-foreground"
                       }`}
                     >
-                      <ReactMarkdown
-                        components={{
-                          p: ({ node, ...props }) => <p className="text-sm leading-relaxed" {...props} />,
-                          strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
-                          em: ({ node, ...props }) => <em className="italic" {...props} />,
-                          ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2" {...props} />,
-                          ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2" {...props} />,
-                          li: ({ node, ...props }) => <li className="my-1" {...props} />,
-                        }}
-                      >
-                        {m.content}
-                      </ReactMarkdown>
+                      {m.content}
                     </div>
                   </div>
                 ))}
