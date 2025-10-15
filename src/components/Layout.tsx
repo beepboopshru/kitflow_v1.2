@@ -307,7 +307,7 @@ export default function Layout({ children }: LayoutProps) {
         {!chatOpen && (
           <Button 
             onClick={() => setChatOpen(true)}
-            className="fixed bottom-6 right-6 z-40 shadow-lg"
+            className="fixed bottom-6 right-6 z-50 shadow-lg"
             size="lg"
           >
             Chat with AI
