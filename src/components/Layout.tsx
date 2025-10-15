@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -239,7 +240,20 @@ export default function Layout({ children }: LayoutProps) {
                         : "bg-primary text-primary-foreground"
                     }`}
                   >
-                    <p className="text-sm">{m.content}</p>
+                    <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                          strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                          em: ({ children }) => <em className="italic">{children}</em>,
+                          ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                          li: ({ children }) => <li className="mb-1">{children}</li>,
+                        }}
+                      >
+                        {m.content}
+                      </ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               ))}
