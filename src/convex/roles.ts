@@ -42,6 +42,29 @@ export const updateUserRole = mutation({
 });
 
 /**
+ * Delete a user
+ * Only accessible by admins
+ */
+export const deleteUser = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await getCurrentUser(ctx);
+    if (!currentUser) throw new Error("Unauthorized");
+    if (currentUser.role !== "admin") throw new Error("Admin access required");
+
+    // Prevent admins from deleting themselves
+    if (currentUser._id === args.userId) {
+      throw new Error("Cannot delete your own account");
+    }
+
+    await ctx.db.delete(args.userId);
+    return { success: true };
+  },
+});
+
+/**
  * Check if current user has a specific role
  */
 export const hasRole = query({

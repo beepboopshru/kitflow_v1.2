@@ -11,7 +11,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { Shield, User, Users } from "lucide-react";
+import { Shield, User, Users, Trash2 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
@@ -30,6 +30,7 @@ export default function UserManagement() {
     currentUserRole === "admin" ? {} : "skip"
   );
   const updateRole = useMutation(api.roles.updateUserRole);
+  const deleteUser = useMutation(api.roles.deleteUser);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -50,6 +51,22 @@ export default function UserManagement() {
       toast.success("User role updated successfully");
     } catch (error) {
       toast.error("Failed to update role", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  const handleDeleteUser = async (userId: Id<"users">, userName: string) => {
+    const confirmed = confirm(
+      `Are you sure you want to delete ${userName}? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteUser({ userId });
+      toast.success("User deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete user", {
         description: error instanceof Error ? error.message : "Unknown error",
       });
     }
@@ -115,22 +132,38 @@ export default function UserManagement() {
                       </p>
                     </div>
                   </div>
-                  <Select
-                    value={u.role || "user"}
-                    onValueChange={(value) =>
-                      handleRoleChange(u._id, value as "admin" | "user" | "member")
-                    }
-                    disabled={u._id === user?._id}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="member">Member</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={u.role || "user"}
+                      onValueChange={(value) =>
+                        handleRoleChange(u._id, value as "admin" | "user" | "member")
+                      }
+                      disabled={u._id === user?._id}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="member">Member</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        handleDeleteUser(
+                          u._id,
+                          u.name || u.email || "Anonymous User"
+                        )
+                      }
+                      disabled={u._id === user?._id}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
