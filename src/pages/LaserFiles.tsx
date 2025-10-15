@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/convex/_generated/api";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { useState } from "react";
 import { Download, Trash2, Upload, FileText, ArrowLeft, Box } from "lucide-react";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ function FileManagementModal({ kitId, kitName, fileType, isOpen, onClose }: File
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
   const createFile = useMutation(api.laserFiles.create);
   const removeFile = useMutation(api.laserFiles.remove);
+  const getFileUrl = useAction(api.storage.getFileUrl);
   const [uploading, setUploading] = useState(false);
   const [deleteId, setDeleteId] = useState<Id<"laserFiles"> | null>(null);
 
@@ -105,7 +106,11 @@ function FileManagementModal({ kitId, kitName, fileType, isOpen, onClose }: File
 
   const handleDownload = async (storageId: string, fileName: string) => {
     try {
-      const url = await fetch(`${import.meta.env.VITE_CONVEX_URL}/api/storage/${storageId}`).then(r => r.url);
+      const url = await getFileUrl({ storageId });
+      if (!url) {
+        toast.error("File URL is unavailable or expired");
+        return;
+      }
       const a = document.createElement("a");
       a.href = url;
       a.download = fileName;
