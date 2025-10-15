@@ -381,68 +381,6 @@ export default function AdminZone() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Role Descriptions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-red-500 mt-0.5" />
-                <div>
-                  <p className="font-medium">Admin</p>
-                  <p className="text-sm text-muted-foreground">
-                    Full access to all features including user management and admin zone
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-orange-500 mt-0.5" />
-                <div>
-                  <p className="font-medium">Manager</p>
-                  <p className="text-sm text-muted-foreground">
-                    Same access as admin but no user management
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <User className="h-5 w-5 text-blue-500 mt-0.5" />
-                <div>
-                  <p className="font-medium">Research & Development</p>
-                  <p className="text-sm text-muted-foreground">
-                    Kit management only - no client management, vendors, or services
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Users className="h-5 w-5 text-green-500 mt-0.5" />
-                <div>
-                  <p className="font-medium">Operations</p>
-                  <p className="text-sm text-muted-foreground">
-                    Inventory management, vendors, and services
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Users className="h-5 w-5 text-purple-500 mt-0.5" />
-                <div>
-                  <p className="font-medium">Inventory</p>
-                  <p className="text-sm text-muted-foreground">
-                    Only inventory management access
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Users className="h-5 w-5 text-pink-500 mt-0.5" />
-                <div>
-                  <p className="font-medium">Content</p>
-                  <p className="text-sm text-muted-foreground">
-                    Can only view and upload images
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Assignment Management Section */}
@@ -531,6 +469,71 @@ export default function AdminZone() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+        </div>
+
+        {/* Role Descriptions Section */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Role Descriptions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-start gap-3">
+                <Shield className="h-5 w-5 text-red-500 mt-0.5" />
+                <div>
+                  <p className="font-medium">Admin</p>
+                  <p className="text-sm text-muted-foreground">
+                    Full access to all features including user management and admin zone
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Shield className="h-5 w-5 text-orange-500 mt-0.5" />
+                <div>
+                  <p className="font-medium">Manager</p>
+                  <p className="text-sm text-muted-foreground">
+                    Same access as admin but no user management
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <User className="h-5 w-5 text-blue-500 mt-0.5" />
+                <div>
+                  <p className="font-medium">Research & Development</p>
+                  <p className="text-sm text-muted-foreground">
+                    Kit management only - no client management, vendors, or services
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Users className="h-5 w-5 text-green-500 mt-0.5" />
+                <div>
+                  <p className="font-medium">Operations</p>
+                  <p className="text-sm text-muted-foreground">
+                    Inventory management, vendors, and services
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Users className="h-5 w-5 text-purple-500 mt-0.5" />
+                <div>
+                  <p className="font-medium">Inventory</p>
+                  <p className="text-sm text-muted-foreground">
+                    Only inventory management access
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Users className="h-5 w-5 text-pink-500 mt-0.5" />
+                <div>
+                  <p className="font-medium">Content</p>
+                  <p className="text-sm text-muted-foreground">
+                    Can only view and upload images
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </motion.div>
     </Layout>
