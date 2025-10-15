@@ -1006,8 +1006,8 @@ const getImageUrl = useQuery(
                         <td className="px-4 py-3 text-sm">
                           {kit.stockCount >= 0 ? (
                             <div>
-                              <div className="font-medium">{kit.stockCount}</div>
-                              <div className="text-xs text-muted-foreground">Available</div>
+                              <div className="font-medium text-green-600">{kit.stockCount}</div>
+                              <div className="text-xs text-green-600">Available</div>
                             </div>
                           ) : (
                             <div>
