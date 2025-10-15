@@ -170,7 +170,7 @@ export default function Layout({ children }: LayoutProps) {
 
         <div className="flex">
           {/* Sidebar */}
-          <nav className="w-64 border-r border-border bg-card/80 backdrop-blur-sm">
+          <nav className="w-64 border-r border-border bg-card/60 backdrop-blur-md">
             <div className="p-8">
               <div className="space-y-2">
                 {navigation.map((item) => {
