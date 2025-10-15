@@ -115,7 +115,6 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Inventory", href: "/inventory", icon: Boxes, roles: ["admin", "manager", "operations", "inventory"] },
     { name: "Vendors", href: "/vendors", icon: Building2, roles: ["admin", "manager", "operations", "inventory"] },
     { name: "Services", href: "/services", icon: Package, roles: ["admin", "manager", "operations"] },
-    { name: "User Management", href: "/users", icon: Users, roles: ["admin"] },
     { name: "Admin Zone", href: "/admin", icon: AlertTriangle, roles: ["admin"] },
   ];
 

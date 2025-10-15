@@ -62,10 +62,6 @@ const router = createBrowserRouter([
     element: <Services />,
   },
   {
-    path: "/users",
-    element: <UserManagement />,
-  },
-  {
     path: "/pending-approval",
     element: <PendingApproval />,
   },
