@@ -113,7 +113,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Clients", href: "/clients", icon: Users, roles: ["admin", "manager"] },
     { name: "Assignments", href: "/assignments", icon: Package, roles: ["admin", "manager"] },
     { name: "Inventory", href: "/inventory", icon: Boxes, roles: ["admin", "manager", "operations", "inventory"] },
-    { name: "Vendors", href: "/vendors", icon: Building2, roles: ["admin", "manager", "operations"] },
+    { name: "Vendors", href: "/vendors", icon: Building2, roles: ["admin", "manager", "operations", "inventory"] },
     { name: "Services", href: "/services", icon: Package, roles: ["admin", "manager", "operations"] },
     { name: "User Management", href: "/users", icon: Users, roles: ["admin"] },
     { name: "Admin Zone", href: "/admin", icon: AlertTriangle, roles: ["admin"] },
