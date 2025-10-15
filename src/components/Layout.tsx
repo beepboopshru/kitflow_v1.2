@@ -187,23 +187,23 @@ export default function Layout({ children }: LayoutProps) {
               opacity: sidebarOpen ? 1 : 0,
             }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="border-r border-border bg-card/60 backdrop-blur-md overflow-hidden"
+            className="border-r border-border/50 bg-card/60 backdrop-blur-md overflow-hidden shadow-lg"
           >
-            <div className="p-8">
-              <div className="space-y-2">
+            <div className="p-6">
+              <div className="space-y-1">
                 {navigation.map((item) => {
                   const isActive = location.pathname === item.href;
                   return (
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 text-sm transition-colors whitespace-nowrap ${
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                         isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          ? "bg-primary text-primary-foreground shadow-md scale-[1.02]"
+                          : "text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:scale-[1.01]"
                       }`}
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-5 w-5" />
                       <span>{item.name}</span>
                     </Link>
                   );
@@ -217,7 +217,7 @@ export default function Layout({ children }: LayoutProps) {
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="hidden lg:flex absolute left-0 top-20 z-10 h-10 w-6 rounded-r-md border-r border-t border-b border-border bg-card/60 backdrop-blur-md hover:bg-card/80"
+            className="hidden lg:flex absolute left-0 top-20 z-10 h-10 w-6 rounded-r-md border-r border-t border-b border-border/50 bg-card/70 backdrop-blur-md hover:bg-card/90 shadow-md transition-all duration-300"
             style={{ left: sidebarOpen ? '256px' : '0px', transition: 'left 0.3s ease-in-out' }}
           >
             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
