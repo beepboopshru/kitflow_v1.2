@@ -8,6 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
@@ -276,16 +282,21 @@ export default function AdminZone() {
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Approved Users</CardTitle>
-              <CardDescription>
-                View and manage user roles. All users share the same database.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {users?.filter(u => u.isApproved !== false).map((u) => (
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="approved-users">
+              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+                Approved Users ({users?.filter(u => u.isApproved !== false).length || 0})
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card>
+                  <CardHeader>
+                    <CardDescription>
+                      View and manage user roles. All users share the same database.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {users?.filter(u => u.isApproved !== false).map((u) => (
                   <div
                     key={u._id}
                     className="flex items-center justify-between p-4 border rounded-lg"
@@ -410,9 +421,13 @@ export default function AdminZone() {
 
         {/* Assignment Management Section */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Assignment Management</h2>
-          
-          <div className="grid gap-4 md:grid-cols-2">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="assignment-management">
+              <AccordionTrigger className="text-xl font-semibold hover:no-underline">
+                Assignment Management
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-4 md:grid-cols-2 pt-4">
             {/* Clear Pending Assignments */}
             <Card className="border-orange-200 hover:border-orange-300 transition-colors">
               <CardHeader>
@@ -477,9 +492,12 @@ export default function AdminZone() {
                   Clear All {totalCount} Assignment{totalCount !== 1 ? 's' : ''}
                 </Button>
               </CardContent>
-            </Card>
-          </div>
-        </div>
+                </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
       </motion.div>
     </Layout>
   );
