@@ -178,7 +178,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </header>
 
-        <div className="flex">
+        <div className="flex min-h-[calc(100vh-4rem)]">
           {/* Sidebar */}
           <motion.nav
             initial={false}
