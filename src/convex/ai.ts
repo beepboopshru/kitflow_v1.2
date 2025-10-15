@@ -13,14 +13,16 @@ export const chat = action({
     // @ts-ignore - suppress deep type instantiation from generated API types
     const mod: any = await import("./_generated/api");
     const api = mod.api as any;
-    const [summary, kits, clients, assignments, vendors, inventory] = (await Promise.all([
+    const [summary, kits, clients, assignments, vendors, services, inventory, laserFiles] = (await Promise.all([
       ctx.runQuery(api.reports.getInventorySummary, {}),
       ctx.runQuery(api.kits.list, {}),
       ctx.runQuery(api.clients.list, {}),
       ctx.runQuery(api.assignments.list, {}),
       ctx.runQuery(api.vendors.list, {}),
+      ctx.runQuery(api.services.list, {}),
       ctx.runQuery(api.inventory.listByCategory, { category: "raw_material" }),
-    ])) as [any, any[], any[], any[], any[], any[]];
+      ctx.runQuery(api.laserFiles.list, {}),
+    ])) as [any, any[], any[], any[], any[], any[], any[], any[]];
 
     const kitsBrief = (kits ?? []).slice(0, 50).map((k: any) => ({
       name: k.name,
@@ -53,6 +55,13 @@ export const chat = action({
       notes: v.notes,
     }));
 
+    const servicesBrief = (services ?? []).slice(0, 30).map((s: any) => ({
+      name: s.name,
+      serviceType: s.serviceType,
+      contact: s.contact,
+      notes: s.notes,
+    }));
+
     const inventoryBrief = (inventory ?? []).slice(0, 30).map((i: any) => ({
       name: i.name,
       category: i.category,
@@ -61,15 +70,23 @@ export const chat = action({
       notes: i.notes,
     }));
 
+    const laserFilesBrief = (laserFiles ?? []).slice(0, 50).map((lf: any) => ({
+      fileName: lf.fileName,
+      kitId: lf.kitId,
+      uploadedAt: lf.uploadedAt,
+    }));
+
     const systemPrompt: string =
-      `You are KitFlow Assistant for a minimalist inventory system.\n` +
+      `You are ScienceUtsav AI Manager for a minimalist inventory system.\n` +
       `Answer concisely and helpfully. Use the provided database context to inform your answers.\n\n` +
       `Database Summary:\n${JSON.stringify(summary, null, 2)}\n\n` +
       `Kits (first 50, includes remarks and serial numbers):\n${JSON.stringify(kitsBrief, null, 2)}\n\n` +
       `Clients (first 30, includes notes):\n${JSON.stringify(clientsBrief, null, 2)}\n\n` +
       `Assignments (first 30, includes notes):\n${JSON.stringify(assignmentsBrief, null, 2)}\n\n` +
       `Vendors (first 30, includes notes and material types):\n${JSON.stringify(vendorsBrief, null, 2)}\n\n` +
+      `Services (first 30, includes service types and notes):\n${JSON.stringify(servicesBrief, null, 2)}\n\n` +
       `Inventory Items (first 30, includes notes):\n${JSON.stringify(inventoryBrief, null, 2)}\n\n` +
+      `Laser Files (first 50):\n${JSON.stringify(laserFilesBrief, null, 2)}\n\n` +
       `If asked for unavailable details, say you don't have that info yet.`;
 
     try {
