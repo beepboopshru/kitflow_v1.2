@@ -23,6 +23,7 @@ import type * as inventory from "../inventory.js";
 import type * as inventoryCategories from "../inventoryCategories.js";
 import type * as kitPdf from "../kitPdf.js";
 import type * as kits from "../kits.js";
+import type * as laserFiles from "../laserFiles.js";
 import type * as programs from "../programs.js";
 import type * as reports from "../reports.js";
 import type * as roles from "../roles.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   inventoryCategories: typeof inventoryCategories;
   kitPdf: typeof kitPdf;
   kits: typeof kits;
+  laserFiles: typeof laserFiles;
   programs: typeof programs;
   reports: typeof reports;
   roles: typeof roles;

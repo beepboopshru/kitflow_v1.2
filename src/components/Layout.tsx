@@ -1,19 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
-import { 
-  BarChart3, 
-  Box, 
-  LogOut, 
-  Package, 
+import {
+  BarChart3,
+  Box,
+  LogOut,
+  Package,
   Users,
   AlertTriangle,
   Building2,
-  Trash2
+  Trash2,
+  FileText,
+  Boxes,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
-/* removed duplicate useEffect import */
-import { Boxes } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAction } from "convex/react";
@@ -115,12 +115,13 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Inventory", href: "/inventory", icon: Boxes, roles: ["admin", "manager", "operations", "inventory"] },
     { name: "Vendors", href: "/vendors", icon: Building2, roles: ["admin", "manager", "operations", "inventory"] },
     { name: "Services", href: "/services", icon: Package, roles: ["admin", "manager", "operations"] },
+    { name: "Laser Files", href: "/laser-files", icon: FileText, roles: ["admin", "manager", "research_development", "operations"] },
     { name: "Admin Zone", href: "/admin", icon: AlertTriangle, roles: ["admin"] },
   ];
 
   // Filter navigation based on user role
-  const navigation = allNavigation.filter(item => 
-    currentUserRole && item.roles.includes(currentUserRole)
+  const navigation = allNavigation.filter(
+    (item) => currentUserRole && item.roles.includes(currentUserRole)
   );
 
   return (

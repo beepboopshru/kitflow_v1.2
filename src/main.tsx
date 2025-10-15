@@ -18,6 +18,7 @@ import Inventory from "@/pages/Inventory.tsx";
 import AdminZone from "./pages/AdminZone.tsx";
 import Vendors from "@/pages/VendorContacts.tsx";
 import Services from "@/pages/Services.tsx";
+import LaserFiles from "@/pages/LaserFiles.tsx";
 import UserManagement from "@/pages/UserManagement.tsx";
 import PendingApproval from "@/pages/PendingApproval.tsx";
 import "./types/global.d.ts";
@@ -60,6 +61,10 @@ const router = createBrowserRouter([
   {
     path: "/services",
     element: <Services />,
+  },
+  {
+    path: "/laser-files",
+    element: <LaserFiles />,
   },
   {
     path: "/pending-approval",
