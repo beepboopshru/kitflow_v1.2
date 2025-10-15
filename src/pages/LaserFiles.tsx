@@ -1,17 +1,20 @@
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/convex/_generated/api";
 import { useQuery, useMutation } from "convex/react";
 import { useState } from "react";
-import { Download, Trash2, Upload, FileText } from "lucide-react";
+import { Download, Trash2, Upload, FileText, ArrowLeft, Box } from "lucide-react";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { motion } from "framer-motion";
 
 type FileType = "mdf_dxf" | "acrylic_dxf" | "printable_pdf";
+type ProgramType = string | null;
 
 interface FileManagementModalProps {
   kitId: Id<"kits">;
@@ -205,6 +208,8 @@ function FileManagementModal({ kitId, kitName, fileType, isOpen, onClose }: File
 
 export default function LaserFiles() {
   const kits = useQuery(api.kits.list);
+  const programs = useQuery(api.programs.list);
+  const [selectedProgram, setSelectedProgram] = useState<ProgramType>(null);
   const [modalState, setModalState] = useState<{
     kitId: Id<"kits">;
     kitName: string;
@@ -245,21 +250,111 @@ export default function LaserFiles() {
     );
   };
 
+  // Filter kits by selected program
+  const filteredKits = selectedProgram 
+    ? (kits ?? []).filter(k => k.type === selectedProgram)
+    : [];
+
+  // Calculate file stats for each program
+  const getProgramFileStats = (programSlug: string) => {
+    const programKits = (kits ?? []).filter(k => k.type === programSlug);
+    let totalFiles = 0;
+    
+    programKits.forEach(kit => {
+      const mdfFiles = useQuery(api.laserFiles.getByKitAndType, { kitId: kit._id, fileType: "mdf_dxf" });
+      const acrylicFiles = useQuery(api.laserFiles.getByKitAndType, { kitId: kit._id, fileType: "acrylic_dxf" });
+      const pdfFiles = useQuery(api.laserFiles.getByKitAndType, { kitId: kit._id, fileType: "printable_pdf" });
+      
+      totalFiles += (mdfFiles?.length ?? 0) + (acrylicFiles?.length ?? 0) + (pdfFiles?.length ?? 0);
+    });
+    
+    return { totalKits: programKits.length, totalFiles };
+  };
+
+  // Landing View: Program Selection
+  if (selectedProgram === null) {
+    return (
+      <Layout>
+        <div className="space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Laser Files</h1>
+            <p className="text-muted-foreground mt-2">
+              Select a program to manage manufacturing design files
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(programs ?? []).map((program, index) => {
+              const stats = getProgramFileStats(program.slug);
+              return (
+                <motion.div
+                  key={program._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card 
+                    className="cursor-pointer hover:shadow-lg transition-all hover:border-primary"
+                    onClick={() => setSelectedProgram(program.slug)}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Box className="h-6 w-6" />
+                        {program.name}
+                      </CardTitle>
+                      {program.description && (
+                        <p className="text-xs text-muted-foreground">{program.description}</p>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Kits</p>
+                          <p className="text-2xl font-bold">{stats.totalKits}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Files</p>
+                          <p className="text-2xl font-bold">{stats.totalFiles}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Program View: Kit File Management
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Laser Files</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage manufacturing design files (DXF and PDF) for all kits
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedProgram(null)}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Programs
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {(programs ?? []).find(p => p.slug === selectedProgram)?.name || selectedProgram.toUpperCase()} - Laser Files
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage manufacturing design files (DXF and PDF) for {(programs ?? []).find(p => p.slug === selectedProgram)?.name || selectedProgram} kits
+            </p>
+          </div>
         </div>
 
-        {kits === undefined ? (
-          <div className="text-center py-12">Loading kits...</div>
-        ) : kits.length === 0 ? (
+        {filteredKits.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            No kits found. Create kits first to manage their laser files.
+            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>No kits found in this program.</p>
           </div>
         ) : (
           <div className="border rounded-lg">
@@ -273,7 +368,7 @@ export default function LaserFiles() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {kits.map((kit) => (
+                {filteredKits.map((kit) => (
                   <TableRow key={kit._id}>
                     <TableCell className="font-medium">{kit.name}</TableCell>
                     <TableCell>
