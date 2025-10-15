@@ -148,18 +148,12 @@ const schema = defineSchema(
     // Laser Files Management
     laserFiles: defineTable({
       kitId: v.id("kits"),
-      fileType: v.union(
-        v.literal("mdf_dxf"),
-        v.literal("acrylic_dxf"),
-        v.literal("printable_pdf")
-      ),
       fileName: v.string(),
       storageId: v.string(),
       uploadedBy: v.id("users"),
       uploadedAt: v.number(),
     })
-      .index("by_kit", ["kitId"])
-      .index("by_kit_and_type", ["kitId", "fileType"]),
+      .index("by_kit", ["kitId"]),
   },
   {
     schemaValidation: false,

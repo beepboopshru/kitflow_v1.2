@@ -13,37 +13,23 @@ import { Id } from "@/convex/_generated/dataModel";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
 
-type FileType = "mdf_dxf" | "acrylic_dxf" | "printable_pdf";
 type ProgramType = string | null;
 
 interface FileManagementModalProps {
   kitId: Id<"kits">;
   kitName: string;
-  fileType: FileType;
   isOpen: boolean;
   onClose: () => void;
 }
 
-function FileManagementModal({ kitId, kitName, fileType, isOpen, onClose }: FileManagementModalProps) {
-  const files = useQuery(api.laserFiles.getByKitAndType, { kitId, fileType });
+function FileManagementModal({ kitId, kitName, isOpen, onClose }: FileManagementModalProps) {
+  const files = useQuery(api.laserFiles.getByKit, { kitId });
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
   const createFile = useMutation(api.laserFiles.create);
   const removeFile = useMutation(api.laserFiles.remove);
   const getFileUrl = useAction(api.storage.getFileUrl);
   const [uploading, setUploading] = useState(false);
   const [deleteId, setDeleteId] = useState<Id<"laserFiles"> | null>(null);
-
-  const fileTypeLabels: Record<FileType, string> = {
-    mdf_dxf: "MDF Files (DXF)",
-    acrylic_dxf: "Acrylic Files (DXF)",
-    printable_pdf: "Printable Designs (PDF)"
-  };
-
-  const acceptedFileTypes: Record<FileType, string> = {
-    mdf_dxf: ".dxf",
-    acrylic_dxf: ".dxf",
-    printable_pdf: ".pdf"
-  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -54,11 +40,10 @@ function FileManagementModal({ kitId, kitName, fileType, isOpen, onClose }: File
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
         
-        // Validate file type
+        // Validate file type (only DXF and PDF allowed)
         const extension = file.name.split('.').pop()?.toLowerCase();
-        const expectedExtension = fileType.includes("pdf") ? "pdf" : "dxf";
-        if (extension !== expectedExtension) {
-          toast.error(`Invalid file type for ${file.name}. Expected .${expectedExtension}`);
+        if (extension !== "dxf" && extension !== "pdf") {
+          toast.error(`Invalid file type for ${file.name}. Only .dxf and .pdf files are allowed`);
           continue;
         }
 
@@ -77,7 +62,6 @@ function FileManagementModal({ kitId, kitName, fileType, isOpen, onClose }: File
         // Save file metadata
         await createFile({
           kitId,
-          fileType,
           fileName: file.name,
           storageId,
         });
@@ -128,21 +112,21 @@ function FileManagementModal({ kitId, kitName, fileType, isOpen, onClose }: File
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Managing {fileTypeLabels[fileType]} for '{kitName}'</DialogTitle>
+            <DialogTitle>Managing Files for '{kitName}'</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
               <input
                 type="file"
-                id={`upload-${fileType}`}
+                id={`upload-files`}
                 multiple
-                accept={acceptedFileTypes[fileType]}
+                accept=".dxf,.pdf"
                 onChange={handleUpload}
                 className="hidden"
                 disabled={uploading}
               />
-              <label htmlFor={`upload-${fileType}`}>
+              <label htmlFor={`upload-files`}>
                 <Button asChild disabled={uploading}>
                   <span className="cursor-pointer">
                     <Upload className="h-4 w-4 mr-2" />
@@ -219,23 +203,22 @@ export default function LaserFiles() {
   const [modalState, setModalState] = useState<{
     kitId: Id<"kits">;
     kitName: string;
-    fileType: FileType;
   } | null>(null);
 
-  const getFileCount = (kitId: Id<"kits">, fileType: FileType) => {
-    const files = useQuery(api.laserFiles.getByKitAndType, { kitId, fileType });
+  const getFileCount = (kitId: Id<"kits">) => {
+    const files = useQuery(api.laserFiles.getByKit, { kitId });
     return files?.length ?? 0;
   };
 
-  const FileCell = ({ kitId, kitName, fileType }: { kitId: Id<"kits">; kitName: string; fileType: FileType }) => {
-    const fileCount = getFileCount(kitId, fileType);
+  const FileCell = ({ kitId, kitName }: { kitId: Id<"kits">; kitName: string }) => {
+    const fileCount = getFileCount(kitId);
 
     if (fileCount === 0) {
       return (
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setModalState({ kitId, kitName, fileType })}
+          onClick={() => setModalState({ kitId, kitName })}
         >
           Add Files
         </Button>
@@ -248,7 +231,7 @@ export default function LaserFiles() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setModalState({ kitId, kitName, fileType })}
+          onClick={() => setModalState({ kitId, kitName })}
         >
           Manage
         </Button>
@@ -367,9 +350,7 @@ export default function LaserFiles() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Kit Name</TableHead>
-                  <TableHead>MDF Files (DXF)</TableHead>
-                  <TableHead>Acrylic Files (DXF)</TableHead>
-                  <TableHead>Printable Designs (PDF)</TableHead>
+                  <TableHead>Files</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -377,13 +358,7 @@ export default function LaserFiles() {
                   <TableRow key={kit._id}>
                     <TableCell className="font-medium">{kit.name}</TableCell>
                     <TableCell>
-                      <FileCell kitId={kit._id} kitName={kit.name} fileType="mdf_dxf" />
-                    </TableCell>
-                    <TableCell>
-                      <FileCell kitId={kit._id} kitName={kit.name} fileType="acrylic_dxf" />
-                    </TableCell>
-                    <TableCell>
-                      <FileCell kitId={kit._id} kitName={kit.name} fileType="printable_pdf" />
+                      <FileCell kitId={kit._id} kitName={kit.name} />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -397,7 +372,6 @@ export default function LaserFiles() {
         <FileManagementModal
           kitId={modalState.kitId}
           kitName={modalState.kitName}
-          fileType={modalState.fileType}
           isOpen={true}
           onClose={() => setModalState(null)}
         />
