@@ -244,7 +244,13 @@ export default function AdminZone() {
                           onValueChange={(value) =>
                             handleApproveUser(
                               u._id,
-                              value as "admin" | "manager" | "research_development" | "operations" | "inventory" | "content",
+                              value as
+                                | "admin"
+                                | "manager"
+                                | "research_development"
+                                | "operations"
+                                | "inventory"
+                                | "content",
                               u.name || u.email || "Anonymous User"
                             )
                           }
@@ -255,7 +261,9 @@ export default function AdminZone() {
                           <SelectContent>
                             <SelectItem value="admin">Admin</SelectItem>
                             <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="research_development">Research & Development</SelectItem>
+                            <SelectItem value="research_development">
+                              Research & Development
+                            </SelectItem>
                             <SelectItem value="operations">Operations</SelectItem>
                             <SelectItem value="inventory">Inventory</SelectItem>
                             <SelectItem value="content">Content</SelectItem>
@@ -285,7 +293,7 @@ export default function AdminZone() {
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="approved-users">
               <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                Approved Users ({users?.filter(u => u.isApproved !== false).length || 0})
+                Approved Users ({users?.filter((u) => u.isApproved !== false).length || 0})
               </AccordionTrigger>
               <AccordionContent>
                 <Card>
@@ -296,65 +304,83 @@ export default function AdminZone() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {users?.filter(u => u.isApproved !== false).map((u) => (
-                  <div
-                    key={u._id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex items-center gap-4">
-                      {getRoleIcon(u.role)}
-                      <div>
-                        <p className="font-medium">
-                          {u.name || u.email || "Anonymous User"}
-                          {u._id === user?._id && (
-                            <span className="ml-2 text-xs text-muted-foreground">(You)</span>
-                          )}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {u.email || "No email"}
-                        </p>
-                      </div>
+                      {users
+                        ?.filter((u) => u.isApproved !== false)
+                        .map((u) => (
+                          <div
+                            key={u._id}
+                            className="flex items-center justify-between p-4 border rounded-lg"
+                          >
+                            <div className="flex items-center gap-4">
+                              {getRoleIcon(u.role)}
+                              <div>
+                                <p className="font-medium">
+                                  {u.name || u.email || "Anonymous User"}
+                                  {u._id === user?._id && (
+                                    <span className="ml-2 text-xs text-muted-foreground">
+                                      (You)
+                                    </span>
+                                  )}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {u.email || "No email"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Select
+                                value={u.role || "inventory"}
+                                onValueChange={(value) =>
+                                  handleRoleChange(
+                                    u._id,
+                                    value as
+                                      | "admin"
+                                      | "manager"
+                                      | "research_development"
+                                      | "operations"
+                                      | "inventory"
+                                      | "content"
+                                  )
+                                }
+                                disabled={u._id === user?._id}
+                              >
+                                <SelectTrigger className="w-48">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                  <SelectItem value="manager">Manager</SelectItem>
+                                  <SelectItem value="research_development">
+                                    Research & Development
+                                  </SelectItem>
+                                  <SelectItem value="operations">Operations</SelectItem>
+                                  <SelectItem value="inventory">Inventory</SelectItem>
+                                  <SelectItem value="content">Content</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() =>
+                                  handleDeleteUser(
+                                    u._id,
+                                    u.name || u.email || "Anonymous User"
+                                  )
+                                }
+                                disabled={u._id === user?._id}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={u.role || "inventory"}
-                        onValueChange={(value) =>
-                          handleRoleChange(u._id, value as "admin" | "manager" | "research_development" | "operations" | "inventory" | "content")
-                        }
-                        disabled={u._id === user?._id}
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="manager">Manager</SelectItem>
-                          <SelectItem value="research_development">Research & Development</SelectItem>
-                          <SelectItem value="operations">Operations</SelectItem>
-                          <SelectItem value="inventory">Inventory</SelectItem>
-                          <SelectItem value="content">Content</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          handleDeleteUser(
-                            u._id,
-                            u.name || u.email || "Anonymous User"
-                          )
-                        }
-                        disabled={u._id === user?._id}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           <Card>
             <CardHeader>
@@ -428,76 +454,84 @@ export default function AdminZone() {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid gap-4 md:grid-cols-2 pt-4">
-            {/* Clear Pending Assignments */}
-            <Card className="border-orange-200 hover:border-orange-300 transition-colors">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-orange-600">
-                  <Trash2 className="h-5 w-5" />
-                  Clear Pending Assignments
-                </CardTitle>
-                <CardDescription>
-                  Delete all non-dispatched assignments and restore stock to kits
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  <p>Current pending assignments: <span className="font-semibold">{pendingCount}</span></p>
-                  <p className="mt-2">This will:</p>
-                  <ul className="list-disc list-inside mt-1 space-y-1">
-                    <li>Delete all "assigned" and "packed" assignments</li>
-                    <li>Restore stock quantities to affected kits</li>
-                    <li>Keep dispatched assignments intact</li>
-                  </ul>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={handleClearAllPendingAssignments}
-                  className="w-full text-orange-600 hover:text-orange-700 border-orange-200 hover:border-orange-300"
-                  disabled={pendingCount === 0}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Clear {pendingCount} Pending Assignment{pendingCount !== 1 ? 's' : ''}
-                </Button>
-              </CardContent>
-            </Card>
+                  {/* Clear Pending Assignments */}
+                  <Card className="border-orange-200 hover:border-orange-300 transition-colors">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-orange-600">
+                        <Trash2 className="h-5 w-5" />
+                        Clear Pending Assignments
+                      </CardTitle>
+                      <CardDescription>
+                        Delete all non-dispatched assignments and restore stock to kits
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="text-sm text-muted-foreground">
+                        <p>
+                          Current pending assignments:{" "}
+                          <span className="font-semibold">{pendingCount}</span>
+                        </p>
+                        <p className="mt-2">This will:</p>
+                        <ul className="list-disc list-inside mt-1 space-y-1">
+                          <li>Delete all "assigned" and "packed" assignments</li>
+                          <li>Restore stock quantities to affected kits</li>
+                          <li>Keep dispatched assignments intact</li>
+                        </ul>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={handleClearAllPendingAssignments}
+                        className="w-full text-orange-600 hover:text-orange-700 border-orange-200 hover:border-orange-300"
+                        disabled={pendingCount === 0}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Clear {pendingCount} Pending Assignment
+                        {pendingCount !== 1 ? "s" : ""}
+                      </Button>
+                    </CardContent>
+                  </Card>
 
-            {/* Clear All Assignments */}
-            <Card className="border-destructive/20 hover:border-destructive/30 transition-colors">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-destructive">
-                  <Trash2 className="h-5 w-5" />
-                  Clear All Assignments
-                </CardTitle>
-                <CardDescription>
-                  Delete ALL assignments including dispatched ones (IRREVERSIBLE)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  <p>Total assignments: <span className="font-semibold">{totalCount}</span></p>
-                  <p className="mt-2">This will:</p>
-                  <ul className="list-disc list-inside mt-1 space-y-1">
-                    <li>Delete ALL assignments (assigned, packed, dispatched)</li>
-                    <li>Restore stock for non-dispatched assignments only</li>
-                    <li>Remove all assignment history permanently</li>
-                  </ul>
+                  {/* Clear All Assignments */}
+                  <Card className="border-destructive/20 hover:border-destructive/30 transition-colors">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-destructive">
+                        <Trash2 className="h-5 w-5" />
+                        Clear All Assignments
+                      </CardTitle>
+                      <CardDescription>
+                        Delete ALL assignments including dispatched ones (IRREVERSIBLE)
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="text-sm text-muted-foreground">
+                        <p>
+                          Total assignments:{" "}
+                          <span className="font-semibold">{totalCount}</span>
+                        </p>
+                        <p className="mt-2">This will:</p>
+                        <ul className="list-disc list-inside mt-1 space-y-1">
+                          <li>Delete ALL assignments (assigned, packed, dispatched)</li>
+                          <li>Restore stock for non-dispatched assignments only</li>
+                          <li>Remove all assignment history permanently</li>
+                        </ul>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        onClick={handleClearAllAssignments}
+                        className="w-full"
+                        disabled={totalCount === 0}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Clear All {totalCount} Assignment
+                        {totalCount !== 1 ? "s" : ""}
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
-                <Button
-                  variant="destructive"
-                  onClick={handleClearAllAssignments}
-                  className="w-full"
-                  disabled={totalCount === 0}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Clear All {totalCount} Assignment{totalCount !== 1 ? 's' : ''}
-                </Button>
-              </CardContent>
-                </Card>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
       </motion.div>
     </Layout>
   );
