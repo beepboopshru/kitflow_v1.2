@@ -189,7 +189,7 @@ export default function Layout({ children }: LayoutProps) {
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="border-r border-border/50 bg-card/60 backdrop-blur-md overflow-hidden shadow-lg h-full"
           >
-            <div className="p-6">
+            <div className="p-6 bg-background/10 backdrop-blur-sm">
               <div className="space-y-1">
                 {navigation.map((item) => {
                   const isActive = location.pathname === item.href;
