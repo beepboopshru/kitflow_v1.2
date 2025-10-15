@@ -209,6 +209,7 @@ function FileManagementModal({ kitId, kitName, fileType, isOpen, onClose }: File
 export default function LaserFiles() {
   const kits = useQuery(api.kits.list);
   const programs = useQuery(api.programs.list);
+  const allLaserFiles = useQuery(api.laserFiles.list, {});
   const [selectedProgram, setSelectedProgram] = useState<ProgramType>(null);
   const [modalState, setModalState] = useState<{
     kitId: Id<"kits">;
@@ -260,13 +261,12 @@ export default function LaserFiles() {
     const programKits = (kits ?? []).filter(k => k.type === programSlug);
     let totalFiles = 0;
     
-    programKits.forEach(kit => {
-      const mdfFiles = useQuery(api.laserFiles.getByKitAndType, { kitId: kit._id, fileType: "mdf_dxf" });
-      const acrylicFiles = useQuery(api.laserFiles.getByKitAndType, { kitId: kit._id, fileType: "acrylic_dxf" });
-      const pdfFiles = useQuery(api.laserFiles.getByKitAndType, { kitId: kit._id, fileType: "printable_pdf" });
-      
-      totalFiles += (mdfFiles?.length ?? 0) + (acrylicFiles?.length ?? 0) + (pdfFiles?.length ?? 0);
-    });
+    if (allLaserFiles) {
+      programKits.forEach(kit => {
+        const kitFiles = allLaserFiles.filter(f => f.kitId === kit._id);
+        totalFiles += kitFiles.length;
+      });
+    }
     
     return { totalKits: programKits.length, totalFiles };
   };
