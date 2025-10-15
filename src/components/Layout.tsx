@@ -130,7 +130,7 @@ export default function Layout({ children }: LayoutProps) {
       <header className="border-b border-border bg-card">
         <div className="flex h-16 items-center justify-between px-8">
           <Link to="/dashboard" className="flex items-center space-x-3">
-            <img src="https://honorable-mammoth-993.convex.cloud/api/storage/1467edc0-3490-4b04-9260-93ea45159890" alt="Logo" className="h-12 w-auto" />
+            <img src="https://harmless-tapir-303.convex.cloud/api/storage/fca2c01e-1351-4df7-89a3-ebd2e884bef2" alt="Logo" className="h-12 w-auto" />
           </Link>
           
           <div className="absolute left-1/2 transform -translate-x-1/2">
