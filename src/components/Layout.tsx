@@ -68,7 +68,7 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   // Add AI Chatbot state and action
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(true);
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>(loadChatHistory);
   const sendChat = useAction(api.ai.chat);
@@ -223,7 +223,7 @@ export default function Layout({ children }: LayoutProps) {
           </Button>
 
           {/* Main Content */}
-          <main className="flex-1">
+          <main className="flex-1 pr-96">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -235,84 +235,51 @@ export default function Layout({ children }: LayoutProps) {
           </main>
         </div>
 
-        {/* AI Chat Sidebar */}
-        {chatOpen && (
-          <div className="fixed inset-0 z-50 flex">
-            {/* Backdrop */}
-            <div 
-              className="absolute inset-0 bg-black/50" 
-              onClick={() => setChatOpen(false)}
-            />
-            
-            {/* Sidebar */}
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="ml-auto relative w-full sm:w-96 bg-card border-l border-border flex flex-col shadow-2xl"
+        {/* AI Chat Sidebar - Always Visible */}
+        <div className="fixed right-0 top-16 bottom-0 w-96 z-40 bg-card border-l border-border flex flex-col shadow-2xl">
+          <div className="flex items-center justify-between px-6 py-4 border-b">
+            <div className="font-semibold text-lg">ScienceUtsav AI Manager</div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleClearChat}
+              title="Clear conversation"
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b">
-                <div className="font-semibold text-lg">ScienceUtsav AI Manager</div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleClearChat}
-                    title="Clear conversation"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setChatOpen(false)}>
-                    Close
-                  </Button>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+              
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            {messages.map((m, idx) => (
+              <div
+                key={idx}
+                className={`flex ${m.role === "assistant" ? "justify-start" : "justify-end"}`}
+              >
+                <div
+                  className={`rounded-lg px-4 py-2 max-w-[85%] text-sm ${
+                    m.role === "assistant" 
+                      ? "bg-muted text-foreground" 
+                      : "bg-primary text-primary-foreground"
+                  }`}
+                >
+                  {m.content}
                 </div>
               </div>
-              
-              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                {messages.map((m, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex ${m.role === "assistant" ? "justify-start" : "justify-end"}`}
-                  >
-                    <div
-                      className={`rounded-lg px-4 py-2 max-w-[85%] text-sm ${
-                        m.role === "assistant" 
-                          ? "bg-muted text-foreground" 
-                          : "bg-primary text-primary-foreground"
-                      }`}
-                    >
-                      {m.content}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <form onSubmit={handleSend} className="border-t p-4 flex items-center gap-2">
-                <Input
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask about kits, stock, etc."
-                  className="flex-1"
-                />
-                <Button type="submit" size="sm">
-                  Send
-                </Button>
-              </form>
-            </motion.div>
+            ))}
           </div>
-        )}
-        
-        {/* Floating AI Button */}
-        {!chatOpen && (
-          <Button 
-            onClick={() => setChatOpen(true)}
-            className="fixed bottom-6 right-6 z-40 shadow-lg"
-            size="lg"
-          >
-            Chat with AI
-          </Button>
-        )}
+          
+          <form onSubmit={handleSend} className="border-t p-4 flex items-center gap-2">
+            <Input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask about kits, stock, etc."
+              className="flex-1"
+            />
+            <Button type="submit" size="sm">
+              Send
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );
