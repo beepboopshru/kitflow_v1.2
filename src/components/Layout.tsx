@@ -303,17 +303,18 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         )}
         
-        {/* Floating AI Button */}
-        {!chatOpen && (
-          <Button 
-            onClick={() => setChatOpen(true)}
-            className="fixed bottom-6 right-6 z-50 shadow-lg"
-            size="lg"
-          >
-            Chat with AI
-          </Button>
-        )}
       </div>
+      
+      {/* Floating AI Button - Outside main container for true fixed positioning */}
+      {!chatOpen && (
+        <Button 
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-6 right-6 z-50 shadow-lg"
+          size="lg"
+        >
+          Chat with AI
+        </Button>
+      )}
     </div>
   );
 }
