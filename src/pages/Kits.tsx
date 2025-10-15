@@ -22,8 +22,9 @@ import { KitImageViewer } from "@/components/KitImageViewer";
 type ProgramType = "cstem" | "robotics" | null;
 
 export default function Kits() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const isContentRole = user?.role === "content";
   
   const kits = useQuery(api.kits.list);
   const programs = useQuery(api.programs.list);
@@ -527,13 +528,14 @@ const getImageUrl = useQuery(
                 Select a program type to manage kits
               </p>
             </div>
-            <Dialog open={isCreateProgramOpen} onOpenChange={setIsCreateProgramOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Program
-                </Button>
-              </DialogTrigger>
+            {!isContentRole && (
+              <Dialog open={isCreateProgramOpen} onOpenChange={setIsCreateProgramOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Program
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle>Create New Program</DialogTitle>
@@ -579,6 +581,7 @@ const getImageUrl = useQuery(
                 </form>
               </DialogContent>
             </Dialog>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -601,28 +604,30 @@ const getImageUrl = useQuery(
                           <Box className="h-6 w-6" />
                           {program.name}
                         </CardTitle>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditProgram(program);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteProgram(program._id, program.name);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        {!isContentRole && (
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditProgram(program);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProgram(program._id, program.name);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       {program.description && (
                         <p className="text-xs text-muted-foreground">{program.description}</p>
@@ -787,14 +792,16 @@ const getImageUrl = useQuery(
           </div>
           
           <div className="flex gap-2">
-            <Button onClick={() => {
-              setFormData({ ...formData, type: selectedProgram });
-              setIsKitSheetMakerOpen(true);
-            }} variant="outline">
-              <FileText className="h-4 w-4 mr-2" />
-              Kit Sheet Maker
-            </Button>
-            <Dialog open={isCreateOpen} onOpenChange={(open) => {
+            {!isContentRole && (
+              <>
+                <Button onClick={() => {
+                  setFormData({ ...formData, type: selectedProgram });
+                  setIsKitSheetMakerOpen(true);
+                }} variant="outline">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Kit Sheet Maker
+                </Button>
+                <Dialog open={isCreateOpen} onOpenChange={(open) => {
               setIsCreateOpen(open);
               if (!open) resetForm();
             }}>
@@ -940,6 +947,8 @@ const getImageUrl = useQuery(
                 </form>
               </DialogContent>
             </Dialog>
+              </>
+            )}
           </div>
         </div>
 
@@ -1085,62 +1094,66 @@ const getImageUrl = useQuery(
                                 <ImageIcon className="h-4 w-4" />
                               </Button>
                             )}
-                            {isStructured && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleExportPdf(kit);
-                                }}
-                                title="Export Kit Sheet"
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
+                            {!isContentRole && (
+                              <>
+                                {isStructured && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleExportPdf(kit);
+                                    }}
+                                    title="Export Kit Sheet"
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingStockKitId(kit._id);
+                                    setStockInput(kit.stockCount);
+                                  }}
+                                  title="Edit Stock Count"
+                                >
+                                  <Hash className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openCopyDialog(kit);
+                                  }}
+                                  title="Copy to Another Program"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(kit);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(kit._id);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingStockKitId(kit._id);
-                                setStockInput(kit.stockCount);
-                              }}
-                              title="Edit Stock Count"
-                            >
-                              <Hash className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openCopyDialog(kit);
-                              }}
-                              title="Copy to Another Program"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(kit);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(kit._id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
                           </div>
                         </td>
                       </motion.tr>

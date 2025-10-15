@@ -109,7 +109,7 @@ export default function Layout({ children }: LayoutProps) {
   // Define navigation items with role-based access
   const allNavigation = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3, roles: ["admin", "manager", "research_development", "operations", "inventory", "content"] },
-    { name: "Kits", href: "/kits", icon: Box, roles: ["admin", "manager", "research_development"] },
+    { name: "Kits", href: "/kits", icon: Box, roles: ["admin", "manager", "research_development", "content"] },
     { name: "Clients", href: "/clients", icon: Users, roles: ["admin", "manager"] },
     { name: "Assignments", href: "/assignments", icon: Package, roles: ["admin", "manager"] },
     { name: "Inventory", href: "/inventory", icon: Boxes, roles: ["admin", "manager", "operations", "inventory"] },
