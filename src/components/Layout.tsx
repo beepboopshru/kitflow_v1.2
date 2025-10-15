@@ -127,162 +127,168 @@ export default function Layout({ children }: LayoutProps) {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="flex h-16 items-center justify-between px-8">
-          <Link to="/dashboard" className="flex items-center space-x-3">
-            <img src="https://harmless-tapir-303.convex.cloud/api/storage/fca2c01e-1351-4df7-89a3-ebd2e884bef2" alt="Logo" className="h-12 w-auto" />
-          </Link>
-          
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <span className="text-xl font-semibold tracking-tight">Management System</span>
-          </div>
-          
-          <div className="flex items-center space-x-6">
-            <span className="text-sm text-muted-foreground">
-              {user?.name || user?.email || "User"}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => signOut()}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex">
-        {/* Sidebar */}
-        <nav className="w-64 border-r border-border bg-card">
-          <div className="p-8">
-            <div className="space-y-2">
-              {navigation.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`flex items-center space-x-3 rounded-lg px-4 py-3 text-sm transition-colors ${
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: 'url(https://harmless-tapir-303.convex.cloud/api/storage/bddef3fe-4743-496a-9a5e-346357150325)' }}
+    >
+      {/* Overlay for better text readability */}
+      <div className="min-h-screen bg-background/40 backdrop-blur-[2px]">
+        {/* Header */}
+        <header className="border-b border-border bg-background/80 backdrop-blur-sm">
+          <div className="flex h-16 items-center justify-between px-8">
+            <Link to="/dashboard" className="flex items-center space-x-3">
+              <img src="https://harmless-tapir-303.convex.cloud/api/storage/fca2c01e-1351-4df7-89a3-ebd2e884bef2" alt="Logo" className="h-12 w-auto" />
+            </Link>
+            
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <span className="text-xl font-semibold tracking-tight">Management System</span>
+            </div>
+            
+            <div className="flex items-center space-x-6">
+              <span className="text-sm text-muted-foreground">
+                {user?.name || user?.email || "User"}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut()}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-        </nav>
+        </header>
 
-        {/* Main Content */}
-        <main className="flex-1">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="p-8"
-          >
-            {children}
-          </motion.div>
-        </main>
-      </div>
-
-      {/* AI Chat Sidebar */}
-      {chatOpen && (
-        <div className="fixed inset-0 z-50 flex">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50" 
-            onClick={() => setChatOpen(false)}
-          />
-          
+        <div className="flex">
           {/* Sidebar */}
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="ml-auto relative w-full sm:w-96 bg-card border-l border-border flex flex-col shadow-2xl"
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <div className="font-semibold text-lg">ScienceUtsav AI Manager</div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleClearChat}
-                  title="Clear conversation"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setChatOpen(false)}>
-                  Close
-                </Button>
+          <nav className="w-64 border-r border-border bg-card/80 backdrop-blur-sm">
+            <div className="p-8">
+              <div className="space-y-2">
+                {navigation.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 text-sm transition-colors ${
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.name}</span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
-            
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-              {messages.map((m, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${m.role === "assistant" ? "justify-start" : "justify-end"}`}
-                >
-                  <div
-                    className={`rounded-lg px-4 py-2 max-w-[85%] ${
-                      m.role === "assistant" 
-                        ? "bg-muted text-foreground" 
-                        : "bg-primary text-primary-foreground"
-                    }`}
-                  >
-                    <ReactMarkdown
-                      components={{
-                        p: ({ node, ...props }) => <p className="text-sm leading-relaxed" {...props} />,
-                        strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
-                        em: ({ node, ...props }) => <em className="italic" {...props} />,
-                        ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2" {...props} />,
-                        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2" {...props} />,
-                        li: ({ node, ...props }) => <li className="my-1" {...props} />,
-                      }}
-                    >
-                      {m.content}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <form onSubmit={handleSend} className="border-t p-4 flex items-center gap-2">
-              <Input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask about kits, stock, etc."
-                className="flex-1"
-              />
-              <Button type="submit" size="sm">
-                Send
-              </Button>
-            </form>
-          </motion.div>
+          </nav>
+
+          {/* Main Content */}
+          <main className="flex-1">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="p-8"
+            >
+              {children}
+            </motion.div>
+          </main>
         </div>
-      )}
-      
-      {/* Floating AI Button */}
-      {!chatOpen && (
-        <Button 
-          onClick={() => setChatOpen(true)}
-          className="fixed bottom-6 right-6 z-40 shadow-lg"
-          size="lg"
-        >
-          Chat with AI
-        </Button>
-      )}
+
+        {/* AI Chat Sidebar */}
+        {chatOpen && (
+          <div className="fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/50" 
+              onClick={() => setChatOpen(false)}
+            />
+            
+            {/* Sidebar */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="ml-auto relative w-full sm:w-96 bg-card border-l border-border flex flex-col shadow-2xl"
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b">
+                <div className="font-semibold text-lg">ScienceUtsav AI Manager</div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleClearChat}
+                    title="Clear conversation"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setChatOpen(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                {messages.map((m, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex ${m.role === "assistant" ? "justify-start" : "justify-end"}`}
+                  >
+                    <div
+                      className={`rounded-lg px-4 py-2 max-w-[85%] ${
+                        m.role === "assistant" 
+                          ? "bg-muted text-foreground" 
+                          : "bg-primary text-primary-foreground"
+                      }`}
+                    >
+                      <ReactMarkdown
+                        components={{
+                          p: ({ node, ...props }) => <p className="text-sm leading-relaxed" {...props} />,
+                          strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
+                          em: ({ node, ...props }) => <em className="italic" {...props} />,
+                          ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2" {...props} />,
+                          ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2" {...props} />,
+                          li: ({ node, ...props }) => <li className="my-1" {...props} />,
+                        }}
+                      >
+                        {m.content}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <form onSubmit={handleSend} className="border-t p-4 flex items-center gap-2">
+                <Input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask about kits, stock, etc."
+                  className="flex-1"
+                />
+                <Button type="submit" size="sm">
+                  Send
+                </Button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+        
+        {/* Floating AI Button */}
+        {!chatOpen && (
+          <Button 
+            onClick={() => setChatOpen(true)}
+            className="fixed bottom-6 right-6 z-40 shadow-lg"
+            size="lg"
+          >
+            Chat with AI
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
