@@ -1,4 +1,3 @@
-const users = useQuery(
-  api.roles.listUsersWithRoles,
-  currentUserRole === "admin" ? {} : "skip"
-);
+<div className={...}>
+  {m.content}
+</div>
