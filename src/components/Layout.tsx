@@ -187,7 +187,7 @@ export default function Layout({ children }: LayoutProps) {
               opacity: sidebarOpen ? 1 : 0,
             }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="border-r border-border/50 bg-card/60 backdrop-blur-md overflow-hidden shadow-lg h-full"
+            className="border-r border-border/50 bg-card/60 backdrop-blur-md overflow-hidden shadow-lg self-stretch"
           >
             <div className="p-6 bg-background/10 backdrop-blur-sm">
               <div className="space-y-1">
