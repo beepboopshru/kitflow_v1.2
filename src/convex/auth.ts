@@ -23,7 +23,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         const code = token;
 
         await resend.emails.send({
-          from: "ScienceUtsav <noreply@yourdomain.com>",
+          from: "ScienceUtsav <noreply@scienceutsav.com>",
           to: [email],
           subject: "Your verification code",
           html: `
