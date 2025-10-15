@@ -216,11 +216,12 @@ export default function Layout({ children }: LayoutProps) {
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="hidden lg:flex absolute left-0 top-20 z-10 h-10 w-6 rounded-r-md border-r border-t border-b border-border/50 bg-card/70 backdrop-blur-md hover:bg-card/90 shadow-md transition-all duration-300"
-            style={{ left: sidebarOpen ? '256px' : '0px', transition: 'left 0.3s ease-in-out' }}
+            className="hidden lg:flex fixed top-24 z-20 h-10 w-8 rounded-r-md border-r border-t border-b border-border/50 bg-card/70 backdrop-blur-md hover:bg-card/90 shadow-md transition-all duration-300"
+            style={{ left: sidebarOpen ? '248px' : '0px', transition: 'left 0.3s ease-in-out' }}
           >
             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
+=======
 
           {/* Main Content */}
           <main className="flex-1">
