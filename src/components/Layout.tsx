@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -47,7 +48,7 @@ export default function Layout({ children }: LayoutProps) {
   const loadChatHistory = () => {
     try {
       const stored = localStorage.getItem(CHAT_STORAGE_KEY);
-      if (!stored) return [{ role: "assistant" as const, content: "Hi! I'm Science Utsav AI Manager. Ask me about kits, inventory, or stock status." }];
+      if (!stored) return [{ role: "assistant" as const, content: "Hi! I'm ScienceUtsav AI Manager. Ask me about kits, inventory, or stock status." }];
       
       const { messages, timestamp } = JSON.parse(stored);
       const now = Date.now();
@@ -55,12 +56,12 @@ export default function Layout({ children }: LayoutProps) {
       // Check if history has expired (older than 1 day)
       if (now - timestamp > CHAT_EXPIRY_MS) {
         localStorage.removeItem(CHAT_STORAGE_KEY);
-        return [{ role: "assistant" as const, content: "Hi! I'm Science Utsav AI Manager. Ask me about kits, inventory, or stock status." }];
+        return [{ role: "assistant" as const, content: "Hi! I'm ScienceUtsav AI Manager. Ask me about kits, inventory, or stock status." }];
       }
       
       return messages;
     } catch {
-      return [{ role: "assistant" as const, content: "Hi! I'm Science Utsav AI Manager. Ask me about kits, inventory, or stock status." }];
+      return [{ role: "assistant" as const, content: "Hi! I'm ScienceUtsav AI Manager. Ask me about kits, inventory, or stock status." }];
     }
   };
 
@@ -81,8 +82,9 @@ export default function Layout({ children }: LayoutProps) {
   }, [messages]);
 
   const handleClearChat = () => {
+    if (!window.confirm("Clear conversation? This cannot be undone.")) return;
     localStorage.removeItem(CHAT_STORAGE_KEY);
-    setMessages([{ role: "assistant", content: "Hi! I'm Science Utsav AI Manager. Ask me about kits, inventory, or stock status." }]);
+    setMessages([{ role: "assistant", content: "Hi! I'm ScienceUtsav AI Manager. Ask me about kits, inventory, or stock status." }]);
   };
 
   const handleSend = async (e: React.FormEvent) => {
@@ -115,7 +117,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Inventory", href: "/inventory", icon: Boxes, roles: ["admin", "manager", "operations", "inventory"] },
     { name: "Vendors", href: "/vendors", icon: Building2, roles: ["admin", "manager", "operations", "inventory"] },
     { name: "Services", href: "/services", icon: Package, roles: ["admin", "manager", "operations"] },
-    { name: "Laser Files", href: "/laser-files", icon: FileText, roles: ["admin", "manager", "research_development", "operations"] },
+    { name: "Laser Files", href: "/laser-files", icon: FileText, roles: ["admin", "manager", "research_development", "operations", "laser_operator"] },
     { name: "Admin Zone", href: "/admin", icon: AlertTriangle, roles: ["admin"] },
   ];
 
@@ -210,7 +212,7 @@ export default function Layout({ children }: LayoutProps) {
             className="ml-auto relative w-full sm:w-96 bg-card border-l border-border flex flex-col shadow-2xl"
           >
             <div className="flex items-center justify-between px-6 py-4 border-b">
-              <div className="font-semibold text-lg">Science Utsav AI Manager</div>
+              <div className="font-semibold text-lg">ScienceUtsav AI Manager</div>
               <div className="flex items-center gap-2">
                 <Button 
                   variant="ghost" 
@@ -239,7 +241,18 @@ export default function Layout({ children }: LayoutProps) {
                         : "bg-primary text-primary-foreground"
                     }`}
                   >
-                    <p className="text-sm">{m.content}</p>
+                    <ReactMarkdown
+                      components={{
+                        p: ({ node, ...props }) => <p className="text-sm leading-relaxed" {...props} />,
+                        strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
+                        em: ({ node, ...props }) => <em className="italic" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2" {...props} />,
+                        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2" {...props} />,
+                        li: ({ node, ...props }) => <li className="my-1" {...props} />,
+                      }}
+                    >
+                      {m.content}
+                    </ReactMarkdown>
                   </div>
                 </div>
               ))}

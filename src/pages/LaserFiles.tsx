@@ -151,7 +151,7 @@ function FileManagementModal({ kitId, kitName, isOpen, onClose }: FileManagement
                 type="file"
                 id={`upload-files`}
                 multiple
-                accept=".dxf,.pdf"
+                accept=".dxf,.pdf,.cdr"
                 onChange={handleUpload}
                 className="hidden"
                 disabled={uploading}
@@ -364,7 +364,7 @@ export default function LaserFiles() {
               {(programs ?? []).find(p => p.slug === selectedProgram)?.name || selectedProgram.toUpperCase()} - Laser Files
             </h1>
             <p className="text-muted-foreground mt-2">
-              Manage manufacturing design files (DXF and PDF) for {(programs ?? []).find(p => p.slug === selectedProgram)?.name || selectedProgram} kits
+              Manage manufacturing design files (DXF, PDF, and CDR) for {(programs ?? []).find(p => p.slug === selectedProgram)?.name || selectedProgram} kits
             </p>
           </div>
         </div>
