@@ -58,7 +58,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         image: args.profile.image,
         emailVerificationTime: args.profile.emailVerificationTime,
         isAnonymous: args.profile.isAnonymous,
-        role: "user", // Default role for new users
+        role: "inventory", // Default role for new users
         isApproved: false, // New users require admin approval
       });
 

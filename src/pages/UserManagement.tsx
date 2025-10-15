@@ -50,7 +50,7 @@ export default function UserManagement() {
     }
   }, [currentUserRole, navigate]);
 
-  const handleRoleChange = async (userId: Id<"users">, newRole: "admin" | "user" | "member") => {
+  const handleRoleChange = async (userId: Id<"users">, newRole: "admin" | "manager" | "research_development" | "operations" | "inventory" | "content") => {
     try {
       await updateRole({ userId, role: newRole });
       toast.success("User role updated successfully");
@@ -77,7 +77,7 @@ export default function UserManagement() {
     }
   };
 
-  const handleApproveUser = async (userId: Id<"users">, role: "admin" | "user" | "member", userName: string) => {
+  const handleApproveUser = async (userId: Id<"users">, role: "admin" | "manager" | "research_development" | "operations" | "inventory" | "content", userName: string) => {
     try {
       await approveUser({ userId, role });
       toast.success(`${userName} approved as ${role}`);
@@ -92,10 +92,16 @@ export default function UserManagement() {
     switch (role) {
       case "admin":
         return <Shield className="h-4 w-4 text-red-500" />;
-      case "user":
+      case "manager":
+        return <Shield className="h-4 w-4 text-orange-500" />;
+      case "research_development":
         return <User className="h-4 w-4 text-blue-500" />;
-      case "member":
+      case "operations":
         return <Users className="h-4 w-4 text-green-500" />;
+      case "inventory":
+        return <Users className="h-4 w-4 text-purple-500" />;
+      case "content":
+        return <Users className="h-4 w-4 text-pink-500" />;
       default:
         return <User className="h-4 w-4 text-gray-500" />;
     }
@@ -151,22 +157,25 @@ export default function UserManagement() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Select
-                        defaultValue="user"
+                        defaultValue="inventory"
                         onValueChange={(value) =>
                           handleApproveUser(
                             u._id,
-                            value as "admin" | "user" | "member",
+                            value as "admin" | "manager" | "research_development" | "operations" | "inventory" | "content",
                             u.name || u.email || "Anonymous User"
                           )
                         }
                       >
-                        <SelectTrigger className="w-32">
+                        <SelectTrigger className="w-48">
                           <SelectValue placeholder="Approve as..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="admin">Approve as Admin</SelectItem>
-                          <SelectItem value="user">Approve as User</SelectItem>
-                          <SelectItem value="member">Approve as Member</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="research_development">Research & Development</SelectItem>
+                          <SelectItem value="operations">Operations</SelectItem>
+                          <SelectItem value="inventory">Inventory</SelectItem>
+                          <SelectItem value="content">Content</SelectItem>
                         </SelectContent>
                       </Select>
                       <Button
@@ -219,22 +228,25 @@ export default function UserManagement() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Select
-                      value={u.role || "user"}
-                      onValueChange={(value) =>
-                        handleRoleChange(u._id, value as "admin" | "user" | "member")
-                      }
-                      disabled={u._id === user?._id}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="member">Member</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <Select
+                        value={u.role || "inventory"}
+                        onValueChange={(value) =>
+                          handleRoleChange(u._id, value as "admin" | "manager" | "research_development" | "operations" | "inventory" | "content")
+                        }
+                        disabled={u._id === user?._id}
+                      >
+                        <SelectTrigger className="w-48">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="research_development">Research & Development</SelectItem>
+                          <SelectItem value="operations">Operations</SelectItem>
+                          <SelectItem value="inventory">Inventory</SelectItem>
+                          <SelectItem value="content">Content</SelectItem>
+                        </SelectContent>
+                      </Select>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -271,20 +283,47 @@ export default function UserManagement() {
               </div>
             </div>
             <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-orange-500 mt-0.5" />
+              <div>
+                <p className="font-medium">Manager</p>
+                <p className="text-sm text-muted-foreground">
+                  Same access as admin but no user management
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
               <User className="h-5 w-5 text-blue-500 mt-0.5" />
               <div>
-                <p className="font-medium">User</p>
+                <p className="font-medium">Research & Development</p>
                 <p className="text-sm text-muted-foreground">
-                  Standard access to manage kits, clients, assignments, and inventory
+                  Kit management only - no client management, vendors, or services
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Users className="h-5 w-5 text-green-500 mt-0.5" />
               <div>
-                <p className="font-medium">Member</p>
+                <p className="font-medium">Operations</p>
                 <p className="text-sm text-muted-foreground">
-                  Limited access - can view data but cannot make changes
+                  Inventory management, vendors, and services
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Users className="h-5 w-5 text-purple-500 mt-0.5" />
+              <div>
+                <p className="font-medium">Inventory</p>
+                <p className="text-sm text-muted-foreground">
+                  Only inventory management access
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Users className="h-5 w-5 text-pink-500 mt-0.5" />
+              <div>
+                <p className="font-medium">Content</p>
+                <p className="text-sm text-muted-foreground">
+                  Can only view and upload images
                 </p>
               </div>
             </div>

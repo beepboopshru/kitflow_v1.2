@@ -24,7 +24,14 @@ export const listUsersWithRoles = query({
 export const updateUserRole = mutation({
   args: {
     userId: v.id("users"),
-    role: v.union(v.literal("admin"), v.literal("user"), v.literal("member")),
+    role: v.union(
+      v.literal("admin"),
+      v.literal("manager"),
+      v.literal("research_development"),
+      v.literal("operations"),
+      v.literal("inventory"),
+      v.literal("content")
+    ),
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
@@ -69,7 +76,14 @@ export const deleteUser = mutation({
  */
 export const hasRole = query({
   args: {
-    role: v.union(v.literal("admin"), v.literal("user"), v.literal("member")),
+    role: v.union(
+      v.literal("admin"),
+      v.literal("manager"),
+      v.literal("research_development"),
+      v.literal("operations"),
+      v.literal("inventory"),
+      v.literal("content")
+    ),
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);
@@ -115,7 +129,14 @@ export const listPendingUsers = query({
 export const approveUser = mutation({
   args: {
     userId: v.id("users"),
-    role: v.union(v.literal("admin"), v.literal("user"), v.literal("member")),
+    role: v.union(
+      v.literal("admin"),
+      v.literal("manager"),
+      v.literal("research_development"),
+      v.literal("operations"),
+      v.literal("inventory"),
+      v.literal("content")
+    ),
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUser(ctx);

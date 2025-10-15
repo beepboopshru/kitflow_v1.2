@@ -5,14 +5,20 @@ import { Infer, v } from "convex/values";
 // default user roles. can add / remove based on the project as needed
 export const ROLES = {
   ADMIN: "admin",
-  USER: "user",
-  MEMBER: "member",
+  MANAGER: "manager",
+  RESEARCH_DEVELOPMENT: "research_development",
+  OPERATIONS: "operations",
+  INVENTORY: "inventory",
+  CONTENT: "content",
 } as const;
 
 export const roleValidator = v.union(
   v.literal(ROLES.ADMIN),
-  v.literal(ROLES.USER),
-  v.literal(ROLES.MEMBER),
+  v.literal(ROLES.MANAGER),
+  v.literal(ROLES.RESEARCH_DEVELOPMENT),
+  v.literal(ROLES.OPERATIONS),
+  v.literal(ROLES.INVENTORY),
+  v.literal(ROLES.CONTENT),
 );
 export type Role = Infer<typeof roleValidator>;
 

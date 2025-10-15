@@ -103,17 +103,26 @@ export default function Layout({ children }: LayoutProps) {
     }
   };
 
-  const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-    { name: "Kits", href: "/kits", icon: Box },
-    { name: "Clients", href: "/clients", icon: Users },
-    { name: "Assignments", href: "/assignments", icon: Package },
-    { name: "Inventory", href: "/inventory", icon: Boxes },
-    { name: "Vendors", href: "/vendors", icon: Building2 },
-    { name: "Services", href: "/services", icon: Package },
-    { name: "User Management", href: "/users", icon: Users },
-    { name: "Admin Zone", href: "/admin", icon: AlertTriangle },
+  // Get current user role for navigation filtering
+  const currentUserRole = user?.role;
+
+  // Define navigation items with role-based access
+  const allNavigation = [
+    { name: "Dashboard", href: "/dashboard", icon: BarChart3, roles: ["admin", "manager", "research_development", "operations", "inventory", "content"] },
+    { name: "Kits", href: "/kits", icon: Box, roles: ["admin", "manager", "research_development"] },
+    { name: "Clients", href: "/clients", icon: Users, roles: ["admin", "manager"] },
+    { name: "Assignments", href: "/assignments", icon: Package, roles: ["admin", "manager"] },
+    { name: "Inventory", href: "/inventory", icon: Boxes, roles: ["admin", "manager", "operations", "inventory"] },
+    { name: "Vendors", href: "/vendors", icon: Building2, roles: ["admin", "manager", "operations"] },
+    { name: "Services", href: "/services", icon: Package, roles: ["admin", "manager", "operations"] },
+    { name: "User Management", href: "/users", icon: Users, roles: ["admin"] },
+    { name: "Admin Zone", href: "/admin", icon: AlertTriangle, roles: ["admin"] },
   ];
+
+  // Filter navigation based on user role
+  const navigation = allNavigation.filter(item => 
+    currentUserRole && item.roles.includes(currentUserRole)
+  );
 
   return (
     <div className="min-h-screen bg-background">
