@@ -8,9 +8,14 @@ export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: 'url(https://harmless-tapir-303.convex.cloud/api/storage/bddef3fe-4743-496a-9a5e-346357150325)' }}
+    >
+      {/* Overlay for better text readability */}
+      <div className="min-h-screen bg-background/40 backdrop-blur-[2px]">
+        {/* Header */}
+        <header className="border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
@@ -85,8 +90,7 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
-
-    
+      </div>
     </div>
   );
 }
