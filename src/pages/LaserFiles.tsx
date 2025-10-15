@@ -40,24 +40,40 @@ function FileManagementModal({ kitId, kitName, isOpen, onClose }: FileManagement
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
         
-        // Validate file type (only DXF and PDF allowed)
+        // Validate file type (DXF, PDF, and CDR allowed)
         const extension = file.name.split('.').pop()?.toLowerCase();
-        if (extension !== "dxf" && extension !== "pdf") {
-          toast.error(`Invalid file type for ${file.name}. Only .dxf and .pdf files are allowed`);
+        if (extension !== "dxf" && extension !== "pdf" && extension !== "cdr") {
+          toast.error(`Invalid file type for ${file.name}. Only .dxf, .pdf, and .cdr files are allowed`);
           continue;
         }
 
         // Get upload URL
         const uploadUrl = await generateUploadUrl();
         
-        // Upload file
+        // Upload file with proper content type
+        const contentType = file.type || "application/octet-stream";
         const result = await fetch(uploadUrl, {
           method: "POST",
-          headers: { "Content-Type": file.type },
+          headers: { "Content-Type": contentType },
           body: file,
         });
         
-        const { storageId } = await result.json();
+        // Check if upload was successful
+        if (!result.ok) {
+          toast.error(`Failed to upload ${file.name}: ${result.statusText}`);
+          console.error("Upload failed:", result.status, result.statusText);
+          continue;
+        }
+        
+        // Parse response and get storageId
+        const responseData = await result.json();
+        const storageId = responseData.storageId;
+        
+        if (!storageId) {
+          toast.error(`Failed to get storage ID for ${file.name}`);
+          console.error("No storageId in response:", responseData);
+          continue;
+        }
         
         // Save file metadata
         await createFile({
@@ -71,7 +87,7 @@ function FileManagementModal({ kitId, kitName, isOpen, onClose }: FileManagement
       e.target.value = ""; // Reset input
     } catch (error) {
       toast.error("Failed to upload files");
-      console.error(error);
+      console.error("Upload error:", error);
     } finally {
       setUploading(false);
     }
