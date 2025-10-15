@@ -111,12 +111,26 @@ function FileManagementModal({ kitId, kitName, isOpen, onClose }: FileManagement
         toast.error("File URL is unavailable or expired");
         return;
       }
+      
+      // Fetch the file as a blob to ensure proper download with filename
+      const response = await fetch(url);
+      if (!response.ok) {
+        toast.error("Failed to fetch file");
+        return;
+      }
+      
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
       const a = document.createElement("a");
-      a.href = url;
+      a.href = blobUrl;
       a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       toast.error("Failed to download file");
       console.error(error);
