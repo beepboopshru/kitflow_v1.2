@@ -12,6 +12,8 @@ import {
   Trash2,
   FileText,
   Boxes,
+  Menu,
+  X,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,6 +34,7 @@ export default function Layout({ children }: LayoutProps) {
   const { user, signOut, isApproved } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Redirect unapproved users
   useEffect(() => {
@@ -141,9 +144,19 @@ export default function Layout({ children }: LayoutProps) {
         {/* Header */}
         <header className="border-b border-border bg-background/80 backdrop-blur-sm">
           <div className="flex h-16 items-center justify-between px-8">
-            <Link to="/dashboard" className="flex items-center space-x-3">
-              <img src="https://harmless-tapir-303.convex.cloud/api/storage/fca2c01e-1351-4df7-89a3-ebd2e884bef2" alt="Logo" className="h-12 w-auto" />
-            </Link>
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden"
+              >
+                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+              <Link to="/dashboard" className="flex items-center space-x-3">
+                <img src="https://harmless-tapir-303.convex.cloud/api/storage/fca2c01e-1351-4df7-89a3-ebd2e884bef2" alt="Logo" className="h-12 w-auto" />
+              </Link>
+            </div>
             
             <div className="absolute left-1/2 transform -translate-x-1/2">
               <span className="text-xl font-semibold tracking-tight">Management System</span>
@@ -167,7 +180,15 @@ export default function Layout({ children }: LayoutProps) {
 
         <div className="flex">
           {/* Sidebar */}
-          <nav className="w-64 border-r border-border bg-card/60 backdrop-blur-md">
+          <motion.nav
+            initial={false}
+            animate={{
+              width: sidebarOpen ? 256 : 0,
+              opacity: sidebarOpen ? 1 : 0,
+            }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="border-r border-border bg-card/60 backdrop-blur-md overflow-hidden"
+          >
             <div className="p-8">
               <div className="space-y-2">
                 {navigation.map((item) => {
@@ -176,7 +197,7 @@ export default function Layout({ children }: LayoutProps) {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 text-sm transition-colors ${
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 text-sm transition-colors whitespace-nowrap ${
                         isActive
                           ? "bg-primary text-primary-foreground"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -189,7 +210,18 @@ export default function Layout({ children }: LayoutProps) {
                 })}
               </div>
             </div>
-          </nav>
+          </motion.nav>
+
+          {/* Toggle Button for Desktop */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="hidden lg:flex absolute left-0 top-20 z-10 h-10 w-6 rounded-r-md border-r border-t border-b border-border bg-card/60 backdrop-blur-md hover:bg-card/80"
+            style={{ left: sidebarOpen ? '256px' : '0px', transition: 'left 0.3s ease-in-out' }}
+          >
+            {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </Button>
 
           {/* Main Content */}
           <main className="flex-1">
