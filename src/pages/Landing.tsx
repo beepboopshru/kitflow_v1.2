@@ -1,17 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router";
 
 export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { scrollY } = useScroll();
+  const y = useTransform(scrollY, [0, 1000], [0, 300]);
 
   return (
-    <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: 'url(https://harmless-tapir-303.convex.cloud/api/storage/bddef3fe-4743-496a-9a5e-346357150325)' }}
-    >
+    <div className="min-h-screen overflow-hidden">
+      {/* Parallax Background */}
+      <motion.div
+        style={{ 
+          y,
+          backgroundImage: 'url(https://harmless-tapir-303.convex.cloud/api/storage/bddef3fe-4743-496a-9a5e-346357150325)'
+        }}
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
+      />
+      
       {/* Overlay for better text readability */}
       <div className="min-h-screen bg-background/40 backdrop-blur-[2px]">
         {/* Header */}
