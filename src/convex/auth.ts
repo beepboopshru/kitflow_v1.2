@@ -51,7 +51,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         return args.existingUserId;
       }
 
-      // Create new user with default role
+      // Create new user with default role and pending approval
       const userId = await ctx.db.insert("users", {
         email: args.profile.email,
         name: args.profile.name,
@@ -59,6 +59,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         emailVerificationTime: args.profile.emailVerificationTime,
         isAnonymous: args.profile.isAnonymous,
         role: "user", // Default role for new users
+        isApproved: false, // New users require admin approval
       });
 
       return userId;

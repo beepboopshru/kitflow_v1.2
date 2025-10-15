@@ -11,7 +11,8 @@ import {
   Building2,
   Trash2
 } from "lucide-react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
+/* removed duplicate useEffect import */
 import { Boxes } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,8 +28,20 @@ const CHAT_STORAGE_KEY = "science_utsav_chat_history";
 const CHAT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 1 day in milliseconds
 
 export default function Layout({ children }: LayoutProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isApproved } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Redirect unapproved users
+  useEffect(() => {
+    if (isApproved === false) {
+      navigate("/pending-approval");
+    }
+  }, [isApproved, navigate]);
+
+  if (isApproved === false) {
+    return null;
+  }
 
   // Load chat history from localStorage
   const loadChatHistory = () => {

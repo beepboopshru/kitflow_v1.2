@@ -29,8 +29,13 @@ export default function UserManagement() {
     api.roles.listUsersWithRoles,
     currentUserRole === "admin" ? {} : "skip"
   );
+  const pendingUsers = useQuery(
+    api.roles.listPendingUsers,
+    currentUserRole === "admin" ? {} : "skip"
+  );
   const updateRole = useMutation(api.roles.updateUserRole);
   const deleteUser = useMutation(api.roles.deleteUser);
+  const approveUser = useMutation(api.roles.approveUser);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -72,6 +77,17 @@ export default function UserManagement() {
     }
   };
 
+  const handleApproveUser = async (userId: Id<"users">, role: "admin" | "user" | "member", userName: string) => {
+    try {
+      await approveUser({ userId, role });
+      toast.success(`${userName} approved as ${role}`);
+    } catch (error) {
+      toast.error("Failed to approve user", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
   const getRoleIcon = (role?: string) => {
     switch (role) {
       case "admin":
@@ -104,16 +120,86 @@ export default function UserManagement() {
           </p>
         </div>
 
+        {pendingUsers && pendingUsers.length > 0 && (
+          <Card className="border-orange-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-orange-500" />
+                Pending Approvals ({pendingUsers.length})
+              </CardTitle>
+              <CardDescription>
+                New users waiting for admin approval to access the system
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {pendingUsers.map((u) => (
+                  <div
+                    key={u._id}
+                    className="flex items-center justify-between p-4 border border-orange-200 rounded-lg bg-orange-50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <User className="h-4 w-4 text-orange-500" />
+                      <div>
+                        <p className="font-medium">
+                          {u.name || u.email || "Anonymous User"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {u.email || "No email"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        defaultValue="user"
+                        onValueChange={(value) =>
+                          handleApproveUser(
+                            u._id,
+                            value as "admin" | "user" | "member",
+                            u.name || u.email || "Anonymous User"
+                          )
+                        }
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="Approve as..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Approve as Admin</SelectItem>
+                          <SelectItem value="user">Approve as User</SelectItem>
+                          <SelectItem value="member">Approve as Member</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          handleDeleteUser(
+                            u._id,
+                            u.name || u.email || "Anonymous User"
+                          )
+                        }
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
-            <CardTitle>All Users</CardTitle>
+            <CardTitle>Approved Users</CardTitle>
             <CardDescription>
               View and manage user roles. All users share the same database.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {users?.map((u) => (
+              {users?.filter(u => u.isApproved !== false).map((u) => (
                 <div
                   key={u._id}
                   className="flex items-center justify-between p-4 border rounded-lg"

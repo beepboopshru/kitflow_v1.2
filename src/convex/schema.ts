@@ -30,7 +30,11 @@ const schema = defineSchema(
       isAnonymous: v.optional(v.boolean()), // is the user anonymous. do not remove
 
       role: v.optional(roleValidator), // role of the user. do not remove
-    }).index("email", ["email"]), // index for the email. do not remove or modify
+      isApproved: v.optional(v.boolean()), // whether the user has been approved by an admin
+      approvedBy: v.optional(v.id("users")), // admin who approved the user
+      approvedAt: v.optional(v.number()), // timestamp of approval
+    }).index("email", ["email"])
+      .index("by_approval_status", ["isApproved"]), // index for the email. do not remove or modify
 
     // Program Management
     programs: defineTable({

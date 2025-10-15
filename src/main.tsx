@@ -19,6 +19,7 @@ import AdminZone from "./pages/AdminZone.tsx";
 import Vendors from "@/pages/VendorContacts.tsx";
 import Services from "@/pages/Services.tsx";
 import UserManagement from "@/pages/UserManagement.tsx";
+import PendingApproval from "@/pages/PendingApproval.tsx";
 import "./types/global.d.ts";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -63,6 +64,10 @@ const router = createBrowserRouter([
   {
     path: "/users",
     element: <UserManagement />,
+  },
+  {
+    path: "/pending-approval",
+    element: <PendingApproval />,
   },
   {
     path: "/admin",
